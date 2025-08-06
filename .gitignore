@@ -39,3 +39,6 @@ out/
 ### ENV VARIABLES ###
 env.properties
 .env
+
+### Docker volumes ###
+data/

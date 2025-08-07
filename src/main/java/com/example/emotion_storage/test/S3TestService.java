@@ -19,7 +19,7 @@ public class S3TestService {
 
     private final AmazonS3 amazonS3;
 
-    @Value("${spring.cloud.aws.s3.bucket}")
+    @Value("${AWS_BUCKET_NAME}")
     private String bucket;
 
     public String uploadImage(MultipartFile image) throws IOException {

@@ -7,6 +7,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,4 +37,18 @@ public class User extends BaseTimeEntity {
     private String email;
 
     private String profileImage;
+
+    private String nickName;
+
+    private String gender;
+
+    private LocalDateTime birthday;
+
+    // private List<String> expectations;
+
+    private boolean isTermsAgreed;
+
+    private boolean isPrivacyAgreed;
+
+    private boolean isMarketingAgreed;
 }

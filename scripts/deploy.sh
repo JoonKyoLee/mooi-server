@@ -2,6 +2,9 @@
 
 REPOSITORY=/home/ubuntu/app
 
+echo "> 환경 변수 로드"
+source ~/.bashrc
+
 echo "> 현재 구동 중인 애플리케이션 pid 확인"
 PORT=8080
 CURRENT_PID=$(sudo lsof -t -i:$PORT)
@@ -26,6 +29,6 @@ echo "> $JAR_NAME 에 실행권한 추가"
 
 chmod +x $JAR_NAME
 
-echo "> $JAR_NAME 실행"
+echo "> $JAR_NAME 실행 (prod 프로파일 활성화)"
 
-nohup java -jar -Duser.timezone=Asia/Seoul $JAR_NAME >> $REPOSITORY/nohup.out 2>&1 &
+nohup java -jar -Dspring.profiles.active=prod -Duser.timezone=Asia/Seoul $JAR_NAME >> $REPOSITORY/nohup.out 2>&1 &

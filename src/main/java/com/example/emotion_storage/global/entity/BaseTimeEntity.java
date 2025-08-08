@@ -1,4 +1,4 @@
-package com.example.emotion_storage.entity;
+package com.example.emotion_storage.global.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

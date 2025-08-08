@@ -1,6 +1,5 @@
 package com.example.emotion_storage.global.security.jwt;
 
-import com.example.emotion_storage.global.exception.principal.TokenStatus;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;

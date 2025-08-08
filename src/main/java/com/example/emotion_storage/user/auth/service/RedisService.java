@@ -36,4 +36,33 @@ public class RedisService {
     public String getUserIdByRefreshToken(String refreshToken) {
         return redisTemplate.opsForValue().get(tokenKey(refreshToken));
     }
+
+    public void deleteByUserId(String userId) {
+        String refreshToken = getRefreshTokenByUserId(userId);
+        if (refreshToken != null) {
+            redisTemplate.delete(tokenKey(refreshToken));
+        }
+        redisTemplate.delete(userKey(userId));
+    }
+
+    public void deleteByRefreshToken(String refreshToken) {
+        String userId = getUserIdByRefreshToken(refreshToken);
+        if (userId != null) {
+            redisTemplate.delete(userKey(userId));
+        }
+        redisTemplate.delete(tokenKey(refreshToken));
+    }
+
+    public void deleteRefreshToken(String userId, String refreshToken) {
+        redisTemplate.delete(userKey(userId));
+        redisTemplate.delete(tokenKey(refreshToken));
+    }
+
+    public void rotateRefreshToken(String userId, String oldToken, String newToken) {
+        if (oldToken != null) {
+            redisTemplate.delete(tokenKey(oldToken));
+        }
+        redisTemplate.delete(userKey(userId));
+        saveRefreshToken(userId, newToken);
+    }
 }

@@ -1,5 +1,6 @@
-package com.example.emotion_storage.entity;
+package com.example.emotion_storage.user;
 
+import com.example.emotion_storage.global.entity.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -8,7 +9,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.time.LocalDateTime;
-import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,7 +36,7 @@ public class User extends BaseTimeEntity {
 
     private String email;
 
-    private String profileImage;
+    private String profileImageUrl;
 
     private String nickName;
 

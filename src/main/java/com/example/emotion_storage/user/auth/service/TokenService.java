@@ -10,12 +10,16 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class TokenService {
+
+    @Value("${auth.refresh.expiration-days}")
+    private int refreshTokenExpiration;
 
     private static final String REFRESH_TOKEN_PREFIX = "refreshToken";
 
@@ -56,7 +60,7 @@ public class TokenService {
                 .secure(true)
                 .sameSite("None")
                 .path("/")
-                .maxAge(Duration.ofDays(14))
+                .maxAge(Duration.ofDays(refreshTokenExpiration))
                 .build();
 
         response.addHeader("Set-Cookie", cookie.toString());

@@ -37,6 +37,16 @@ public record ApiResponse<T>(
         );
     }
 
+    public static <T> ApiResponse<T> success(int status, String message, T data) {
+        return new ApiResponse<>(
+                status,
+                null,
+                message,
+                data,
+                null
+        );
+    }
+
     public static <T> ApiResponse<T> fail(ErrorCode errorCode) {
         return new ApiResponse<>(
                 errorCode.getHttpStatus().value(),

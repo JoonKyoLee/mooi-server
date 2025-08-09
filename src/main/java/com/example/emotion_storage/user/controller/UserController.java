@@ -44,6 +44,7 @@ public class UserController {
     @Operation(summary = "구글 회원가입", description = "구글 ID 토큰 검증 후 신규 회원을 생성합니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않은 ID 토큰"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 가입된 이메일")
     })
     @PostMapping("/signup/google")

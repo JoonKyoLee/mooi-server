@@ -34,13 +34,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class UserServiceTest {
 
     @InjectMocks private UserService userService;
-
     @Mock private UserRepository userRepository;
-
     @Mock private GoogleTokenVerifier googleTokenVerifier;
-
     @Mock private TokenService tokenService;
-
     @Mock private HttpServletResponse httpServletResponse;
 
     private GoogleLoginRequest createGoogleLoginRequest() {

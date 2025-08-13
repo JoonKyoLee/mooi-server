@@ -27,15 +27,35 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     private final UserRepository userRepository;
     private static final String TOKEN_PREFIX = "Bearer ";
 
+    // 화이트리스트
+    private final List<String> whitelist = List.of(
+            "/auth/",
+            "/docs/",
+            "/health",
+            "/h2-console/"
+    );
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return whitelist.stream().anyMatch(path::startsWith);
+    }
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
         String token = resolveToken(request);
+
+        if (token == null || token.isBlank()) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         TokenStatus status = jwtTokenProvider.validateToken(token);
 
-        if (token != null && status == TokenStatus.VALID) {
+        if (status == TokenStatus.VALID) {
             Long userId = jwtTokenProvider.getUserIdFromToken(token);
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));

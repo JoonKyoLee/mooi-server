@@ -16,11 +16,11 @@ public class RedisService {
     private int refreshTokenExpiration;
 
     private String userKey(String userId) {
-        return "refresh:user" + userId;
+        return "refresh:user:" + userId;
     }
 
     private String tokenKey(String token) {
-        return "refresh:token" + token;
+        return "refresh:token:" + token;
     }
 
     public void saveRefreshToken(String userId, String refreshToken) {

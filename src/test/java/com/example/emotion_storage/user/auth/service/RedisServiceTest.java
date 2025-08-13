@@ -36,8 +36,8 @@ public class RedisServiceTest {
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
-    private static String userKey(String userId) { return "refresh:user" + userId; }
-    private static String tokenKey(String token) { return "refresh:token" + token; }
+    private static String userKey(String userId) { return "refresh:user:" + userId; }
+    private static String tokenKey(String token) { return "refresh:token:" + token; }
 
     @Test
     void 리프레시_토큰_저장_시에_유저키와_토큰키에_모두_저장한다() {

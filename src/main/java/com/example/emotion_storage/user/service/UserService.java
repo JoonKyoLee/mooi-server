@@ -60,7 +60,7 @@ public class UserService {
                 .socialId(claims.subject())
                 .socialType(SocialType.GOOGLE)
                 .profileImageUrl(claims.profileImgUrl())
-                .nickName(request.nickname())
+                .nickname(request.nickname())
                 .birthday(request.birthday())
                 .expectations(request.expectations())
                 .isTermsAgreed(request.isTermsAgreed())

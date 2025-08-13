@@ -2,6 +2,7 @@ package com.example.emotion_storage.user.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ public class UserTest {
         String profileImgUrl = "https://image-url.com/image.jpg";
         String nickName = "모이";
         Gender gender = Gender.FEMALE;
-        LocalDateTime birthday = LocalDateTime.of(1990, 1, 1, 0, 0);
+        LocalDate birthday = LocalDate.of(1990, 1, 1);
         List<String> expectations = List.of("내 감정을 정리하고 싶어요", "내 감정 패턴을 알고 싶어요");
         boolean isTermsAgreed = true;
         boolean isPrivacyAgreed = true;
@@ -29,7 +30,7 @@ public class UserTest {
                 .socialId(socialId)
                 .email(email)
                 .profileImageUrl(profileImgUrl)
-                .nickName(nickName)
+                .nickname(nickName)
                 .gender(gender)
                 .birthday(birthday)
                 .expectations(expectations)
@@ -43,7 +44,7 @@ public class UserTest {
         assertThat(user.getSocialId()).isEqualTo(socialId);
         assertThat(user.getEmail()).isEqualTo(email);
         assertThat(user.getProfileImageUrl()).isEqualTo(profileImgUrl);
-        assertThat(user.getNickName()).isEqualTo(nickName);
+        assertThat(user.getNickname()).isEqualTo(nickName);
         assertThat(user.getGender()).isEqualTo(gender);
         assertThat(user.getBirthday()).isEqualTo(birthday);
         assertThat(user.getExpectations()).containsExactlyElementsOf(expectations);

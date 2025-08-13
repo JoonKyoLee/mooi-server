@@ -21,6 +21,7 @@ import com.example.emotion_storage.user.dto.request.GoogleSignUpRequest;
 import com.example.emotion_storage.user.dto.response.LoginResponse;
 import com.example.emotion_storage.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -67,7 +68,7 @@ public class UserServiceTest {
         return new GoogleSignUpRequest(
                 "모이",
                 Gender.MALE,
-                LocalDateTime.of(2000, 1, 1, 0, 0),
+                LocalDate.of(2000, 1, 1),
                 List.of("내 감정을 정리하고 싶어요", "내 감정 패턴을 알고 싶어요"),
                 true,
                 true,
@@ -80,7 +81,7 @@ public class UserServiceTest {
         return new GoogleSignUpRequest(
                 "모이",
                 Gender.MALE,
-                LocalDateTime.of(2000, 1, 1, 0, 0),
+                LocalDate.of(2000, 1, 1),
                 List.of("내 감정을 정리하고 싶어요", "내 감정 패턴을 알고 싶어요"),
                 true,
                 true,
@@ -104,7 +105,7 @@ public class UserServiceTest {
                 .socialId(claims.subject())
                 .socialType(socialType)
                 .profileImageUrl(claims.profileImgUrl())
-                .nickName(request.nickname())
+                .nickname(request.nickname())
                 .birthday(request.birthday())
                 .expectations(request.expectations())
                 .isTermsAgreed(request.isTermsAgreed())

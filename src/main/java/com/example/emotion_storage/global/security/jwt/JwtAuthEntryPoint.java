@@ -36,7 +36,7 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
         response.setStatus(errorCode.getHttpStatus().value());
         response.setHeader(
                 "WWW-Authenticate",
-                "Bearer error=\"invalid_token\", error_description=\"" + errorCode.getMessage() + "\"");
+                "Bearer error=\"invalid_token\", error_description=\"" + errorCode.name() + "\"");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Cache-Control", "no-store");

@@ -1,0 +1,114 @@
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_version:
+        description: '롤백할 버전 번호 (예: 122)'
+        required: true
+        type: string
+      environment:
+        description: '롤백할 환경을 선택하세요'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+      reason:
+        description: '롤백 사유 (선택사항)'
+        required: false
+        type: string
+        default: 'Rollback due to issues'
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Set rollback parameters
+        id: rollback
+        run: |
+          echo "target_version=${{ inputs.target_version }}" >> $GITHUB_OUTPUT
+          echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          echo "reason=${{ inputs.reason }}" >> $GITHUB_OUTPUT
+
+      - name: Verify target artifact exists
+        run: |
+          aws s3 ls s3://${{ vars.S3_BUCKET_NAME }}/mooi-server-${{ steps.rollback.outputs.target_version }}.zip
+          echo "✅ Target artifact verified: mooi-server-${{ steps.rollback.outputs.target_version }}.zip"
+
+      - name: Get target release info
+        id: target_release
+        run: |
+          aws s3 cp s3://${{ vars.S3_BUCKET_NAME }}/releases/release-${{ steps.rollback.outputs.target_version }}.json target-release-info.json
+          echo "commit=$(jq -r '.commit' target-release-info.json)" >> $GITHUB_OUTPUT
+          echo "commit_message=$(jq -r '.commit_message' target-release-info.json)" >> $GITHUB_OUTPUT
+          echo "build_status=$(jq -r '.build_status' target-release-info.json)" >> $GITHUB_OUTPUT
+
+      - name: Validate target build status
+        run: |
+          if [ "${{ steps.target_release.outputs.build_status }}" != "success" ]; then
+            echo "❌ Target build status is not success: ${{ steps.target_release.outputs.build_status }}"
+            exit 1
+          fi
+          echo "✅ Target build status validated: ${{ steps.target_release.outputs.build_status }}"
+
+      - name: Rollback to version ${{ steps.rollback.outputs.target_version }}
+        id: rollback_deployment
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
+          --application-name ${{ vars.APPLICATION_NAME }} \
+          --deployment-group-name ${{ vars.DEPLOY_GROUP_NAME }} \
+          --file-exists-behavior OVERWRITE \
+          --s3-location bucket=${{ vars.S3_BUCKET_NAME }},bundleType=zip,key=mooi-server-${{ steps.rollback.outputs.target_version }}.zip \
+          --region ap-northeast-2 \
+          --description "ROLLBACK: ${{ steps.rollback.outputs.reason }} - Version: ${{ steps.rollback.outputs.target_version }}, Environment: ${{ steps.rollback.outputs.environment }}, Run: ${{ github.run_number }}" \
+          --query 'deploymentId' --output text)
+          
+          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+          echo "Rollback Deployment ID: $DEPLOYMENT_ID"
+
+      - name: Wait for rollback completion
+        run: |
+          DEPLOYMENT_ID="${{ steps.rollback_deployment.outputs.deployment_id }}"
+          echo "Waiting for rollback deployment $DEPLOYMENT_ID to complete..."
+          
+          while true; do
+            STATUS=$(aws deploy get-deployment --deployment-id $DEPLOYMENT_ID --query 'deploymentInfo.status' --output text)
+            echo "Rollback deployment status: $STATUS"
+            
+            if [ "$STATUS" = "Succeeded" ]; then
+              echo "✅ Rollback completed successfully!"
+              break
+            elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Stopped" ]; then
+              echo "❌ Rollback failed with status: $STATUS"
+              exit 1
+            fi
+            
+            sleep 30
+          done
+
+      - name: Notify rollback status
+        run: |
+          echo "✅ Rollback completed successfully!"
+          echo "Target Version: ${{ steps.rollback.outputs.target_version }}"
+          echo "Environment: ${{ steps.rollback.outputs.environment }}"
+          echo "Reason: ${{ steps.rollback.outputs.reason }}"
+          echo "Deployment ID: ${{ steps.rollback_deployment.outputs.deployment_id }}"
+          echo "Target Commit: ${{ steps.target_release.outputs.commit }}"
+          echo "Target Commit Message: ${{ steps.target_release.outputs.commit_message }}"
+          echo "Rollback Run Number: ${{ github.run_number }}"

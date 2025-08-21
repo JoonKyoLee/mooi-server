@@ -48,18 +48,59 @@ jobs:
           aws s3 ls s3://${{ vars.S3_BUCKET_NAME }}/mooi-server-${{ steps.version.outputs.version }}.zip
           echo "✅ Artifact verified: mooi-server-${{ steps.version.outputs.version }}.zip"
 
+      - name: Get release info
+        id: release_info
+        run: |
+          aws s3 cp s3://${{ vars.S3_BUCKET_NAME }}/releases/release-${{ steps.version.outputs.version }}.json release-info.json
+          echo "commit=$(jq -r '.commit' release-info.json)" >> $GITHUB_OUTPUT
+          echo "commit_message=$(jq -r '.commit_message' release-info.json)" >> $GITHUB_OUTPUT
+          echo "build_status=$(jq -r '.build_status' release-info.json)" >> $GITHUB_OUTPUT
+
+      - name: Validate build status
+        run: |
+          if [ "${{ steps.release_info.outputs.build_status }}" != "success" ]; then
+            echo "❌ Build status is not success: ${{ steps.release_info.outputs.build_status }}"
+            exit 1
+          fi
+          echo "✅ Build status validated: ${{ steps.release_info.outputs.build_status }}"
+
       - name: Deploy to ${{ steps.version.outputs.environment }}
+        id: deployment
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          aws deploy create-deployment \
+          DEPLOYMENT_ID=$(aws deploy create-deployment \
           --application-name ${{ vars.APPLICATION_NAME }} \
           --deployment-group-name ${{ vars.DEPLOY_GROUP_NAME }} \
           --file-exists-behavior OVERWRITE \
           --s3-location bucket=${{ vars.S3_BUCKET_NAME }},bundleType=zip,key=mooi-server-${{ steps.version.outputs.version }}.zip \
           --region ap-northeast-2 \
-          --description "${{ steps.version.outputs.description }} - Version: ${{ steps.version.outputs.version }}, Environment: ${{ steps.version.outputs.environment }}, Run: ${{ github.run_number }}"
+          --description "${{ steps.version.outputs.description }} - Version: ${{ steps.version.outputs.version }}, Environment: ${{ steps.version.outputs.environment }}, Run: ${{ github.run_number }}" \
+          --query 'deploymentId' --output text)
+          
+          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+          echo "Deployment ID: $DEPLOYMENT_ID"
+
+      - name: Wait for deployment completion
+        run: |
+          DEPLOYMENT_ID="${{ steps.deployment.outputs.deployment_id }}"
+          echo "Waiting for deployment $DEPLOYMENT_ID to complete..."
+          
+          while true; do
+            STATUS=$(aws deploy get-deployment --deployment-id $DEPLOYMENT_ID --query 'deploymentInfo.status' --output text)
+            echo "Deployment status: $STATUS"
+            
+            if [ "$STATUS" = "Succeeded" ]; then
+              echo "✅ Deployment completed successfully!"
+              break
+            elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Stopped" ]; then
+              echo "❌ Deployment failed with status: $STATUS"
+              exit 1
+            fi
+            
+            sleep 30
+          done
 
       - name: Notify deployment status
         run: |
@@ -67,4 +108,7 @@ jobs:
           echo "Version: ${{ steps.version.outputs.version }}"
           echo "Environment: ${{ steps.version.outputs.environment }}"
           echo "Description: ${{ steps.version.outputs.description }}"
+          echo "Deployment ID: ${{ steps.deployment.outputs.deployment_id }}"
+          echo "Commit: ${{ steps.release_info.outputs.commit }}"
+          echo "Commit Message: ${{ steps.release_info.outputs.commit_message }}"
           echo "CD Run Number: ${{ github.run_number }}"

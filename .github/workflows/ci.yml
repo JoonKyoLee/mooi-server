@@ -24,6 +24,9 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build -x test
 
+      - name: Run Tests
+        run: ./gradlew test
+
       - name: Make Directory
         run: mkdir -p deploy
 
@@ -61,7 +64,8 @@ jobs:
             "commit_message": "${{ github.event.head_commit.message }}",
             "artifact_key": "mooi-server-${{ github.run_number }}.zip",
             "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "workflow_run_id": "${{ github.run_id }}"
+            "workflow_run_id": "${{ github.run_id }}",
+            "build_status": "success"
           }
           EOF
 
@@ -77,3 +81,4 @@ jobs:
           echo "Build Number: ${{ github.run_number }}"
           echo "Artifact: mooi-server-${{ github.run_number }}.zip"
           echo "Release Info: s3://${{ vars.S3_BUCKET_NAME }}/releases/release-${{ github.run_number }}.json"
+          echo "Ready for manual deployment!"

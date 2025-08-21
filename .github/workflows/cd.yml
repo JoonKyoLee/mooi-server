@@ -1,0 +1,70 @@
+name: CD - Deploy from Artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '배포할 버전 번호 (예: 123)'
+        required: true
+        type: string
+      environment:
+        description: '배포할 환경을 선택하세요'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+      description:
+        description: '배포 설명 (선택사항)'
+        required: false
+        type: string
+        default: 'Manual deployment'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Set deployment parameters
+        id: version
+        run: |
+          echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          echo "description=${{ inputs.description }}" >> $GITHUB_OUTPUT
+
+      - name: Verify artifact exists
+        run: |
+          aws s3 ls s3://${{ vars.S3_BUCKET_NAME }}/mooi-server-${{ steps.version.outputs.version }}.zip
+          echo "✅ Artifact verified: mooi-server-${{ steps.version.outputs.version }}.zip"
+
+      - name: Deploy to ${{ steps.version.outputs.environment }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          aws deploy create-deployment \
+          --application-name ${{ vars.APPLICATION_NAME }} \
+          --deployment-group-name ${{ vars.DEPLOY_GROUP_NAME }} \
+          --file-exists-behavior OVERWRITE \
+          --s3-location bucket=${{ vars.S3_BUCKET_NAME }},bundleType=zip,key=mooi-server-${{ steps.version.outputs.version }}.zip \
+          --region ap-northeast-2 \
+          --description "${{ steps.version.outputs.description }} - Version: ${{ steps.version.outputs.version }}, Environment: ${{ steps.version.outputs.environment }}, Run: ${{ github.run_number }}"
+
+      - name: Notify deployment status
+        run: |
+          echo "✅ CD deployment completed successfully!"
+          echo "Version: ${{ steps.version.outputs.version }}"
+          echo "Environment: ${{ steps.version.outputs.environment }}"
+          echo "Description: ${{ steps.version.outputs.description }}"
+          echo "CD Run Number: ${{ github.run_number }}"

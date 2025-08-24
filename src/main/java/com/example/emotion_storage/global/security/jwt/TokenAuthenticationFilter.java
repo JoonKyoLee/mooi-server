@@ -29,16 +29,19 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     // 화이트리스트
     private final List<String> whitelist = List.of(
-            "/auth/",
-            "/docs/",
+            "/auth",
+            "/docs",
             "/health",
-            "/h2-console/"
+            "/h2-console",
+            "/swagger-ui",
+            "/v3/api-docs"
     );
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return whitelist.stream().anyMatch(path::startsWith);
+        return whitelist.stream().anyMatch(path::equals) ||
+                whitelist.stream().anyMatch(path::startsWith);
     }
 
     @Override

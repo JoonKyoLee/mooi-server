@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -68,5 +69,8 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean isPrivacyAgreed;
 
+    @Column(nullable = false)
     private boolean isMarketingAgreed;
+
+    private LocalDateTime deletedAt;
 }

@@ -14,6 +14,7 @@ public enum ErrorCode {
     ALREADY_REGISTERED_WITH_GOOGLE(HttpStatus.BAD_REQUEST, "해당 이메일은 구글로 가입된 계정입니다."),
     ALREADY_REGISTERED_WITH_KAKAO(HttpStatus.BAD_REQUEST, "해당 이메일은 카카오로 가입된 계정입니다."),
     INVALID_ID_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 ID TOKEN 입니다."),
+    INVALID_KAKAO_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 카카오 Access Token 입니다."),
     ACCESS_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "만료된 Access Token 입니다."),
     ACCESS_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "유효하지 않은 Access Token 입니다."),
     REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "만료된 Refresh Token 입니다."),

@@ -3,7 +3,10 @@ package com.example.emotion_storage.user.service;
 import com.example.emotion_storage.user.auth.oauth.google.GoogleLoginClaims;
 import com.example.emotion_storage.user.auth.oauth.google.GoogleSignUpClaims;
 import com.example.emotion_storage.user.auth.oauth.google.GoogleTokenVerifier;
+import com.example.emotion_storage.user.auth.oauth.kakao.KakaoUserInfoClient;
+import com.example.emotion_storage.user.auth.oauth.kakao.KakaoUserInfo;
 import com.example.emotion_storage.user.auth.service.TokenService;
+import com.example.emotion_storage.user.dto.request.KakaoLoginRequest;
 import com.example.emotion_storage.user.repository.UserRepository;
 import com.example.emotion_storage.user.domain.SocialType;
 import com.example.emotion_storage.user.domain.User;
@@ -16,6 +19,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,8 +27,10 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final GoogleTokenVerifier googleTokenVerifier;
+    private final KakaoUserInfoClient kakaoUserInfoClient;
     private final TokenService tokenService;
 
+    @Transactional(readOnly = true)
     public LoginResponse googleLogin(GoogleLoginRequest request, HttpServletResponse response) {
         GoogleLoginClaims claims = googleTokenVerifier.verifyLoginToken(request.idToken());
 
@@ -41,6 +47,7 @@ public class UserService {
         return new LoginResponse(accessToken);
     }
 
+    @Transactional
     public void googleSignUp(GoogleSignUpRequest request) {
         GoogleSignUpClaims claims = googleTokenVerifier.verifySignUpToken(request.idToken());
 
@@ -70,5 +77,26 @@ public class UserService {
                 .build();
 
         userRepository.save(user);
+    }
+
+    @Transactional(readOnly = true)
+    public LoginResponse KakaoLogin(KakaoLoginRequest request, HttpServletResponse response) {
+        KakaoUserInfo userInfo = kakaoUserInfoClient.getKakaoUserInfo(request.accessToken());
+
+        User user = userRepository.findBySocialId(userInfo.getKakaoId())
+                .orElseThrow(() -> new BaseException(ErrorCode.NEED_SIGN_UP));
+
+// 카카오 소셜 로그인의 경우 이메일은 비즈 계정에서만 가능하기 때문에 추후에 비즈 계정으로 변경 시 이메일로 구현 가능
+//        User user = userRepository.findByEmail(userInfo.kakaoAccount().email())
+//                .orElseThrow(() -> new BaseException(ErrorCode.NEED_SIGN_UP));
+//
+//        if (user.getSocialType().equals(SocialType.GOOGLE)) {
+//            throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE);
+//        }
+
+        String accessToken = tokenService.issueAccessToken(user.getId());
+        tokenService.issueRefreshToken(user.getId(), response);
+
+        return new LoginResponse(accessToken);
     }
 }

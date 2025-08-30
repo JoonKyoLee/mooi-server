@@ -7,6 +7,7 @@ import com.example.emotion_storage.user.auth.oauth.kakao.KakaoUserInfoClient;
 import com.example.emotion_storage.user.auth.oauth.kakao.KakaoUserInfo;
 import com.example.emotion_storage.user.auth.service.TokenService;
 import com.example.emotion_storage.user.dto.request.KakaoLoginRequest;
+import com.example.emotion_storage.user.dto.request.KakaoSignUpRequest;
 import com.example.emotion_storage.user.repository.UserRepository;
 import com.example.emotion_storage.user.domain.SocialType;
 import com.example.emotion_storage.user.domain.User;
@@ -80,7 +81,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public LoginResponse KakaoLogin(KakaoLoginRequest request, HttpServletResponse response) {
+    public LoginResponse kakaoLogin(KakaoLoginRequest request, HttpServletResponse response) {
         KakaoUserInfo userInfo = kakaoUserInfoClient.getKakaoUserInfo(request.accessToken());
 
         User user = userRepository.findBySocialId(userInfo.getKakaoId())
@@ -98,5 +99,42 @@ public class UserService {
         tokenService.issueRefreshToken(user.getId(), response);
 
         return new LoginResponse(accessToken);
+    }
+
+    @Transactional
+    public void kakaoSignUp(KakaoSignUpRequest request) {
+        KakaoUserInfo userInfo = kakaoUserInfoClient.getKakaoUserInfo(request.accessToken());
+
+        Optional<User> existingUser = userRepository.findBySocialId(userInfo.getKakaoId());
+        if (existingUser.isPresent()) {
+            throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO);
+        }
+
+// 카카오 소셜 로그인의 경우 이메일은 비즈 계정에서만 가능하기 때문에 추후에 비즈 계정으로 변경 시 이메일로 구현 가능
+//        Optional<User> existingUser = userRepository.findByEmail(userInfo.kakaoAccount().email());
+//        if (existingUser.isPresent()) {
+//            User user = existingUser.get();
+//            if (user.getSocialType().equals(SocialType.GOOGLE)) {
+//                throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE);
+//            }
+//            if (user.getSocialType().equals(SocialType.KAKAO)) {
+//                throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO);
+//            }
+//        }
+
+        User user = User.builder()
+                //.email(userInfo.kakaoAccount().email())
+                .socialId(userInfo.getKakaoId())
+                .socialType(SocialType.KAKAO)
+                .profileImageUrl(userInfo.kakaoAccount().profile().profileImgUrl())
+                .nickname(request.nickname())
+                .birthday(request.birthday())
+                .expectations(request.expectations())
+                .isTermsAgreed(request.isTermsAgreed())
+                .isPrivacyAgreed(request.isPrivacyAgreed())
+                .isMarketingAgreed(request.isMarketingAgreed())
+                .build();
+
+        userRepository.save(user);
     }
 }

@@ -54,6 +54,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
 
         if (token == null || token.isBlank()) {
+            SecurityContextHolder.clearContext();
             filterChain.doFilter(request, response);
             return;
         }
@@ -73,6 +74,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(principal, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         } else {
+            SecurityContextHolder.clearContext();
             ErrorCode errorCode = (status == TokenStatus.EXPIRED)
                     ? ErrorCode.ACCESS_TOKEN_EXPIRED
                     : ErrorCode.ACCESS_TOKEN_INVALID;

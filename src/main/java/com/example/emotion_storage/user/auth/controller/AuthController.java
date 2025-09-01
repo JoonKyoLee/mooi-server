@@ -3,6 +3,7 @@ package com.example.emotion_storage.user.auth.controller;
 import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.user.auth.dto.response.AccessTokenResponse;
+import com.example.emotion_storage.user.auth.dto.response.SessionResponse;
 import com.example.emotion_storage.user.auth.service.TokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,5 +36,15 @@ public class AuthController {
         String accessToken = tokenService.reissueAccessToken(httpServletRequest, httpServletResponse);
         AccessTokenResponse response = AccessTokenResponse.from(accessToken);
         return ApiResponse.success(HttpStatus.OK.value(), SuccessMessage.ACCESS_TOKEN_REISSUE_SUCCESS.getMessage(), response);
+    }
+
+    @Operation(summary = "세션 유지 확인", description = "액세스 토큰으로 로그인 세션 정보를 확인합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "세션 정보 확인 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "액세스 토큰 만료")
+    })
+    @PostMapping("/session")
+    public ApiResponse<SessionResponse> checkSession() {
+        return ApiResponse.success(SuccessMessage.SESSION_CHECK_SUCCESS.getMessage(), SessionResponse.ok());
     }
 }

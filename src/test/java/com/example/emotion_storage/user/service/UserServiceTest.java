@@ -12,12 +12,17 @@ import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.user.auth.oauth.google.GoogleLoginClaims;
 import com.example.emotion_storage.user.auth.oauth.google.GoogleSignUpClaims;
 import com.example.emotion_storage.user.auth.oauth.google.GoogleTokenVerifier;
+import com.example.emotion_storage.user.auth.oauth.kakao.KakaoUserInfo;
+import com.example.emotion_storage.user.auth.oauth.kakao.KakaoUserInfo.KakaoAccount;
+import com.example.emotion_storage.user.auth.oauth.kakao.KakaoUserInfo.KakaoProfile;
+import com.example.emotion_storage.user.auth.oauth.kakao.KakaoUserInfoClient;
 import com.example.emotion_storage.user.auth.service.TokenService;
 import com.example.emotion_storage.user.domain.Gender;
 import com.example.emotion_storage.user.domain.SocialType;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.dto.request.GoogleLoginRequest;
 import com.example.emotion_storage.user.dto.request.GoogleSignUpRequest;
+import com.example.emotion_storage.user.dto.request.KakaoLoginRequest;
 import com.example.emotion_storage.user.dto.response.LoginResponse;
 import com.example.emotion_storage.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,6 +42,7 @@ public class UserServiceTest {
     @InjectMocks private UserService userService;
     @Mock private UserRepository userRepository;
     @Mock private GoogleTokenVerifier googleTokenVerifier;
+    @Mock private KakaoUserInfoClient kakaoUserInfoClient;
     @Mock private TokenService tokenService;
     @Mock private HttpServletResponse httpServletResponse;
 
@@ -56,7 +62,7 @@ public class UserServiceTest {
         return new GoogleLoginClaims("error@email.com");
     }
 
-    private User createGoogleLoginUser(SocialType socialType) {
+    private User createLoginUser(SocialType socialType) {
         return User.builder()
                 .id(1L)
                 .email("test@email.com")
@@ -114,13 +120,39 @@ public class UserServiceTest {
                 .build();
     }
 
+    private KakaoLoginRequest createKakaoLoginRequest() {
+        return new KakaoLoginRequest("access-token");
+    }
+
+    private KakaoLoginRequest createErrorKakaoLoginRequest() {
+        return new KakaoLoginRequest("error-access-token");
+    }
+
+    private KakaoUserInfo createKakaoUserInfo() {
+        return new KakaoUserInfo(
+                1L, "connected-at",
+                new KakaoAccount(
+                        new KakaoProfile("profile-img-url"), "test@email.com"
+                )
+        );
+    }
+
+    private KakaoUserInfo createErrorKakaoUserInfo() {
+        return new KakaoUserInfo(
+                60L, "connected-at",
+                new KakaoAccount(
+                        new KakaoProfile("profile-img-url"), "test@email.com"
+                )
+        );
+    }
+
     @Test
     void 구글_로그인에_성공하면_토큰을_반환한다() {
         // given
         GoogleLoginRequest request = createGoogleLoginRequest();
         GoogleLoginClaims claims = createGoogleLoginClaims();
 
-        User user = createGoogleLoginUser(SocialType.GOOGLE);
+        User user = createLoginUser(SocialType.GOOGLE);
 
         when(googleTokenVerifier.verifyLoginToken("id-token")).thenReturn(claims);
         when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.of(user));
@@ -154,7 +186,7 @@ public class UserServiceTest {
         GoogleLoginRequest request = createGoogleLoginRequest();
         GoogleLoginClaims claims = createGoogleLoginClaims();
 
-        User user = createGoogleLoginUser(SocialType.KAKAO);
+        User user = createLoginUser(SocialType.KAKAO);
 
         when(googleTokenVerifier.verifyLoginToken("id-token")).thenReturn(claims);
         when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.of(user));
@@ -239,5 +271,52 @@ public class UserServiceTest {
         assertThatThrownBy(() -> userService.googleSignUp(request))
                 .isInstanceOf(BaseException.class)
                 .hasMessageContaining(ErrorCode.INVALID_ID_TOKEN.getMessage());
+    }
+
+    @Test
+    void 카카오_로그인에_성공하면_토큰을_반환한다() {
+        // given
+        KakaoLoginRequest request = createKakaoLoginRequest();
+        KakaoUserInfo kakaoUserInfo = createKakaoUserInfo();
+
+        User user = createLoginUser(SocialType.KAKAO);
+
+        when(kakaoUserInfoClient.getKakaoUserInfo("access-token")).thenReturn(kakaoUserInfo);
+        when(userRepository.findBySocialId(Long.toString(1L))).thenReturn(Optional.of(user));
+        when(tokenService.issueAccessToken(user.getId())).thenReturn("kakao-access-token");
+
+        // when
+        LoginResponse response = userService.kakaoLogin(request, httpServletResponse);
+
+        // then
+        assertThat(response.accessToken()).isEqualTo("kakao-access-token");
+    }
+
+    @Test
+    void 회원가입하지_않은_카카오_계정으로_로그인을_시도할_때_예외가_발생한다() {
+        // given
+        KakaoLoginRequest request = createKakaoLoginRequest();
+        KakaoUserInfo kakaoUserInfo = createErrorKakaoUserInfo();
+
+        when(kakaoUserInfoClient.getKakaoUserInfo("access-token")).thenReturn(kakaoUserInfo);
+        when(userRepository.findBySocialId(Long.toString(60L))).thenReturn(Optional.empty());
+
+        // when, then
+        assertThatThrownBy(() -> userService.kakaoLogin(request, httpServletResponse))
+                .isInstanceOf(BaseException.class)
+                .hasMessageContaining(ErrorCode.NEED_SIGN_UP.getMessage());
+    }
+
+    @Test
+    void 카카오_로그인을_시도할_때_카카오_액세스_토큰이_유효하지_얂은_경우_예외가_발생한다() {
+        // given
+        KakaoLoginRequest request = createErrorKakaoLoginRequest();
+
+        when(kakaoUserInfoClient.getKakaoUserInfo("error-access-token")).thenThrow(new BaseException(ErrorCode.INVALID_KAKAO_ACCESS_TOKEN));
+
+        // when, then
+        assertThatThrownBy(() -> userService.kakaoLogin(request, httpServletResponse))
+                .isInstanceOf(BaseException.class)
+                .hasMessageContaining(ErrorCode.INVALID_KAKAO_ACCESS_TOKEN.getMessage());
     }
 }

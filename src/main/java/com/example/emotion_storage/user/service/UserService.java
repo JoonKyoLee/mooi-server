@@ -128,6 +128,7 @@ public class UserService {
                 .socialType(SocialType.KAKAO)
                 .profileImageUrl(userInfo.kakaoAccount().profile().profileImgUrl())
                 .nickname(request.nickname())
+                .gender(request.gender())
                 .birthday(request.birthday())
                 .expectations(request.expectations())
                 .isTermsAgreed(request.isTermsAgreed())

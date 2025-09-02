@@ -4,7 +4,6 @@ import com.example.emotion_storage.global.security.jwt.JwtAuthEntryPoint;
 import com.example.emotion_storage.global.security.jwt.JwtTokenProvider;
 import com.example.emotion_storage.global.security.jwt.TokenAuthenticationFilter;
 import com.example.emotion_storage.user.repository.UserRepository;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +37,8 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**",
+                                "/api/v1/users/login/**",
+                                "/api/v1/users/signup/**",
                                 "/docs/**",
                                 "/health",
                                 "/h2-console/**",

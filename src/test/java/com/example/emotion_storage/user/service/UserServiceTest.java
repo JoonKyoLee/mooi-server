@@ -23,6 +23,7 @@ import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.dto.request.GoogleLoginRequest;
 import com.example.emotion_storage.user.dto.request.GoogleSignUpRequest;
 import com.example.emotion_storage.user.dto.request.KakaoLoginRequest;
+import com.example.emotion_storage.user.dto.request.KakaoSignUpRequest;
 import com.example.emotion_storage.user.dto.response.LoginResponse;
 import com.example.emotion_storage.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
@@ -144,6 +145,47 @@ public class UserServiceTest {
                         new KakaoProfile("profile-img-url"), "test@email.com"
                 )
         );
+    }
+
+    private KakaoSignUpRequest createKakaoSignUpRequest() {
+        return new KakaoSignUpRequest(
+                "모이",
+                Gender.FEMALE,
+                LocalDate.of(2003,1,1),
+                List.of("내 감정을 정리하고 싶어요", "내 감정 패턴을 알고 싶어요"),
+                true,
+                true,
+                false,
+                "kakao-access-token"
+        );
+    }
+
+    private KakaoSignUpRequest createErrorKakaoSignUpRequest() {
+        return new KakaoSignUpRequest(
+                "모이",
+                Gender.FEMALE,
+                LocalDate.of(2003,1,1),
+                List.of("내 감정을 정리하고 싶어요", "내 감정 패턴을 알고 싶어요"),
+                true,
+                true,
+                false,
+                "error-kakao-access-token"
+        );
+    }
+
+    private User createKakaoSignUpUser(KakaoSignUpRequest request, KakaoUserInfo userInfo, SocialType socialType) {
+        return User.builder()
+                //.email(userInfo.kakaoAccount().email())
+                .socialId(userInfo.getKakaoId())
+                .socialType(socialType)
+                .profileImageUrl(userInfo.kakaoAccount().profile().profileImgUrl())
+                .nickname(request.nickname())
+                .birthday(request.birthday())
+                .expectations(request.expectations())
+                .isTermsAgreed(request.isTermsAgreed())
+                .isPrivacyAgreed(request.isPrivacyAgreed())
+                .isMarketingAgreed(request.isMarketingAgreed())
+                .build();
     }
 
     @Test
@@ -316,6 +358,52 @@ public class UserServiceTest {
 
         // when, then
         assertThatThrownBy(() -> userService.kakaoLogin(request, httpServletResponse))
+                .isInstanceOf(BaseException.class)
+                .hasMessageContaining(ErrorCode.INVALID_KAKAO_ACCESS_TOKEN.getMessage());
+    }
+
+    @Test
+    void 카카오_회원가입에_성공하면_회원이_저장된다() {
+        // given
+        KakaoSignUpRequest request = createKakaoSignUpRequest();
+        KakaoUserInfo userInfo = createKakaoUserInfo();
+
+        when(kakaoUserInfoClient.getKakaoUserInfo(request.accessToken())).thenReturn(userInfo);
+        when(userRepository.findBySocialId(Long.toString(1L))).thenReturn(Optional.empty());
+
+        // when
+        userService.kakaoSignUp(request);
+
+        // then
+        verify(userRepository, times(1)).save(any(User.class));
+    }
+
+    @Test
+    void 카카오_회원가입한_계정으로_카카오_회원가입을_시도할_때_예외가_발생한다() {
+        // given
+        KakaoSignUpRequest request = createKakaoSignUpRequest();
+        KakaoUserInfo userInfo = createKakaoUserInfo();
+
+        User user = createKakaoSignUpUser(request, userInfo, SocialType.KAKAO);
+
+        when(kakaoUserInfoClient.getKakaoUserInfo(request.accessToken())).thenReturn(userInfo);
+        when(userRepository.findBySocialId(Long.toString(1L))).thenReturn(Optional.of(user));
+
+        // when, then
+        assertThatThrownBy(() -> userService.kakaoSignUp(request))
+                .isInstanceOf(BaseException.class)
+                .hasMessageContaining(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO.getMessage());
+    }
+
+    @Test
+    void 카카오_회원가입을_시도할_때_카카오_액세스_토큰이_유효하지_않다면_예외가_발생한다() {
+        // given
+        KakaoSignUpRequest request = createErrorKakaoSignUpRequest();
+
+        when(kakaoUserInfoClient.getKakaoUserInfo(request.accessToken())).thenThrow(new BaseException(ErrorCode.INVALID_KAKAO_ACCESS_TOKEN));
+
+        // when, then
+        assertThatThrownBy(() -> userService.kakaoSignUp(request))
                 .isInstanceOf(BaseException.class)
                 .hasMessageContaining(ErrorCode.INVALID_KAKAO_ACCESS_TOKEN.getMessage());
     }

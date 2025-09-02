@@ -56,13 +56,18 @@ nohup java -jar \
     -Xmx1024m \
     $JAR_NAME >> $REPOSITORY/nohup.out 2>&1 &
 
-# 새로운 PID 확인
-sleep 3
-NEW_PID=$(sudo lsof -t -i:$PORT 2>/dev/null || echo "")
+# 새로운 PID 확인 (최대 20초 대기)
+for i in {1..10}; do
+    NEW_PID=$(sudo lsof -t -i:$PORT 2>/dev/null || echo "")
+    if [ -n "$NEW_PID" ]; then
+        log "✅ 배포 성공! 새로운 PID: $NEW_PID"
+        break
+    fi
+    log "애플리케이션이 아직 시작되지 않았습니다... ($i/10)"
+    sleep 2
+done
 
-if [ -n "$NEW_PID" ]; then
-    log "✅ 배포 성공! 새로운 PID: $NEW_PID"
-else
+if [ -z "$NEW_PID" ]; then
     log "❌ 배포 실패! 애플리케이션이 시작되지 않았습니다."
     log "로그 확인: tail -f $REPOSITORY/nohup.out"
     exit 1

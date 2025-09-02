@@ -56,6 +56,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.security:spring-security-oauth2-jose'
+	testImplementation "org.springframework.security:spring-security-test"
 
 	// Google
 	implementation 'com.google.api-client:google-api-client:1.34.0'

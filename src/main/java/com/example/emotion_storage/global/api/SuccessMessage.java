@@ -14,6 +14,7 @@ public enum SuccessMessage {
     // Chat
     CHAT_ROOM_CREATE_SUCCESS("대화 시작 성공"),
     CHAT_ROOM_CLOSE_SUCCESS("대화 종료 성공"),
+    CHAT_SUCCESS("채팅 메시지 전송 성공"),
 
     // Home
     GET_TICKETS_SUCCESS("티켓 개수 조회 성공"),

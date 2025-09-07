@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 
 @Slf4j
 @Service
@@ -49,7 +50,26 @@ public class ChatService {
 
         chatRoomRepository.save(chatRoom);
 
-        log.info("채팅방 {}가 생성되었습니다.", chatRoom.getId());
+        log.info("사용자 {}가 감정대화를 진행할 수 있는 채팅방 id {} 생성이 완료되었습니다.", user.getId(), chatRoom.getId());
+
+        ChatRoomCreateResponse response = new ChatRoomCreateResponse(chatRoom.getId().toString());
+
+        return ApiResponse.success(SuccessMessage.CHAT_ROOM_CREATE_SUCCESS.getMessage(), response);
+    }
+
+    @Transactional
+    public ApiResponse<ChatRoomCreateResponse> createChatRoom(CustomUserPrincipal userPrincipal) {
+        User user = userRepository.findById(userPrincipal.getId())
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        ChatRoom chatRoom = ChatRoom.builder()
+                .user(user)
+                .isEnded(false)
+                .build();
+
+        chatRoomRepository.save(chatRoom);
+
+        log.info("사용자 {}가 감정대화를 진행할 수 있는 채팅방 id {} 생성이 완료되었습니다.", user.getId(), chatRoom.getId());
 
         ChatRoomCreateResponse response = new ChatRoomCreateResponse(chatRoom.getId().toString());
 

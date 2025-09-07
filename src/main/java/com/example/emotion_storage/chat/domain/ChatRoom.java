@@ -37,4 +37,8 @@ public class ChatRoom extends BaseTimeEntity {
 
     @Column(name = "first_chat_time")
     private LocalDateTime firstChatTime;
+
+    public void setFirstChatTime(LocalDateTime firstChatTime) {
+        this.firstChatTime = firstChatTime;
+    }
 }

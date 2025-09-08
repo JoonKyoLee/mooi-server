@@ -1,7 +1,11 @@
 package com.example.emotion_storage.chat.service;
 
+import com.example.emotion_storage.chat.domain.Chat;
 import com.example.emotion_storage.chat.domain.ChatRoom;
+import com.example.emotion_storage.chat.domain.SenderType;
+import com.example.emotion_storage.chat.dto.UserMessageDto;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCreateResponse;
+import com.example.emotion_storage.chat.repository.ChatRepository;
 import com.example.emotion_storage.chat.repository.ChatRoomRepository;
 import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
@@ -10,8 +14,11 @@ import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -21,6 +28,8 @@ public class ChatService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
+    private final ChatRepository chatRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public ApiResponse<ChatRoomCreateResponse> createChatRoom(CustomUserPrincipal userPrincipal) {
         User user = userRepository.findById(userPrincipal.getId())
@@ -38,5 +47,31 @@ public class ChatService {
         ChatRoomCreateResponse response = new ChatRoomCreateResponse(chatRoom.getId().toString());
 
         return ApiResponse.success(SuccessMessage.CHAT_ROOM_CREATE_SUCCESS.getMessage(), response);
+    }
+
+    public void saveUserMessage(UserMessageDto userMessage) {
+        ChatRoom chatRoom = chatRoomRepository.findById(Long.parseLong(userMessage.roomId()))
+                .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        if (chatRoom.getFirstChatTime() == null) {
+            log.info("채팅방 {}의 첫 채팅시각을 기록합니다.", chatRoom.getId());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"); // 프론트 포맷에 맞춰 변경 필요
+            LocalDateTime firstChatTime = LocalDateTime.parse(userMessage.timestamp(), formatter);
+            chatRoom.setFirstChatTime(firstChatTime);
+        }
+
+        log.info("채팅방 {}에 전송된 채팅을 저장합니다.", userMessage.roomId());
+        Chat chat = Chat.builder()
+                .chatRoom(chatRoom)
+                .message(userMessage.content())
+                .sender(SenderType.USER)
+                .build();
+
+        chatRepository.save(chat);
+    }
+
+    public void sendToUser(String roomId, String message) { // 추루에 AI 메시지 DTO 형식으로 변경
+        messagingTemplate.convertAndSend("/sub/chatroom/" + roomId, message);
+        // messagingTemplate.convertAndSend("sub/chatroom/" + roomId, AiMessageDto);
     }
 }

@@ -112,4 +112,9 @@ public class ChatService {
 
         return ApiResponse.success(SuccessMessage.CHAT_ROOM_CLOSE_SUCCESS.getMessage(), response);
     }
+
+    public void sendToUser(String roomId, String message) { // 추루에 AI 메시지 DTO 형식으로 변경
+        messagingTemplate.convertAndSend("/sub/chatroom/" + roomId, message);
+        // messagingTemplate.convertAndSend("sub/chatroom/" + roomId, AiMessageDto);
+    }
 }

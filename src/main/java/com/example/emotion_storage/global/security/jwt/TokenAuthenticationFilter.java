@@ -29,7 +29,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     // 화이트리스트
     private final List<String> whitelist = List.of(
-            "/auth",
+            "/auth/reissue",
             "/api/v1/users/signup",
             "/api/v1/users/login",
             "/docs",

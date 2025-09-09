@@ -69,4 +69,14 @@ public class HomeController {
         ApiResponse<ChatRoomCreateResponse> response = chatService.createChatRoom(userPrincipal);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @DeleteMapping("/emotion-conversation/{roomId}")
+    @Operation(summary = "감정 대화 종료", description = "감정 대화 채팅방을 종료합니다.")
+    public ResponseEntity<ApiResponse<ChatRoomCloseResponse>> closeChatRoom(
+            @PathVariable String roomId,
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal) {
+        log.info("사용자 {}의 감정 대화를 종료하고 채팅방 {}를 종료 상태로 업데이트 합니다.", userPrincipal.getId(), roomId);
+        ApiResponse<ChatRoomCloseResponse> response = chatService.closeChatRoom(roomId, userPrincipal);
+        return ResponseEntity.ok(response);
+    }
 }

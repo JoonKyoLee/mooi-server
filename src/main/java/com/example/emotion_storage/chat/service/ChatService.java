@@ -117,4 +117,21 @@ public class ChatService {
         messagingTemplate.convertAndSend("/sub/chatroom/" + roomId, message);
         // messagingTemplate.convertAndSend("sub/chatroom/" + roomId, AiMessageDto);
     }
+
+    @Transactional
+    public ApiResponse<ChatRoomCloseResponse> closeChatRoom(String roomId, CustomUserPrincipal userPrincipal) {
+        ChatRoom chatRoom = chatRoomRepository.findById(Long.parseLong(roomId))
+                .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        if (!chatRoom.getUser().getId().equals(userPrincipal.getId())) {
+            throw new BaseException(ErrorCode.CHAT_ROOM_ACCESS_DENIED);
+        }
+
+        log.info("채팅방 {}에서 감정 대화 종료를 요청했습니다.", roomId);
+        chatRoom.updateChatRoomStatus(true);
+
+        ChatRoomCloseResponse response = new ChatRoomCloseResponse(true);
+
+        return ApiResponse.success(SuccessMessage.CHAT_ROOM_CLOSE_SUCCESS.getMessage(), response);
+    }
 }

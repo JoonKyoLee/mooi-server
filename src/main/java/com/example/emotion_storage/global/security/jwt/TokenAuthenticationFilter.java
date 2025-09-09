@@ -14,12 +14,14 @@ import java.util.Collections;
 import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+@Slf4j
 @RequiredArgsConstructor
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
@@ -51,6 +53,8 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
+        request.removeAttribute("authErrorCode");
+
         String token = resolveToken(request);
 
         if (token == null || token.isBlank()) {
@@ -61,6 +65,8 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
         TokenStatus status = jwtTokenProvider.validateToken(token);
 
+        log.debug("[AUTH] path={}, authHeader={}", request.getServletPath(), request.getHeader(HttpHeaders.AUTHORIZATION));
+        log.debug("[AUTH] tokenStatus={}", status);
         if (status == TokenStatus.VALID) {
             Long userId = jwtTokenProvider.getUserIdFromToken(token);
             User user = userRepository.findById(userId)

@@ -4,6 +4,7 @@ import com.example.emotion_storage.chat.domain.Chat;
 import com.example.emotion_storage.chat.domain.ChatRoom;
 import com.example.emotion_storage.chat.domain.SenderType;
 import com.example.emotion_storage.chat.dto.UserMessageDto;
+import com.example.emotion_storage.chat.dto.response.ChatRoomCloseResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCreateResponse;
 import com.example.emotion_storage.chat.repository.ChatRepository;
 import com.example.emotion_storage.chat.repository.ChatRoomRepository;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -31,6 +33,7 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
+    @Transactional
     public ApiResponse<ChatRoomCreateResponse> createChatRoom(CustomUserPrincipal userPrincipal) {
         User user = userRepository.findById(userPrincipal.getId())
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
@@ -49,6 +52,7 @@ public class ChatService {
         return ApiResponse.success(SuccessMessage.CHAT_ROOM_CREATE_SUCCESS.getMessage(), response);
     }
 
+    @Transactional
     public void saveUserMessage(UserMessageDto userMessage) {
         ChatRoom chatRoom = chatRoomRepository.findById(Long.parseLong(userMessage.roomId()))
                 .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
@@ -70,8 +74,26 @@ public class ChatService {
         chatRepository.save(chat);
     }
 
+    @Transactional
     public void sendToUser(String roomId, String message) { // 추루에 AI 메시지 DTO 형식으로 변경
         messagingTemplate.convertAndSend("/sub/chatroom/" + roomId, message);
         // messagingTemplate.convertAndSend("sub/chatroom/" + roomId, AiMessageDto);
+    }
+
+    @Transactional
+    public ApiResponse<ChatRoomCloseResponse> closeChatRoom(String roomId, CustomUserPrincipal userPrincipal) {
+        ChatRoom chatRoom = chatRoomRepository.findById(Long.parseLong(roomId))
+                .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        if (!chatRoom.getUser().getId().equals(userPrincipal.getId())) {
+            throw new BaseException(ErrorCode.CHAT_ROOM_ACCESS_DENIED);
+        }
+
+        log.info("채팅방 {}에서 감정 대화 종료를 요청했습니다.", roomId);
+        chatRoom.updateChatRoomStatus(true);
+
+        ChatRoomCloseResponse response = new ChatRoomCloseResponse(true);
+
+        return ApiResponse.success(SuccessMessage.CHAT_ROOM_CLOSE_SUCCESS.getMessage(), response);
     }
 }

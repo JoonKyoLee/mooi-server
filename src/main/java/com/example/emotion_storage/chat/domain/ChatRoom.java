@@ -38,6 +38,10 @@ public class ChatRoom extends BaseTimeEntity {
     @Column(name = "first_chat_time")
     private LocalDateTime firstChatTime;
 
+    public void updateChatRoomStatus(boolean isEnded) {
+        this.isEnded = isEnded;
+    }
+
     public void setFirstChatTime(LocalDateTime firstChatTime) {
         this.firstChatTime = firstChatTime;
     }

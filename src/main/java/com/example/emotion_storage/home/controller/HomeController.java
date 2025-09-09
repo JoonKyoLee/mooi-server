@@ -1,5 +1,6 @@
 package com.example.emotion_storage.home.controller;
 
+import com.example.emotion_storage.chat.dto.response.ChatRoomCloseResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCreateResponse;
 import com.example.emotion_storage.chat.service.ChatService;
 import com.example.emotion_storage.global.api.ApiResponse;
@@ -11,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,5 +34,15 @@ public class HomeController {
         log.info("사용자 {}의 감정 대화 시작을 위해 채팅방 개설을 진행합니다.", userPrincipal.getId());
         ApiResponse<ChatRoomCreateResponse> response = chatService.createChatRoom(userPrincipal);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @DeleteMapping("/emotion-conversation/{roomId}")
+    @Operation(summary = "감정 대화 종료", description = "감정 대화 채팅방을 종료합니다.")
+    public ResponseEntity<ApiResponse<ChatRoomCloseResponse>> closeChatRoom(
+            @PathVariable String roomId,
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal) {
+        log.info("사용자 {}의 감정 대화를 종료하고 채팅방 {}를 종료 상태로 업데이트 합니다.", userPrincipal.getId(), roomId);
+        ApiResponse<ChatRoomCloseResponse> response = chatService.closeChatRoom(roomId, userPrincipal);
+        return ResponseEntity.ok(response);
     }
 }

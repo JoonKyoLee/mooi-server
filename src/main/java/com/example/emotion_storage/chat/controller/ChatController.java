@@ -47,10 +47,4 @@ public class ChatController {
         ApiResponse<ChatResponse> response = chatService.sendUserMessage(request, userId);
         return ResponseEntity.ok(response);
     }
-
-    @GetMapping("/health")
-    @Operation(summary = "채팅 서비스 상태 확인", description = "채팅 서비스의 상태를 확인합니다.")
-    public ResponseEntity<ApiResponse<String>> healthCheck() {
-        return ResponseEntity.ok(ApiResponse.success("채팅 서비스가 정상적으로 작동 중입니다."));
-    }
 }

@@ -1,11 +1,9 @@
 package com.example.emotion_storage.chat.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
 
 @Getter
 @NoArgsConstructor
@@ -42,7 +40,6 @@ public class AiResponseDto {
                 .fullResponse(fullResponse)
                 .build();
     }
-
     public static AiResponseDto createError(String message) {
         return AiResponseDto.builder()
                 .type("error")

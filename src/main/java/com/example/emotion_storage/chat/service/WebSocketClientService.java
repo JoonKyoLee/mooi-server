@@ -11,7 +11,6 @@ import org.springframework.web.socket.*;
 import org.springframework.web.socket.client.WebSocketClient;
 
 import java.net.URI;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +36,6 @@ public class WebSocketClientService {
     public CompletableFuture<AiResponseDto> sendMessageToAI(AiMessageDto message) {
         CompletableFuture<AiResponseDto> future = new CompletableFuture<>();
         String sessionId = message.getPayload().getSessionId();
-
         // 요청 등록
         registerRequest(sessionId, future);
 
@@ -102,7 +100,6 @@ public class WebSocketClientService {
             WebSocketHandler handler = createWebSocketHandler();
             WebSocketClient client = webSocketClientConfig.webSocketClient();
             URI uri = URI.create(webSocketClientConfig.getAiWebSocketUrl());
-
             CompletableFuture<WebSocketSession> future = client.execute(handler, null, uri);
             return future.get();
 
@@ -191,7 +188,6 @@ public class WebSocketClientService {
         if (sessionId != null) {
             CompletableFuture<AiResponseDto> future = pendingRequests.remove(sessionId);
             StringBuilder builder = responseBuilders.remove(sessionId);
-
             if (future != null && builder != null) {
                 String fullResponse = builder.toString();
                 AiResponseDto finalResponse = AiResponseDto.createChatComplete(sessionId, fullResponse);
@@ -208,7 +204,6 @@ public class WebSocketClientService {
         if (sessionId != null) {
             CompletableFuture<AiResponseDto> future = pendingRequests.remove(sessionId);
             responseBuilders.remove(sessionId);
-
             if (future != null) {
                 future.completeExceptionally(new RuntimeException("AI 서버 오류: " + response.getMessage()));
             }
@@ -216,19 +211,16 @@ public class WebSocketClientService {
             log.warn("error 메시지에서 세션 ID를 찾을 수 없습니다");
         }
     }
-
     private String getCurrentSessionId() {
         // 현재 처리 중인 세션 ID를 반환
         // AI 서버의 응답에는 session_id가 포함되지 않으므로 현재 세션 ID 사용
         if (currentSessionId != null && pendingRequests.containsKey(currentSessionId)) {
             return currentSessionId;
         }
-
         // 백업: 대기 중인 첫 번째 세션 ID 반환
         if (!pendingRequests.isEmpty()) {
             return pendingRequests.keySet().iterator().next();
         }
-
         log.warn("세션 ID를 찾을 수 없습니다.");
         return null;
     }

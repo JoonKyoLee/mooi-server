@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 public class AiMessageDto {
     private String type;
     private Payload payload;
-
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor

@@ -1,5 +1,6 @@
 package com.example.emotion_storage.chat.controller;
 
+import com.example.emotion_storage.chat.dto.UserMessageDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,12 +15,18 @@ public class WebSocketStompDocsController {
     @Operation(
             summary = "STOMP WebSocket 사용법",
             description = """
-                          1. 연결: ws://호스트주소:8080/ws
-                          2. 메시지 전송(publish): /pub/v1/test(테스트용)
-                          3. 메시지 구독(subscribe): /sub/chatroom/{roomId}
-                          클라이언트는 위 경로를 사용해 STOMP 프로토콜로 연결, 송신, 수신을 수행합니다.
-                          """
+                  1. 연결: ws://호스트주소:8080/ws
+                  2. 메시지 전송(publish): /pub/v1/test (테스트용), 실제로는 /pub/v1/chat으로 설정해 둔 상태
+                  3. 메시지 구독(subscribe): /sub/chatroom/{roomId}
+                  클라이언트는 위 경로를 사용해 STOMP 프로토콜로 연결, 송신, 수신을 수행합니다.
+                  """
     )
     @GetMapping
-    public void doc() {}
+    public void doc(
+            @io.swagger.v3.oas.annotations.Parameter(
+                    description = "STOMP 메시지 예시 DTO",
+                    required = true
+            )
+            UserMessageDto userMessageDto
+    ) {}
 }

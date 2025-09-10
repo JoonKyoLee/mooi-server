@@ -57,9 +57,10 @@ public class ChatService {
         ChatRoom chatRoom = chatRoomRepository.findById(Long.parseLong(userMessage.roomId()))
                 .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"); // 프론트 포맷에 맞춰 변경 필요
+
         if (chatRoom.getFirstChatTime() == null) {
             log.info("채팅방 {}의 첫 채팅시각을 기록합니다.", chatRoom.getId());
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"); // 프론트 포맷에 맞춰 변경 필요
             LocalDateTime firstChatTime = LocalDateTime.parse(userMessage.timestamp(), formatter);
             chatRoom.setFirstChatTime(firstChatTime);
         }
@@ -69,6 +70,7 @@ public class ChatService {
                 .chatRoom(chatRoom)
                 .message(userMessage.content())
                 .sender(SenderType.USER)
+                .chatTime(LocalDateTime.parse(userMessage.timestamp(), formatter))
                 .build();
 
         chatRepository.save(chat);

@@ -58,6 +58,9 @@ public class User extends BaseTimeEntity {
     private LocalDate birthday;
 
     @Column(nullable = false)
+    private Long keyCount;
+
+    @Column(nullable = false)
     private Long ticketCount;
 
     @ElementCollection

@@ -4,6 +4,7 @@ import com.example.emotion_storage.chat.dto.response.ChatRoomCreateResponse;
 import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
+import com.example.emotion_storage.home.dto.response.KeyCountResponse;
 import com.example.emotion_storage.home.dto.response.TicketStatusResponse;
 import com.example.emotion_storage.home.service.HomeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,9 +42,19 @@ public class HomeController {
     public ResponseEntity<ApiResponse<TicketStatusResponse>> getTickets(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal
             ) {
-        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L;
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success(SuccessMessage.GET_TICKETS_SUCCESS.getMessage(), homeService.getTicketStatus(userId)));
+    }
+
+    @GetMapping("/keys")
+    @Operation(summary = "열쇠 개수 조회", description = "사용자가 가지고 있는 열쇠 개수를 반환합니다.")
+    public ResponseEntity<ApiResponse<KeyCountResponse>> getKeys(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+            ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(SuccessMessage.GET_KEYS_SUCCESS.getMessage(), homeService.getKeyCount(userId)));
     }
 
 }

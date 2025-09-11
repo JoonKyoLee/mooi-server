@@ -1,5 +1,6 @@
 package com.example.emotion_storage.home.service;
 
+import com.example.emotion_storage.home.dto.response.KeyCountResponse;
 import com.example.emotion_storage.home.dto.response.TicketStatusResponse;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
@@ -21,8 +22,7 @@ public class HomeService {
     public TicketStatusResponse getTicketStatus(Long userId) {
         log.info("사용자 티켓 상태 조회 요청 - userId: {}", userId);
         
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. userId: " + userId));
+        User user = findUserById(userId);
         
         TicketStatusResponse response = TicketStatusResponse.builder()
                 .remainingTickets(user.getTicketCount())
@@ -33,5 +33,25 @@ public class HomeService {
                 userId, response.getRemainingTickets(), response.getDailyLimit());
         
         return response;
+    }
+
+    public KeyCountResponse getKeyCount(Long userId) {
+        log.info("사용자 열쇠 개수 조회 요청 - userId: {}", userId);
+        
+        User user = findUserById(userId);
+        
+        KeyCountResponse response = KeyCountResponse.builder()
+                .keyCount(user.getKeyCount())
+                .build();
+        
+        log.info("사용자 열쇠 개수 조회 완료 - userId: {}, keyCount: {}", 
+                userId, response.getKeyCount());
+        
+        return response;
+    }
+
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. userId: " + userId));
     }
 }

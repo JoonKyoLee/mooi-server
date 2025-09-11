@@ -14,7 +14,8 @@ public enum SuccessMessage {
     CHAT_ROOM_CREATE_SUCCESS("대화 시작 성공"),
 
     // Home
-    GET_TICKETS_SUCCESS("티켓 개수 조회 성공");
+    GET_TICKETS_SUCCESS("티켓 개수 조회 성공"),
+    GET_KEYS_SUCCESS("열쇠 개수 조회 성공");
 
     private final String message;
 }

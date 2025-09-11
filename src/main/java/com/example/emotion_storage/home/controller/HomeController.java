@@ -6,6 +6,7 @@ import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import com.example.emotion_storage.home.dto.response.KeyCountResponse;
 import com.example.emotion_storage.home.dto.response.NewDailyReportResponse;
+import com.example.emotion_storage.home.dto.response.NewNotificationResponse;
 import com.example.emotion_storage.home.dto.response.NewTimeCapsuleResponse;
 import com.example.emotion_storage.home.dto.response.TicketStatusResponse;
 import com.example.emotion_storage.home.service.HomeService;
@@ -79,6 +80,17 @@ public class HomeController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success(SuccessMessage.GET_NEW_DAILY_REPORT_SUCCESS.getMessage(), 
                         homeService.getNewDailyReportStatus(userId)));
+    }
+
+    @GetMapping("/notifications")
+    @Operation(summary = "새로운 알림 여부 조회", description = "사용자의 미열람 알림이 있는지 여부와 개수를 반환합니다.")
+    public ResponseEntity<ApiResponse<NewNotificationResponse>> getNewNotifications(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+            ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(SuccessMessage.GET_NEW_NOTIFICATION_SUCCESS.getMessage(), 
+                        homeService.getNewNotificationStatus(userId)));
     }
 
 }

@@ -17,7 +17,8 @@ public enum SuccessMessage {
     GET_TICKETS_SUCCESS("티켓 개수 조회 성공"),
     GET_KEYS_SUCCESS("열쇠 개수 조회 성공"),
     GET_NEW_TIME_CAPSULE_SUCCESS("도착한 타임캡슐 여부 조회 성공"),
-    GET_NEW_DAILY_REPORT_SUCCESS("새로운 일일리포트 여부 조회 성공");
+    GET_NEW_DAILY_REPORT_SUCCESS("새로운 일일리포트 여부 조회 성공"),
+    GET_NEW_NOTIFICATION_SUCCESS("신규 알림 여부 조회 성공");
 
     private final String message;
 }

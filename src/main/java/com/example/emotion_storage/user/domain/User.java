@@ -1,6 +1,7 @@
 package com.example.emotion_storage.user.domain;
 
 import com.example.emotion_storage.global.entity.BaseTimeEntity;
+import com.example.emotion_storage.notification.domain.Notification;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
@@ -87,6 +88,10 @@ public class User extends BaseTimeEntity {
     @Builder.Default
     private List<TimeCapsule> timeCapsules = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Notification> notifications = new ArrayList<>();
+
     public void addTimeCapsule(TimeCapsule timeCapsule) {
         this.timeCapsules.add(timeCapsule);
         timeCapsule.setUser(this);
@@ -95,5 +100,15 @@ public class User extends BaseTimeEntity {
     public void removeTimeCapsule(TimeCapsule timeCapsule) {
         this.timeCapsules.remove(timeCapsule);
         timeCapsule.setUser(null);
+    }
+
+    public void addNotification(Notification notification) {
+        this.notifications.add(notification);
+        notification.setUser(this);
+    }
+
+    public void removeNotification(Notification notification) {
+        this.notifications.remove(notification);
+        notification.setUser(null);
     }
 }

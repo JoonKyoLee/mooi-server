@@ -2,8 +2,10 @@ package com.example.emotion_storage.home.service;
 
 import com.example.emotion_storage.home.dto.response.KeyCountResponse;
 import com.example.emotion_storage.home.dto.response.NewDailyReportResponse;
+import com.example.emotion_storage.home.dto.response.NewNotificationResponse;
 import com.example.emotion_storage.home.dto.response.NewTimeCapsuleResponse;
 import com.example.emotion_storage.home.dto.response.TicketStatusResponse;
+import com.example.emotion_storage.notification.repository.NotificationRepository;
 import com.example.emotion_storage.report.repository.ReportRepository;
 import com.example.emotion_storage.timecapsule.repository.TimeCapsuleRepository;
 import com.example.emotion_storage.user.domain.User;
@@ -24,6 +26,7 @@ public class HomeService {
     private final UserRepository userRepository;
     private final TimeCapsuleRepository timeCapsuleRepository;
     private final ReportRepository reportRepository;
+    private final NotificationRepository notificationRepository;
 
     public TicketStatusResponse getTicketStatus(Long userId) {
         log.info("사용자 티켓 상태 조회 요청 - userId: {}", userId);
@@ -94,6 +97,27 @@ public class HomeService {
         
         log.info("사용자 새로운 일일리포트 상태 조회 완료 - userId: {}, hasNewReport: {}, count: {}", 
                 userId, response.isHasNewReport(), response.getCount());
+        
+        return response;
+    }
+
+    public NewNotificationResponse getNewNotificationStatus(Long userId) {
+        log.info("사용자 새로운 알림 상태 조회 요청 - userId: {}", userId);
+        
+        // 사용자 존재 여부 확인
+        findUserById(userId);
+        
+        // 미열람 알림 개수 조회
+        Long unreadNotificationCount = notificationRepository.countUnreadNotificationsByUserId(userId);
+        boolean hasNewNotification = unreadNotificationCount > 0;
+        
+        NewNotificationResponse response = NewNotificationResponse.builder()
+                .hasNewNotification(hasNewNotification)
+                .count(unreadNotificationCount.intValue())
+                .build();
+        
+        log.info("사용자 새로운 알림 상태 조회 완료 - userId: {}, hasNew: {}, count: {}", 
+                userId, response.isHasNewNotification(), response.getCount());
         
         return response;
     }

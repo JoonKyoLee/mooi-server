@@ -1,7 +1,9 @@
 package com.example.emotion_storage.home.service;
 
 import com.example.emotion_storage.home.dto.response.KeyCountResponse;
+import com.example.emotion_storage.home.dto.response.NewTimeCapsuleResponse;
 import com.example.emotion_storage.home.dto.response.TicketStatusResponse;
+import com.example.emotion_storage.timecapsule.repository.TimeCapsuleRepository;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ public class HomeService {
     private static final Long DAILY_TICKET_LIMIT = 10L;
     
     private final UserRepository userRepository;
+    private final TimeCapsuleRepository timeCapsuleRepository;
 
     public TicketStatusResponse getTicketStatus(Long userId) {
         log.info("사용자 티켓 상태 조회 요청 - userId: {}", userId);
@@ -46,6 +49,27 @@ public class HomeService {
         
         log.info("사용자 열쇠 개수 조회 완료 - userId: {}, keyCount: {}", 
                 userId, response.getKeyCount());
+        
+        return response;
+    }
+
+    public NewTimeCapsuleResponse getNewTimeCapsuleStatus(Long userId) {
+        log.info("사용자 도착한 타임캡슐 상태 조회 요청 - userId: {}", userId);
+        
+        // 사용자 존재 여부 확인
+        findUserById(userId);
+        
+        // 미확인 타임캡슐 개수 조회
+        Long unopenedCount = timeCapsuleRepository.countUnopenedTimeCapsulesByUserId(userId);
+        boolean hasNewCapsule = unopenedCount > 0;
+        
+        NewTimeCapsuleResponse response = NewTimeCapsuleResponse.builder()
+                .hasNewCapsule(hasNewCapsule)
+                .count(unopenedCount.intValue())
+                .build();
+        
+        log.info("사용자 도착한 타임캡슐 상태 조회 완료 - userId: {}, hasNewCapsule: {}, count: {}", 
+                userId, response.isHasNewCapsule(), response.getCount());
         
         return response;
     }

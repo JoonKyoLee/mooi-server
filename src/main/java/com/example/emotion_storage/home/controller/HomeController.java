@@ -5,6 +5,7 @@ import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import com.example.emotion_storage.home.dto.response.KeyCountResponse;
+import com.example.emotion_storage.home.dto.response.NewTimeCapsuleResponse;
 import com.example.emotion_storage.home.dto.response.TicketStatusResponse;
 import com.example.emotion_storage.home.service.HomeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,6 +56,17 @@ public class HomeController {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success(SuccessMessage.GET_KEYS_SUCCESS.getMessage(), homeService.getKeyCount(userId)));
+    }
+
+    @GetMapping("/time-capsules")
+    @Operation(summary = "도착한 타임캡슐 여부 조회", description = "사용자의 도착한 미확인 타임캡슐이 있는지 여부와 개수를 반환합니다.")
+    public ResponseEntity<ApiResponse<NewTimeCapsuleResponse>> getNewTimeCapsules(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+            ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(SuccessMessage.GET_NEW_TIME_CAPSULE_SUCCESS.getMessage(), 
+                        homeService.getNewTimeCapsuleStatus(userId)));
     }
 
 }

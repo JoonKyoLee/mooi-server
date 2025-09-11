@@ -1,6 +1,8 @@
 package com.example.emotion_storage.user.domain;
 
 import com.example.emotion_storage.global.entity.BaseTimeEntity;
+import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -11,6 +13,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -79,4 +82,18 @@ public class User extends BaseTimeEntity {
     private boolean isMarketingAgreed;
 
     private LocalDateTime deletedAt;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<TimeCapsule> timeCapsules = new ArrayList<>();
+
+    public void addTimeCapsule(TimeCapsule timeCapsule) {
+        this.timeCapsules.add(timeCapsule);
+        timeCapsule.setUser(this);
+    }
+
+    public void removeTimeCapsule(TimeCapsule timeCapsule) {
+        this.timeCapsules.remove(timeCapsule);
+        timeCapsule.setUser(null);
+    }
 }

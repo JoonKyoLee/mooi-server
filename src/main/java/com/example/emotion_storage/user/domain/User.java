@@ -57,6 +57,9 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false)
     private LocalDate birthday;
 
+    @Column(nullable = false)
+    private Long ticketCount;
+
     @ElementCollection
     @CollectionTable(name = "user_expectations", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "expectation", nullable = false, length = 100)

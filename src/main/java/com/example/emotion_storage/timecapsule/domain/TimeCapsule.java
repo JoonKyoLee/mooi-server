@@ -49,6 +49,9 @@ public class TimeCapsule extends BaseTimeEntity {
     private LocalDateTime openedAt;
 
     @Column(nullable = false)
+    private Boolean isOpened;
+
+    @Column(nullable = false)
     private Boolean isTempSave;
 
     @Column(nullable = false)

@@ -1,6 +1,7 @@
 package com.example.emotion_storage.timecapsule.domain;
 
 import com.example.emotion_storage.global.entity.BaseTimeEntity;
+import com.example.emotion_storage.report.domain.Report;
 import com.example.emotion_storage.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,8 +27,9 @@ public class TimeCapsule extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "report_id", nullable = false)
-    private Long reportId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "report_id", nullable = false)
+    private Report report;
 
     @Column(name = "chatroom_id", nullable = false)
     private Long chatroomId;
@@ -74,5 +76,9 @@ public class TimeCapsule extends BaseTimeEntity {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public void setReport(Report report) {
+        this.report = report;
     }
 }

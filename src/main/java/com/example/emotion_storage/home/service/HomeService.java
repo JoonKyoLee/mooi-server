@@ -1,8 +1,10 @@
 package com.example.emotion_storage.home.service;
 
 import com.example.emotion_storage.home.dto.response.KeyCountResponse;
+import com.example.emotion_storage.home.dto.response.NewDailyReportResponse;
 import com.example.emotion_storage.home.dto.response.NewTimeCapsuleResponse;
 import com.example.emotion_storage.home.dto.response.TicketStatusResponse;
+import com.example.emotion_storage.report.repository.ReportRepository;
 import com.example.emotion_storage.timecapsule.repository.TimeCapsuleRepository;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
@@ -21,6 +23,7 @@ public class HomeService {
     
     private final UserRepository userRepository;
     private final TimeCapsuleRepository timeCapsuleRepository;
+    private final ReportRepository reportRepository;
 
     public TicketStatusResponse getTicketStatus(Long userId) {
         log.info("사용자 티켓 상태 조회 요청 - userId: {}", userId);
@@ -70,6 +73,27 @@ public class HomeService {
         
         log.info("사용자 도착한 타임캡슐 상태 조회 완료 - userId: {}, hasNewCapsule: {}, count: {}", 
                 userId, response.isHasNewCapsule(), response.getCount());
+        
+        return response;
+    }
+
+    public NewDailyReportResponse getNewDailyReportStatus(Long userId) {
+        log.info("사용자 새로운 일일리포트 상태 조회 요청 - userId: {}", userId);
+        
+        // 사용자 존재 여부 확인
+        findUserById(userId);
+        
+        // 미확인 일일리포트 개수 조회
+        Long unopenedReportCount = reportRepository.countUnopenedReportsByUserId(userId);
+        boolean hasNewReport = unopenedReportCount > 0;
+        
+        NewDailyReportResponse response = NewDailyReportResponse.builder()
+                .hasNewReport(hasNewReport)
+                .count(unopenedReportCount.intValue())
+                .build();
+        
+        log.info("사용자 새로운 일일리포트 상태 조회 완료 - userId: {}, hasNewReport: {}, count: {}", 
+                userId, response.isHasNewReport(), response.getCount());
         
         return response;
     }

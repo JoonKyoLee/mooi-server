@@ -1,5 +1,7 @@
 package com.example.emotion_storage.home.service;
 
+import com.example.emotion_storage.global.exception.BaseException;
+import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.home.dto.response.KeyCountResponse;
 import com.example.emotion_storage.home.dto.response.NewDailyReportResponse;
 import com.example.emotion_storage.home.dto.response.NewNotificationResponse;
@@ -124,6 +126,6 @@ public class HomeService {
 
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다. userId: " + userId));
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
     }
 }

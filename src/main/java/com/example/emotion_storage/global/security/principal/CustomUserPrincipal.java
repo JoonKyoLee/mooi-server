@@ -1,9 +1,11 @@
 package com.example.emotion_storage.global.security.principal;
 
 import java.util.Collection;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+@Getter
 public class CustomUserPrincipal implements UserDetails {
 
     private final Long id;
@@ -19,10 +21,6 @@ public class CustomUserPrincipal implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     @Override

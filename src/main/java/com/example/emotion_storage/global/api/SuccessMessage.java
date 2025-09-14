@@ -12,7 +12,14 @@ public enum SuccessMessage {
     SESSION_CHECK_SUCCESS("세션 확인 성공"),
 
     CHAT_ROOM_CREATE_SUCCESS("대화 시작 성공"),
-    CHAT_ROOM_CLOSE_SUCCESS("대화 종료 성공");
+    CHAT_ROOM_CLOSE_SUCCESS("대화 종료 성공"),
+
+    // Home
+    GET_TICKETS_SUCCESS("티켓 개수 조회 성공"),
+    GET_KEYS_SUCCESS("열쇠 개수 조회 성공"),
+    GET_NEW_TIME_CAPSULE_SUCCESS("도착한 타임캡슐 여부 조회 성공"),
+    GET_NEW_DAILY_REPORT_SUCCESS("새로운 일일리포트 여부 조회 성공"),
+    GET_NEW_NOTIFICATION_SUCCESS("신규 알림 여부 조회 성공");
 
     private final String message;
 }

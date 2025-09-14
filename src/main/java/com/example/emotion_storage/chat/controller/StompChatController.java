@@ -19,6 +19,10 @@ public class StompChatController {
     @MessageMapping("/v1/test")
     public void test(UserMessageDto userMessage) {
         log.info("유저에게 메시지를 받았습니다.");
+
+        chatService.saveUserMessage(userMessage);
+        log.info("사용자가 전송한 메시지를 저장했습니다.");
+
         chatService.chatTest(userMessage);
     }
 }

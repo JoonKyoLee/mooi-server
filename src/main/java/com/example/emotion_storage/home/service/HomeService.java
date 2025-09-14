@@ -2,6 +2,7 @@ package com.example.emotion_storage.home.service;
 
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
+import com.example.emotion_storage.home.dto.response.HomeInfoResponse;
 import com.example.emotion_storage.home.dto.response.KeyCountResponse;
 import com.example.emotion_storage.home.dto.response.NewDailyReportResponse;
 import com.example.emotion_storage.home.dto.response.NewNotificationResponse;
@@ -120,6 +121,38 @@ public class HomeService {
         
         log.info("사용자 새로운 알림 상태 조회 완료 - userId: {}, hasNew: {}, count: {}", 
                 userId, response.isHasNewNotification(), response.getCount());
+        
+        return response;
+    }
+
+    public HomeInfoResponse getHomeInfo(Long userId) {
+        log.info("사용자 홈 정보 조회 요청 - userId: {}", userId);
+        
+        // 사용자 존재 여부 확인
+        findUserById(userId);
+        
+        // 각종 정보 조회
+        TicketStatusResponse ticketStatus = getTicketStatus(userId);
+        KeyCountResponse keyCount = getKeyCount(userId);
+        NewNotificationResponse notificationStatus = getNewNotificationStatus(userId);
+        NewTimeCapsuleResponse timeCapsuleStatus = getNewTimeCapsuleStatus(userId);
+        NewDailyReportResponse reportStatus = getNewDailyReportStatus(userId);
+        
+        HomeInfoResponse response = HomeInfoResponse.builder()
+                .remainingTickets(ticketStatus.getRemainingTickets())
+                .dailyLimit(ticketStatus.getDailyLimit())
+                .keyCount(keyCount.getKeyCount())
+                .hasNewNotification(notificationStatus.isHasNewNotification())
+                .notificationCount(notificationStatus.getCount())
+                .hasNewTimeCapsule(timeCapsuleStatus.isHasNewCapsule())
+                .timeCapsuleCount(timeCapsuleStatus.getCount())
+                .hasNewReport(reportStatus.isHasNewReport())
+                .reportCount(reportStatus.getCount())
+                .build();
+        
+        log.info("사용자 홈 정보 조회 완료 - userId: {}, remainingTickets: {}, keyCount: {}, hasNewNotification: {}, hasNewTimeCapsule: {}, hasNewReport: {}", 
+                userId, response.getRemainingTickets(), response.getKeyCount(), 
+                response.isHasNewNotification(), response.isHasNewTimeCapsule(), response.isHasNewReport());
         
         return response;
     }

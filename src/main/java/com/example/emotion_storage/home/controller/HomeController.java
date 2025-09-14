@@ -6,6 +6,7 @@ import com.example.emotion_storage.chat.service.ChatService;
 import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
+import com.example.emotion_storage.home.dto.response.HomeInfoResponse;
 import com.example.emotion_storage.home.dto.response.KeyCountResponse;
 import com.example.emotion_storage.home.dto.response.NewDailyReportResponse;
 import com.example.emotion_storage.home.dto.response.NewNotificationResponse;
@@ -105,6 +106,17 @@ public class HomeController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(ApiResponse.success(SuccessMessage.GET_NEW_NOTIFICATION_SUCCESS.getMessage(), 
                         homeService.getNewNotificationStatus(userId)));
+    }
+
+    @GetMapping("")
+    @Operation(summary = "홈 정보 통합 조회", description = "홈 화면에 필요한 모든 정보(티켓, 열쇠, 알림, 타임캡슐, 리포트)를 한 번에 조회합니다.")
+    public ResponseEntity<ApiResponse<HomeInfoResponse>> getHomeInfo(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+            ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(ApiResponse.success(SuccessMessage.GET_HOME_INFO_SUCCESS.getMessage(), 
+                        homeService.getHomeInfo(userId)));
     }
 
 }

@@ -38,8 +38,11 @@ public class HomeController {
 
     @PostMapping("emotion-conversation/test")
     @Operation(summary = "감정 대화 테스트를 위한 채팅방 반환 API", description = "감정 대화 테스트를 위한 채팅방 ID를 생성하고 반환합니다.")
-    public ResponseEntity<ApiResponse<ChatRoomCreateResponse>> createChatRoomForTest() {
-        ApiResponse<ChatRoomCreateResponse> response = chatService.createTestChatRoom();
+    public ResponseEntity<ApiResponse<ChatRoomCreateResponse>> createChatRoomForTest(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        ApiResponse<ChatRoomCreateResponse> response = chatService.createTestChatRoom(userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

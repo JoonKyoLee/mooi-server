@@ -38,8 +38,8 @@ public class ChatService {
     }
 
     @Transactional
-    public ApiResponse<ChatRoomCreateResponse> createTestChatRoom() {
-        User user = userRepository.findById(1L)
+    public ApiResponse<ChatRoomCreateResponse> createTestChatRoom(Long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
         ChatRoom chatRoom = ChatRoom.builder()

@@ -2,6 +2,9 @@ package com.example.emotion_storage.user.auth.controller;
 
 import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
+import com.example.emotion_storage.global.exception.BaseException;
+import com.example.emotion_storage.global.exception.ErrorCode;
+import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import com.example.emotion_storage.user.auth.dto.response.AccessTokenResponse;
 import com.example.emotion_storage.user.auth.dto.response.SessionResponse;
 import com.example.emotion_storage.user.auth.service.TokenService;
@@ -12,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,7 +49,10 @@ public class AuthController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "액세스 토큰 만료")
     })
     @GetMapping("/session")
-    public ApiResponse<SessionResponse> checkSession() {
+    public ApiResponse<SessionResponse> checkSession(@AuthenticationPrincipal CustomUserPrincipal userPrincipal) {
+        if (userPrincipal == null) {
+            throw new BaseException(ErrorCode.USER_NOT_FOUND);
+        }
         return ApiResponse.success(SuccessMessage.SESSION_CHECK_SUCCESS.getMessage(), SessionResponse.ok());
     }
 }

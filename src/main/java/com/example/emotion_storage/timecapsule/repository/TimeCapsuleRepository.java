@@ -1,8 +1,10 @@
 package com.example.emotion_storage.timecapsule.repository;
 
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
-import java.time.LocalDate;
+import java.sql.Date;
 import java.time.LocalDateTime;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,7 +22,15 @@ public interface TimeCapsuleRepository extends JpaRepository<TimeCapsule, Long> 
     Long countUnopenedTimeCapsulesByUserId(@Param("userId") Long userId);
 
     @Query("SELECT DISTINCT CAST(tc.historyDate AS DATE) from TimeCapsule tc "
-            + "WHERE tc.user.id = :userId AND tc.historyDate >= :start AND tc.historyDate < :end "
+            + "WHERE tc.user.id = :userId AND tc.historyDate >= :start AND tc.historyDate < :end AND tc.deletedAt IS NULL "
             + "ORDER BY CAST(tc.historyDate AS DATE)")
-    List<LocalDate> findActiveDatesInRange(@Param("userId") Long userId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    List<Date> findActiveDatesInRange(@Param("userId") Long userId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    Page<TimeCapsule> findByUser_IdAndDeletedAtIsNullAndOpenedAtGreaterThanEqualAndOpenedAtLessThanEqual(
+            Long userId, LocalDateTime start, LocalDateTime end, Pageable pageable
+    );
+
+    Page<TimeCapsule> findByUser_IdAndDeletedAtIsNullAndHistoryDateBetween(
+            Long userId, LocalDateTime start, LocalDateTime end, Pageable pageable
+    );
 }

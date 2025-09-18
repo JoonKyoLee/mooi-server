@@ -22,7 +22,9 @@ public enum SuccessMessage {
     GET_NEW_NOTIFICATION_SUCCESS("신규 알림 여부 조회 성공"),
     GET_HOME_INFO_SUCCESS("홈 화면 정보 API 조회 성공"),
 
-    GET_MONTHLY_TIME_CAPSULE_DATES_SUCCESS("월별 타임캡슐 날짜 목록 조회 성공");
+    // Time Capsule
+    GET_MONTHLY_TIME_CAPSULE_DATES_SUCCESS("월별 타임캡슐 날짜 목록 조회 성공"),
+    GET_TIME_CAPSULE_LIST_SUCCESS("타임캡슐 목록 조회 성공");
 
     private final String message;
 }

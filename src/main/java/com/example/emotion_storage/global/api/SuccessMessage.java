@@ -32,6 +32,9 @@ public enum SuccessMessage {
     OPEN_TIME_CAPSULE_SUCCESS("타임캡슐 열람 성공"),
     UPDATE_TIME_CAPSULE_MIND_NOTE_SUCCESS("타임캡슐 내 마음 노트 수정 성공"),
     DELETE_TIME_CAPSULE_SUCCESS("타임캡슐 삭제 성공"),
+    
+    // Report
+    DAILY_REPORT_DETAIL_GET_SUCCESS("일일리포트 상세 조회 성공"),
     ;
 
     private final String message;

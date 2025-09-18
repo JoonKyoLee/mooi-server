@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -26,11 +27,16 @@ public interface TimeCapsuleRepository extends JpaRepository<TimeCapsule, Long> 
             + "ORDER BY CAST(tc.historyDate AS DATE)")
     List<Date> findActiveDatesInRange(@Param("userId") Long userId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-    Page<TimeCapsule> findByUser_IdAndDeletedAtIsNullAndOpenedAtGreaterThanEqualAndOpenedAtLessThanEqual(
+    // 전체 타임캡슐 목록
+    Page<TimeCapsule> findByUser_IdAndDeletedAtIsNullAndIsOpenedFalseAndOpenedAtGreaterThanEqualAndOpenedAtLessThanEqual(
             Long userId, LocalDateTime start, LocalDateTime end, Pageable pageable
     );
 
+    // 도착한 타임캡슐 목록
     Page<TimeCapsule> findByUser_IdAndDeletedAtIsNullAndHistoryDateBetween(
             Long userId, LocalDateTime start, LocalDateTime end, Pageable pageable
     );
+
+    // 즐겨찾기한 타임캡슐 목록
+    Page<TimeCapsule> findByUser_IdAndDeletedAtIsNullAndIsFavoriteIsTrue(Long userId, Pageable pageable);
 }

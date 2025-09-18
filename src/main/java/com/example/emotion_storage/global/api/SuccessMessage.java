@@ -24,7 +24,8 @@ public enum SuccessMessage {
 
     // Time Capsule
     GET_MONTHLY_TIME_CAPSULE_DATES_SUCCESS("월별 타임캡슐 날짜 목록 조회 성공"),
-    GET_TIME_CAPSULE_LIST_SUCCESS("타임캡슐 목록 조회 성공");
+    GET_TIME_CAPSULE_LIST_SUCCESS("타임캡슐 목록 조회 성공"),
+    GET_FAVORITE_TIME_CAPSULE_LIST_SUCCESS("즐겨찾기 타임캡슐 목록 조회 성공");
 
     private final String message;
 }

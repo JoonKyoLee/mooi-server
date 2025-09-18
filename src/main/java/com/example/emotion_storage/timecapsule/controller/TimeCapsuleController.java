@@ -38,7 +38,7 @@ public class TimeCapsuleController {
     }
 
     @GetMapping
-    @Operation()
+    @Operation(summary = "타임캡슐 목록 조회", description = "날짜 및 타임캡슐 상태를 기준으로 타임캡슐 목록을 조회하고 반환합니다.")
     public ResponseEntity<ApiResponse<TimeCapsuleListResponse>> getTimeCapsuleList(
             @RequestParam LocalDate startDate, @RequestParam LocalDate endDate,
             @RequestParam int page, @RequestParam int limit, @RequestParam(defaultValue = "all") String status,
@@ -48,6 +48,18 @@ public class TimeCapsuleController {
         log.info("사용자 {}의 타임캡슐 목록 조회를 요청받았습니다.", userId);
         ApiResponse<TimeCapsuleListResponse> response =
                 timeCapsuleService.getTimeCapsuleList(startDate, endDate, page, limit, status, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/favorites")
+    @Operation(summary = "즐겨찾기 타임캡슐 목록 조회", description = "즐겨찾기한 타임캡슐을 최신순 또는 즐겨찾기한 순으로 조회합니다.")
+    public ResponseEntity<ApiResponse<TimeCapsuleListResponse>> getFavoriteTimeCapsules(
+            @RequestParam int page, @RequestParam int limit, @RequestParam String sort, @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}의 즐겨찾기 타임캡슐 목록 조회를 요청받았습니다.", userId);
+        ApiResponse<TimeCapsuleListResponse> response =
+                timeCapsuleService.getFavoriteTimeCapsules(page, limit, sort, userId);
         return ResponseEntity.ok(response);
     }
 }

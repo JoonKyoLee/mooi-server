@@ -27,8 +27,10 @@ import org.springframework.stereotype.Service;
 public class TimeCapsuleService {
 
     private static final String ARRIVED_STATUS = "arrived";
-    private static final String SORT_FOR_ARRIVED = "openedAt";
-    private static final String SORT_FOR_ALL = "historyDate";
+    private static final String SORT_FAVORITE = "favorite";
+    private static final String SORT_BY_DEFAULT_TIME = "historyDate";
+    private static final String SORT_BY_ARRIVED_TIME = "openedAt";
+    private static final String SORT_BY_FAVORITE_TIME = "favoriteAt";
 
     private final TimeCapsuleRepository timeCapsuleRepository;
 
@@ -63,17 +65,29 @@ public class TimeCapsuleService {
 
         if (ARRIVED_STATUS.equals(status)) {
             log.info("사용자 {}의 {}-{}의 도착한 타임캡슐 목록을 조회합니다.", userId, startDate, endDate);
-            pageable = pageDesc(page, limit, SORT_FOR_ARRIVED);
+            pageable = pageDesc(page, limit, SORT_BY_ARRIVED_TIME);
             LocalDateTime end = LocalDateTime.now();
             timeCapsuleList = getArrivedTimeCapsuleList(start, end, page, limit, userId, pageable);
         } else {
             log.info("사용자 {}의 {}-{}의 타임캡슐 목록을 조회합니다.", userId, startDate, endDate);
-            pageable = pageDesc(page, limit, SORT_FOR_ALL);
+            pageable = pageDesc(page, limit, SORT_BY_DEFAULT_TIME);
             LocalDateTime end = endDate.plusDays(1).atStartOfDay();
             timeCapsuleList = getOneDayTimeCapsuleList(start, end, page, limit, userId, pageable);
         }
 
         return ApiResponse.success(SuccessMessage.GET_TIME_CAPSULE_LIST_SUCCESS.getMessage(), timeCapsuleList);
+    }
+
+    public ApiResponse<TimeCapsuleListResponse> getFavoriteTimeCapsules(
+            int page, int limit, String sort, Long userId
+    ) {
+        final boolean sortFavorite = SORT_FAVORITE.equals(sort);
+        Pageable pageable = pageDesc(page, limit, sortFavorite ? SORT_BY_FAVORITE_TIME : SORT_BY_DEFAULT_TIME);
+
+        log.info("사용자 {}의 즐겨찾기 리스트를 조회합니다.", userId);
+        TimeCapsuleListResponse timeCapsuleList = getFavoriteTimeCapsuleList(page, limit, userId, pageable);
+
+        return ApiResponse.success(SuccessMessage.GET_FAVORITE_TIME_CAPSULE_LIST_SUCCESS.getMessage(), timeCapsuleList);
     }
 
     private Pageable pageDesc(int page, int limit, String sortField) {
@@ -94,9 +108,17 @@ public class TimeCapsuleService {
             LocalDateTime start, LocalDateTime end, int page, int limit, Long userId, Pageable pageable
     ) {
         Page<TimeCapsule> timeCapsules =
-                timeCapsuleRepository.findByUser_IdAndDeletedAtIsNullAndOpenedAtGreaterThanEqualAndOpenedAtLessThanEqual(
+                timeCapsuleRepository.findByUser_IdAndDeletedAtIsNullAndIsOpenedFalseAndOpenedAtGreaterThanEqualAndOpenedAtLessThanEqual(
                         userId, start, end, pageable
                 );
+        return getTimeCapsuleList(timeCapsules, page, limit);
+    }
+
+    private TimeCapsuleListResponse getFavoriteTimeCapsuleList(
+            int page, int limit, Long userId, Pageable pageable
+    ) {
+        Page<TimeCapsule> timeCapsules =
+                timeCapsuleRepository.findByUser_IdAndDeletedAtIsNullAndIsFavoriteIsTrue(userId, pageable);
         return getTimeCapsuleList(timeCapsules, page, limit);
     }
 

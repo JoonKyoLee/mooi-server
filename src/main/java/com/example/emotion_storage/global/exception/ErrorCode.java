@@ -23,6 +23,10 @@ public enum ErrorCode {
 
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
     CHAT_ROOM_ACCESS_DENIED(HttpStatus.FORBIDDEN, "채팅방에 접근할 수 없습니다."),
+
+    TIME_CAPSULE_NOT_FOUND(HttpStatus.NOT_FOUND, "타임캡슐을 찾을 수 없습니다."),
+    TIME_CAPSULE_IS_NOT_OWNED(HttpStatus.FORBIDDEN, "사용자의 타임캡슐이 아닙니다."),
+    TIME_CAPSULE_FAVORITE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "즐겨찾기는 최대 30개까지만 가능합니다.")
     ;
 
     private final HttpStatus httpStatus;

@@ -2,10 +2,14 @@ package com.example.emotion_storage.timecapsule.service;
 
 import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
+import com.example.emotion_storage.global.exception.BaseException;
+import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
 import com.example.emotion_storage.timecapsule.dto.PaginationDto;
 import com.example.emotion_storage.timecapsule.dto.TimeCapsuleDto;
+import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
+import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
 import com.example.emotion_storage.timecapsule.repository.TimeCapsuleRepository;
 import java.sql.Date;
@@ -20,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -90,6 +95,33 @@ public class TimeCapsuleService {
         return ApiResponse.success(SuccessMessage.GET_FAVORITE_TIME_CAPSULE_LIST_SUCCESS.getMessage(), timeCapsuleList);
     }
 
+    @Transactional
+    public ApiResponse<TimeCapsuleFavoriteResponse> setFavorite(
+            Long timeCapsuleId, TimeCapsuleFavoriteRequest request, Long userId
+    ) {
+        TimeCapsule timeCapsule = findOwnedTimeCapsule(timeCapsuleId, userId);
+
+        if (request.addFavorite()) {
+            validateFavoriteLimit(userId);
+            addFavorite(timeCapsule);
+
+        } else {
+            deleteFavorite(timeCapsule);
+        }
+
+        TimeCapsuleFavoriteResponse response = new TimeCapsuleFavoriteResponse(
+                timeCapsule.getIsFavorite(),
+                timeCapsule.getFavoriteAt(),
+                timeCapsuleRepository.countByUser_IdAndIsFavoriteTrue(userId)
+        );
+
+        SuccessMessage successMessage = request.addFavorite()
+                ? SuccessMessage.ADD_FAVORITE_TIME_CAPSULE_SUCCESS
+                : SuccessMessage.REMOVE_FAVORITE_TIME_CAPSULE_SUCCESS;
+
+        return ApiResponse.success(successMessage.getMessage(), response);
+    }
+
     private Pageable pageDesc(int page, int limit, String sortField) {
         return PageRequest.of(page, limit, Sort.by(sortField).descending());
     }
@@ -138,5 +170,35 @@ public class TimeCapsuleService {
         return timeCapsules.getContent().stream()
                 .map(TimeCapsuleDto::of)
                 .toList();
+    }
+
+    private TimeCapsule findOwnedTimeCapsule(Long timeCapsuleId, Long userId) {
+        TimeCapsule timeCapsule = timeCapsuleRepository.findById(timeCapsuleId)
+                .orElseThrow(() -> new BaseException(ErrorCode.TIME_CAPSULE_NOT_FOUND));
+
+        if (!timeCapsule.getUser().getId().equals(userId)) {
+            throw new BaseException(ErrorCode.TIME_CAPSULE_IS_NOT_OWNED);
+        }
+        return timeCapsule;
+    }
+
+    private void validateFavoriteLimit(Long userId) {
+        log.info("즐겨찾기된 타임캡슐 개수를 조회합니다.");
+        int favoriteCnt = timeCapsuleRepository.countByUser_IdAndIsFavoriteTrue(userId);
+        if (favoriteCnt >= 30) {
+            throw new BaseException(ErrorCode.TIME_CAPSULE_FAVORITE_LIMIT_EXCEEDED);
+        }
+    }
+
+    private void addFavorite(TimeCapsule timeCapsule) {
+        log.info("타임캡슐 {}을 즐겨찾기 목록에 추가합니다.", timeCapsule.getId());
+        timeCapsule.setFavoriteAt(LocalDateTime.now());
+        timeCapsule.setIsFavorite(true);
+    }
+
+    private void deleteFavorite(TimeCapsule timeCapsule) {
+        log.info("타임캡슐 {}을 즐겨찾기 목록에서 해제합니다.", timeCapsule.getId());
+        timeCapsule.setFavoriteAt(null);
+        timeCapsule.setIsFavorite(false);
     }
 }

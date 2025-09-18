@@ -39,4 +39,6 @@ public interface TimeCapsuleRepository extends JpaRepository<TimeCapsule, Long> 
 
     // 즐겨찾기한 타임캡슐 목록
     Page<TimeCapsule> findByUser_IdAndDeletedAtIsNullAndIsFavoriteIsTrue(Long userId, Pageable pageable);
+
+    int countByUser_IdAndIsFavoriteTrue(Long userId);
 }

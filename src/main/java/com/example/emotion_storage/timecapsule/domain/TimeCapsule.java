@@ -86,4 +86,12 @@ public class TimeCapsule extends BaseTimeEntity {
     public void setReport(Report report) {
         this.report = report;
     }
+
+    public void setFavoriteAt(LocalDateTime favoriteAt) {
+        this.favoriteAt = favoriteAt;
+    }
+
+    public void setIsFavorite(Boolean isFavorite) {
+        this.isFavorite = isFavorite;
+    }
 }

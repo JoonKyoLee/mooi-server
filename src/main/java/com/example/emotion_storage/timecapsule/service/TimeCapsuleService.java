@@ -5,6 +5,7 @@ import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
+import com.example.emotion_storage.timecapsule.domain.TimeCapsuleOpenCost;
 import com.example.emotion_storage.timecapsule.dto.PaginationDto;
 import com.example.emotion_storage.timecapsule.dto.TimeCapsuleDto;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
@@ -12,7 +13,10 @@ import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDate
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
 import com.example.emotion_storage.timecapsule.repository.TimeCapsuleRepository;
+import com.example.emotion_storage.user.domain.User;
+import com.example.emotion_storage.user.repository.UserRepository;
 import java.sql.Date;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -38,6 +42,7 @@ public class TimeCapsuleService {
     private static final String SORT_BY_FAVORITE_TIME = "favoriteAt";
 
     private final TimeCapsuleRepository timeCapsuleRepository;
+    private final UserRepository userRepository;
 
     public ApiResponse<TimeCapsuleExistDateResponse> getMonthlyActiveDates(
             int year, int month, Long userId
@@ -200,5 +205,52 @@ public class TimeCapsuleService {
         log.info("타임캡슐 {}을 즐겨찾기 목록에서 해제합니다.", timeCapsule.getId());
         timeCapsule.setFavoriteAt(null);
         timeCapsule.setIsFavorite(false);
+    }
+
+    @Transactional
+    public ApiResponse<Void> openTimeCapsule(Long timeCapsuleId, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        TimeCapsule timeCapsule = findOwnedTimeCapsule(timeCapsuleId, userId);
+
+        LocalDateTime openDate = timeCapsule.getOpenedAt();
+        long days = calculateDaysToOpen(openDate);
+
+        if (days != 0) {
+            useKeysForOpening(user, days);
+        }
+
+        timeCapsule.setIsOpened(true);
+
+        return ApiResponse.success(204, SuccessMessage.OPEN_TIME_CAPSULE_SUCCESS.getMessage(), null);
+    }
+
+    private long calculateDaysToOpen(LocalDateTime openDate) {
+        log.info("타임캡슐을 열 때까지 필요한 날을 계산합니다.");
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if (now.isAfter(openDate)) {
+            return 0;
+        }
+
+        long seconds = Duration.between(now, openDate).getSeconds();
+        long secondsPerDay = 24 * 60 * 60;
+
+        return (seconds + secondsPerDay - 1) / secondsPerDay;
+    }
+
+    private void useKeysForOpening(User user, long days) {
+        log.info("타임캡슐을 열 때 필요한 열쇠의 개수를 계산합니다.");
+
+        long keys = TimeCapsuleOpenCost.getRequiredKeys(days);
+        long currentKeys = user.getKeyCount();
+        if (currentKeys < keys) {
+            throw new BaseException(ErrorCode.TIME_CAPSULE_KEY_NOT_ENOUGH);
+        }
+
+        user.updateKeyCount(keys);
+        log.info("열쇠 {}개를 사용했습니다. 남은 열쇠의 개수는 {}개입니다.", keys, user.getKeyCount());
     }
 }

@@ -94,7 +94,12 @@ public class TimeCapsule extends BaseTimeEntity {
     public void setIsFavorite(Boolean isFavorite) {
         this.isFavorite = isFavorite;
     }
+
     public void setIsOpened(Boolean isOpened) {
         this.isOpened = true;
+    }
+
+    public void updateMyMindNote(String myMindNote) {
+        this.myMindNote = myMindNote;
     }
 }

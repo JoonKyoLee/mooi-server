@@ -9,6 +9,7 @@ import com.example.emotion_storage.timecapsule.domain.TimeCapsuleOpenCost;
 import com.example.emotion_storage.timecapsule.dto.PaginationDto;
 import com.example.emotion_storage.timecapsule.dto.TimeCapsuleDto;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
+import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
@@ -252,5 +253,15 @@ public class TimeCapsuleService {
 
         user.updateKeyCount(keys);
         log.info("열쇠 {}개를 사용했습니다. 남은 열쇠의 개수는 {}개입니다.", keys, user.getKeyCount());
+    }
+
+    @Transactional
+    public ApiResponse<Void> updateTimeCapsuleNote(Long timeCapsuleId, TimeCapsuleNoteUpdateRequest request, Long userId) {
+        TimeCapsule timeCapsule = findOwnedTimeCapsule(timeCapsuleId, userId);
+
+        log.info("타임캡슐 {}의 내 마음 노트를 업데이트 합니다.", timeCapsuleId);
+        timeCapsule.updateMyMindNote(request.content());
+
+        return ApiResponse.success(204, SuccessMessage.UPDATE_TIME_CAPSULE_MIND_NOTE_SUCCESS.getMessage(), null);
     }
 }

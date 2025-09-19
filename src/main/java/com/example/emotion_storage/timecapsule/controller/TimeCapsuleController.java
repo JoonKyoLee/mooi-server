@@ -4,6 +4,7 @@ import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
+import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
@@ -90,6 +91,19 @@ public class TimeCapsuleController {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}가 타임캡슐 {} 열람을 요청했습니다.", userId, timeCapsuleId);
         ApiResponse<Void> response = timeCapsuleService.openTimeCapsule(timeCapsuleId, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("{capsuleId}/note")
+    @Operation(summary = "타임캡슐 마음노트 수정", description = "타임캡슐 마음노트를 수정합니다.")
+    public ResponseEntity<ApiResponse<Void>> updateTimeCapsuleNote(
+            @PathVariable("capsuleId") Long timeCapsuleId,
+            @RequestBody TimeCapsuleNoteUpdateRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}가 타임캡슐 {}의 마음노트 수정을 요청했습니다.", userId, timeCapsuleId);
+        ApiResponse<Void> response = timeCapsuleService.updateTimeCapsuleNote(timeCapsuleId, request, userId);
         return ResponseEntity.ok(response);
     }
 }

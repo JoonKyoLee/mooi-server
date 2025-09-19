@@ -102,4 +102,8 @@ public class TimeCapsule extends BaseTimeEntity {
     public void updateMyMindNote(String myMindNote) {
         this.myMindNote = myMindNote;
     }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
 }

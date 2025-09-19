@@ -264,4 +264,14 @@ public class TimeCapsuleService {
 
         return ApiResponse.success(204, SuccessMessage.UPDATE_TIME_CAPSULE_MIND_NOTE_SUCCESS.getMessage(), null);
     }
+
+    @Transactional
+    public ApiResponse<Void> deleteTimeCapsule(Long timeCapsuleId, Long userId) {
+        TimeCapsule timeCapsule = findOwnedTimeCapsule(timeCapsuleId, userId);
+
+        log.info("타임캡슐 {}를 삭제합니다.", timeCapsuleId);
+        timeCapsule.setDeletedAt(LocalDateTime.now());
+
+        return ApiResponse.success(204, SuccessMessage.DELETE_TIME_CAPSULE_SUCCESS.getMessage(), null);
+    }
 }

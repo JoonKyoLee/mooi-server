@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -104,6 +105,18 @@ public class TimeCapsuleController {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}가 타임캡슐 {}의 마음노트 수정을 요청했습니다.", userId, timeCapsuleId);
         ApiResponse<Void> response = timeCapsuleService.updateTimeCapsuleNote(timeCapsuleId, request, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("{capsuleId}")
+    @Operation(summary = "타임캡슐 삭제", description = "타임캡슐을 삭제합니다.")
+    public ResponseEntity<ApiResponse<Void>> deleteTimeCapsule(
+            @PathVariable("capsuleId") Long timeCapsuleId,
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}가 타임캡슐 {} 삭제를 요청했습니다.", userId, timeCapsuleId);
+        ApiResponse<Void> response = timeCapsuleService.deleteTimeCapsule(timeCapsuleId, userId);
         return ResponseEntity.ok(response);
     }
 }

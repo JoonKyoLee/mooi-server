@@ -39,6 +39,7 @@ public class TimeCapsuleService {
 
     private static final String ARRIVED_STATUS = "arrived";
     private static final String SORT_FAVORITE = "favorite";
+    private static final String SORT_BY_TEMP_SAVED = "isTempSave";
     private static final String SORT_BY_DEFAULT_TIME = "historyDate";
     private static final String SORT_BY_ARRIVED_TIME = "openedAt";
     private static final String SORT_BY_FAVORITE_TIME = "favoriteAt";
@@ -82,9 +83,8 @@ public class TimeCapsuleService {
             timeCapsuleList = getArrivedTimeCapsuleList(start, end, page, limit, userId, pageable);
         } else {
             log.info("사용자 {}의 {}-{}의 타임캡슐 목록을 조회합니다.", userId, startDate, endDate);
-            pageable = pageDesc(page, limit, SORT_BY_DEFAULT_TIME);
             LocalDateTime end = endDate.plusDays(1).atStartOfDay();
-            timeCapsuleList = getOneDayTimeCapsuleList(start, end, page, limit, userId, pageable);
+            timeCapsuleList = getOneDayTimeCapsuleList(start, end, page, limit, userId);
         }
 
         return ApiResponse.success(SuccessMessage.GET_TIME_CAPSULE_LIST_SUCCESS.getMessage(), timeCapsuleList);
@@ -135,8 +135,13 @@ public class TimeCapsuleService {
     }
 
     private TimeCapsuleListResponse getOneDayTimeCapsuleList(
-            LocalDateTime start, LocalDateTime end, int page, int limit, Long userId, Pageable pageable
+            LocalDateTime start, LocalDateTime end, int page, int limit, Long userId
     ) {
+        int zeroBasedPage = Math.max(0, page - 1);
+        Pageable pageable = PageRequest.of(
+                zeroBasedPage, limit,
+                Sort.by(SORT_BY_TEMP_SAVED).descending().and(Sort.by(SORT_BY_DEFAULT_TIME).descending())
+        );
         Page<TimeCapsule> timeCapsules =
                 timeCapsuleRepository.findByUser_IdAndDeletedAtIsNullAndHistoryDateBetween(
                         userId, start, end, pageable

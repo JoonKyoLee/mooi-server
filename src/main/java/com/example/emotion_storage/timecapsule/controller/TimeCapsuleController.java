@@ -1,7 +1,6 @@
 package com.example.emotion_storage.timecapsule.controller;
 
 import com.example.emotion_storage.global.api.ApiResponse;
-import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;

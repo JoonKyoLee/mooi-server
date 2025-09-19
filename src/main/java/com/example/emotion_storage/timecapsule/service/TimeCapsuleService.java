@@ -10,6 +10,7 @@ import com.example.emotion_storage.timecapsule.dto.PaginationDto;
 import com.example.emotion_storage.timecapsule.dto.TimeCapsuleDto;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;
+import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
@@ -175,7 +176,7 @@ public class TimeCapsuleService {
 
     private List<TimeCapsuleDto> makeTimeCapsuleListFormat(Page<TimeCapsule> timeCapsules) {
         return timeCapsules.getContent().stream()
-                .map(TimeCapsuleDto::of)
+                .map(TimeCapsuleDto::from)
                 .toList();
     }
 
@@ -207,6 +208,13 @@ public class TimeCapsuleService {
         log.info("타임캡슐 {}을 즐겨찾기 목록에서 해제합니다.", timeCapsule.getId());
         timeCapsule.setFavoriteAt(null);
         timeCapsule.setIsFavorite(false);
+    }
+
+    public ApiResponse<TimeCapsuleDetailResponse> getTimeCapsuleDetail(Long timeCapsuleId, Long userId) {
+        TimeCapsule timeCapsule = findOwnedTimeCapsule(timeCapsuleId, userId);
+        log.info("타임캡슐 {}에 대한 상세 정보를 조회합니다.", timeCapsuleId);
+        TimeCapsuleDetailResponse response = TimeCapsuleDetailResponse.from(timeCapsule);
+        return ApiResponse.success(SuccessMessage.GET_TIME_CAPSULE_DETAIL_SUCCESS.getMessage(), response);
     }
 
     @Transactional

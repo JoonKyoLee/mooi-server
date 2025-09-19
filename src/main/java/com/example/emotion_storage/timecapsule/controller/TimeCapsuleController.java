@@ -5,6 +5,7 @@ import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;
+import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
@@ -92,6 +93,18 @@ public class TimeCapsuleController {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}가 타임캡슐 {} 열람을 요청했습니다.", userId, timeCapsuleId);
         ApiResponse<Void> response = timeCapsuleService.openTimeCapsule(timeCapsuleId, userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("{capsuleId}")
+    @Operation(summary = "타임캡슐 상세 조회", description = "타임캡슐의 상세 정보를 조회합니다.")
+    public ResponseEntity<ApiResponse<TimeCapsuleDetailResponse>> getTimeCapsuleDetail(
+            @PathVariable("capsuleId") Long timeCapsuleId,
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}가 타임캡슐 {}의 상세 조회를 요청했습니다.", userId, timeCapsuleId);
+        ApiResponse<TimeCapsuleDetailResponse> response = timeCapsuleService.getTimeCapsuleDetail(timeCapsuleId, userId);
         return ResponseEntity.ok(response);
     }
 

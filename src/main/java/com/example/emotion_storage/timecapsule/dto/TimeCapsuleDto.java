@@ -15,10 +15,10 @@ public record TimeCapsuleDto(
         Boolean isFavorite,
         List<String> emotions,
         String title,
-        String timeCapsuleStatus
+        String status
 ) {
-    public static TimeCapsuleDto of(TimeCapsule entity) {
-        TimeCapsuleStatus status = TimeCapsuleStatus.getStatus(entity);
+    public static TimeCapsuleDto from(TimeCapsule entity) {
+        TimeCapsuleStatus timeCapsuleStatus = TimeCapsuleStatus.getStatus(entity);
 
         return new TimeCapsuleDto(
                 entity.getId(),
@@ -32,7 +32,7 @@ public record TimeCapsuleDto(
                         .map(AnalyzedEmotion::getAnalyzedEmotion)
                         .toList(),
                 entity.getOneLineSummary(),
-                status.getStatusMessage()
+                timeCapsuleStatus.getStatusMessage()
         );
     }
 }

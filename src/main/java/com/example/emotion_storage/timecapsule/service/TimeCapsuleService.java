@@ -251,7 +251,7 @@ public class TimeCapsuleService {
             throw new BaseException(ErrorCode.TIME_CAPSULE_KEY_NOT_ENOUGH);
         }
 
-        user.updateKeyCount(keys);
+        user.useKeys(keys);
         log.info("열쇠 {}개를 사용했습니다. 남은 열쇠의 개수는 {}개입니다.", keys, user.getKeyCount());
     }
 

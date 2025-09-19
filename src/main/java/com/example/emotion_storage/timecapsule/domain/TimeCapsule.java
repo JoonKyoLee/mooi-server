@@ -43,7 +43,7 @@ public class TimeCapsule extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String dialogueSummary;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT")
     private String myMindNote;
 
     private LocalDateTime favoriteAt;

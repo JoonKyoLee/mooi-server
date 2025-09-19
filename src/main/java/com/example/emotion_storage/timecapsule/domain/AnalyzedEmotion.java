@@ -24,6 +24,9 @@ public class AnalyzedEmotion extends BaseTimeEntity {
     @Column(name = "analyzed_emotion", columnDefinition = "TEXT", nullable = false)
     private String analyzedEmotion;
 
+    @Column(name = "percentage", nullable = false)
+    private int percentage;
+
     public void setTimeCapsule(TimeCapsule timeCapsule) {
         this.timeCapsule = timeCapsule;
     }

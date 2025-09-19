@@ -129,7 +129,8 @@ public class TimeCapsuleService {
     }
 
     private Pageable pageDesc(int page, int limit, String sortField) {
-        return PageRequest.of(page, limit, Sort.by(sortField).descending());
+        int zeroBasedPage = Math.max(0, page - 1);
+        return PageRequest.of(zeroBasedPage, limit, Sort.by(sortField).descending());
     }
 
     private TimeCapsuleListResponse getOneDayTimeCapsuleList(

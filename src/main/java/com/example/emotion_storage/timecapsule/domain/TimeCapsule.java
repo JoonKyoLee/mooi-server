@@ -96,7 +96,7 @@ public class TimeCapsule extends BaseTimeEntity {
     }
 
     public void setIsOpened(Boolean isOpened) {
-        this.isOpened = true;
+        this.isOpened = isOpened;
     }
 
     public void updateMyMindNote(String myMindNote) {

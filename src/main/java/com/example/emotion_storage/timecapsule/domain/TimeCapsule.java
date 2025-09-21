@@ -87,11 +87,11 @@ public class TimeCapsule extends BaseTimeEntity {
         this.report = report;
     }
 
-    public void setFavoriteAt(LocalDateTime favoriteAt) {
+    public void updateFavoriteTimestamp(LocalDateTime favoriteAt) {
         this.favoriteAt = favoriteAt;
     }
 
-    public void setIsFavorite(Boolean isFavorite) {
+    public void changeFavoriteStatus(Boolean isFavorite) {
         this.isFavorite = isFavorite;
     }
 
@@ -105,5 +105,23 @@ public class TimeCapsule extends BaseTimeEntity {
 
     public void setDeletedAt(LocalDateTime deletedAt) {
         this.deletedAt = deletedAt;
+    }
+
+    public void markFavorite() {
+        markAsFavoriteAt();
+        changeFavoriteStatus(true);
+    }
+
+    public void unmarkFavorite() {
+        unmarkAsFavoriteAt();
+        changeFavoriteStatus(false);
+    }
+
+    private void markAsFavoriteAt() {
+        this.favoriteAt = LocalDateTime.now();
+    }
+
+    private void unmarkAsFavoriteAt() {
+        this.favoriteAt = null;
     }
 }

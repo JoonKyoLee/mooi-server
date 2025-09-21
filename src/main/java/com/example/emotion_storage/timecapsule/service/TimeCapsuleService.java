@@ -100,10 +100,12 @@ public class TimeCapsuleService {
 
         if (request.addFavorite()) {
             validateFavoriteLimit(userId);
-            addFavorite(timeCapsule);
+            log.info("타임캡슐 {}을 즐겨찾기 목록에 추가합니다.", timeCapsule.getId());
+            timeCapsule.markFavorite();
 
         } else {
-            deleteFavorite(timeCapsule);
+            log.info("타임캡슐 {}을 즐겨찾기 목록에서 해제합니다.", timeCapsule.getId());
+            timeCapsule.unmarkFavorite();
         }
 
         return new TimeCapsuleFavoriteResponse(
@@ -185,18 +187,6 @@ public class TimeCapsuleService {
         if (favoriteCnt >= 30) {
             throw new BaseException(ErrorCode.TIME_CAPSULE_FAVORITE_LIMIT_EXCEEDED);
         }
-    }
-
-    private void addFavorite(TimeCapsule timeCapsule) {
-        log.info("타임캡슐 {}을 즐겨찾기 목록에 추가합니다.", timeCapsule.getId());
-        timeCapsule.setFavoriteAt(LocalDateTime.now());
-        timeCapsule.setIsFavorite(true);
-    }
-
-    private void deleteFavorite(TimeCapsule timeCapsule) {
-        log.info("타임캡슐 {}을 즐겨찾기 목록에서 해제합니다.", timeCapsule.getId());
-        timeCapsule.setFavoriteAt(null);
-        timeCapsule.setIsFavorite(false);
     }
 
     public TimeCapsuleDetailResponse getTimeCapsuleDetail(Long timeCapsuleId, Long userId) {

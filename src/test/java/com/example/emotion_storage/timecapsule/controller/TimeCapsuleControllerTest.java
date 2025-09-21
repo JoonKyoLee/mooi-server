@@ -203,4 +203,143 @@ class TimeCapsuleControllerTest {
                 .andExpect(jsonPath("$.data.timeCapsules[1].openAt", notNullValue()))
                 .andExpect(jsonPath("$.data.timeCapsules[1].title").value("오늘 아침에 ..."));
     }
+
+    @Test
+    void 최신_순으로_즐겨찾기_타임캡슐_리스트를_반환한다() throws Exception {
+        // given
+        int page = 1;
+        int limit = 15;
+        String sort = "all";
+
+        TimeCapsuleListResponse response =
+                new TimeCapsuleListResponse(
+                        new PaginationDto(
+                                1, 15, 1
+                        ),
+                        2,
+                        List.of(
+                                new TimeCapsuleDto(
+                                        2L,
+                                        LocalDateTime.now().minusDays(5),
+                                        LocalDateTime.now().minusDays(5),
+                                        LocalDateTime.now().minusDays(5),
+                                        LocalDateTime.now().minusDays(3),
+                                        true,
+                                        List.of("고마움", "안정감"),
+                                        "오늘 점심에 ...",
+                                        "도착"
+                                ),
+                                new TimeCapsuleDto(
+                                        1L,
+                                        LocalDateTime.now().minusDays(10),
+                                        LocalDateTime.now().minusDays(10),
+                                        LocalDateTime.now().minusDays(10),
+                                        LocalDateTime.now().minusDays(7),
+                                        true,
+                                        List.of("행복", "즐거움"),
+                                        "오늘 아침에 ...",
+                                        "도착"
+                                )
+                        )
+                );
+
+        given(timeCapsuleService.fetchFavoriteTimeCapsules(
+                eq(page), eq(limit), eq(sort), anyLong()
+        )).willReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/time-capsule/favorites")
+                        .param("page", String.valueOf(page))
+                        .param("limit", String.valueOf(limit))
+                        .param("sort", "all"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.GET_FAVORITE_TIME_CAPSULE_LIST_SUCCESS.getMessage()))
+                // 페이징
+                .andExpect(jsonPath("$.data.pagination.page").value(page))
+                .andExpect(jsonPath("$.data.pagination.limit").value(limit))
+                .andExpect(jsonPath("$.data.pagination.totalPage").value(1))
+                // 총 개수/목록 크기
+                .andExpect(jsonPath("$.data.totalCapsules").value(2))
+                .andExpect(jsonPath("$.data.timeCapsules.length()").value(2))
+                // 도착한 타임캡슐
+                .andExpect(jsonPath("$.data.timeCapsules[0].id").value(2L))
+                .andExpect(jsonPath("$.data.timeCapsules[0].status").value("도착"))
+                .andExpect(jsonPath("$.data.timeCapsules[0].openAt", notNullValue()))
+                .andExpect(jsonPath("$.data.timeCapsules[0].title").value("오늘 점심에 ..."))
+                .andExpect(jsonPath("$.data.timeCapsules[1].id").value(1L))
+                .andExpect(jsonPath("$.data.timeCapsules[1].status").value("도착"))
+                .andExpect(jsonPath("$.data.timeCapsules[1].openAt", notNullValue()))
+                .andExpect(jsonPath("$.data.timeCapsules[1].title").value("오늘 아침에 ..."));
+    }
+
+    @Test
+    void 즐겨찾기한_순으로_즐겨찾기_타임캡슐_리스트를_반환한다() throws Exception {
+        // given
+        int page = 1;
+        int limit = 15;
+        String sort = "favorite";
+
+        TimeCapsuleListResponse response =
+                new TimeCapsuleListResponse(
+                        new PaginationDto(
+                                1, 15, 1
+                        ),
+                        2,
+                        List.of(
+                                new TimeCapsuleDto(
+                                        2L,
+                                        LocalDateTime.now().minusDays(5),
+                                        LocalDateTime.now().minusDays(5),
+                                        LocalDateTime.now().minusDays(5),
+                                        LocalDateTime.now().minusDays(3),
+                                        true,
+                                        List.of("고마움", "안정감"),
+                                        "나중에 즐겨찾기한 타임캡슐",
+                                        "도착"
+                                ),
+                                new TimeCapsuleDto(
+                                        1L,
+                                        LocalDateTime.now().minusDays(10),
+                                        LocalDateTime.now().minusDays(10),
+                                        LocalDateTime.now().minusDays(10),
+                                        LocalDateTime.now().minusDays(7),
+                                        true,
+                                        List.of("행복", "즐거움"),
+                                        "먼저 즐겨찾기한 타임캡슐",
+                                        "도착"
+                                )
+                        )
+                );
+
+        given(timeCapsuleService.fetchFavoriteTimeCapsules(
+                eq(page), eq(limit), eq(sort), anyLong()
+        )).willReturn(response);
+
+
+        // when & then
+        mockMvc.perform(get("/api/v1/time-capsule/favorites")
+                        .param("page", String.valueOf(page))
+                        .param("limit", String.valueOf(limit))
+                        .param("sort", "favorite"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.GET_FAVORITE_TIME_CAPSULE_LIST_SUCCESS.getMessage()))
+                // 페이징
+                .andExpect(jsonPath("$.data.pagination.page").value(page))
+                .andExpect(jsonPath("$.data.pagination.limit").value(limit))
+                .andExpect(jsonPath("$.data.pagination.totalPage").value(1))
+                // 총 개수/목록 크기
+                .andExpect(jsonPath("$.data.totalCapsules").value(2))
+                .andExpect(jsonPath("$.data.timeCapsules.length()").value(2))
+                // 도착한 타임캡슐
+                .andExpect(jsonPath("$.data.timeCapsules[0].id").value(2L))
+                .andExpect(jsonPath("$.data.timeCapsules[0].status").value("도착"))
+                .andExpect(jsonPath("$.data.timeCapsules[0].openAt", notNullValue()))
+                .andExpect(jsonPath("$.data.timeCapsules[0].title").value("나중에 즐겨찾기한 타임캡슐"))
+                .andExpect(jsonPath("$.data.timeCapsules[1].id").value(1L))
+                .andExpect(jsonPath("$.data.timeCapsules[1].status").value("도착"))
+                .andExpect(jsonPath("$.data.timeCapsules[1].openAt", notNullValue()))
+                .andExpect(jsonPath("$.data.timeCapsules[1].title").value("먼저 즐겨찾기한 타임캡슐"));
+    }
 }

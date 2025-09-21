@@ -1,5 +1,7 @@
 package com.example.emotion_storage.timecapsule.domain;
 
+import com.example.emotion_storage.global.exception.BaseException;
+import com.example.emotion_storage.global.exception.ErrorCode;
 import java.util.Arrays;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,6 @@ public enum TimeCapsuleOpenCost {
                 .filter(policy -> policy.minDays <= days && days <= policy.maxDays)
                 .findFirst()
                 .map(TimeCapsuleOpenCost::getRequiredKeys)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 날짜입니다."));
+                .orElseThrow(() -> new BaseException(ErrorCode.TIME_CAPSULE_OPEN_RULE_NOT_FOUND));
     }
 }

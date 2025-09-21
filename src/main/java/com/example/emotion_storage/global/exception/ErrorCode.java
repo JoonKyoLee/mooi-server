@@ -27,7 +27,8 @@ public enum ErrorCode {
     TIME_CAPSULE_NOT_FOUND(HttpStatus.NOT_FOUND, "타임캡슐을 찾을 수 없습니다."),
     TIME_CAPSULE_IS_NOT_OWNED(HttpStatus.FORBIDDEN, "사용자의 타임캡슐이 아닙니다."),
     TIME_CAPSULE_FAVORITE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "즐겨찾기는 최대 30개까지만 가능합니다."),
-    TIME_CAPSULE_KEY_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "열쇠가 부족하여 타임캡슐을 열 수 없습니다.")
+    TIME_CAPSULE_KEY_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "열쇠가 부족하여 타임캡슐을 열 수 없습니다."),
+    TIME_CAPSULE_OPEN_RULE_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "열람 비용 규칙이 정의되어 있지 않습니다."),
     ;
 
     private final HttpStatus httpStatus;

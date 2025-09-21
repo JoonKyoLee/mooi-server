@@ -31,6 +31,8 @@ public enum ErrorCode {
     TIME_CAPSULE_OPEN_RULE_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "열람 비용 규칙이 정의되어 있지 않습니다."),
     
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "리포트를 찾을 수 없습니다."),
+    DAILY_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "일일리포트 조회 실패 - 존재하지 않음"),
+    INVALID_DATE_FORMAT(HttpStatus.BAD_REQUEST, "잘못된 날짜 형식입니다."),
     ;
 
     private final HttpStatus httpStatus;

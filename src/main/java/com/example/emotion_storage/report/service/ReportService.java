@@ -10,6 +10,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -18,21 +22,32 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
 
-    public DailyReportDetailResponse getDailyReportDetail(Long reportId) {
-        log.info("일일리포트 상세 조회 요청 - reportId: {}", reportId);
+    public DailyReportDetailResponse getDailyReportDetail(Long userId, String dateString) {
+        log.info("일일리포트 상세 조회 요청 - userId: {}, date: {}", userId, dateString);
         
-        Report report = findReportWithDetails(reportId);
+        LocalDate historyDate = parseDate(dateString);
+        Report report = findReportByUserIdAndDate(userId, historyDate);
         
         DailyReportDetailResponse response = DailyReportDetailResponse.from(report);
         
-        log.info("일일리포트 상세 조회 완료 - reportId: {}", reportId);
+        log.info("일일리포트 상세 조회 완료 - userId: {}, date: {}", userId, dateString);
         return response;
     }
 
-    private Report findReportWithDetails(Long reportId) {
-        return reportRepository.findById(reportId)
+    private LocalDate parseDate(String dateString) {
+        try {
+            return LocalDate.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        } catch (DateTimeParseException e) {
+            log.warn("잘못된 날짜 형식 - date: {}", dateString);
+            throw new BaseException(ErrorCode.INVALID_DATE_FORMAT);
+        }
+    }
+
+    private Report findReportByUserIdAndDate(Long userId, LocalDate historyDate) {
+
+        return reportRepository.findByUserIdAndHistoryDate(userId, historyDate)
                 .orElseThrow(() -> {
-                    log.warn("존재하지 않는 리포트 조회 시도 - reportId: {}", reportId);
+                    log.warn("존재하지 않는 일일리포트 조회 시도 - userId: {}, historyDate: {}", userId, historyDate);
                     return new BaseException(ErrorCode.REPORT_NOT_FOUND);
                 });
     }

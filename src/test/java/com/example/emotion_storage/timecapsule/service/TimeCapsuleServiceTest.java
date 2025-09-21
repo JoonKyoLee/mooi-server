@@ -9,6 +9,7 @@ import com.example.emotion_storage.report.domain.Report;
 import com.example.emotion_storage.report.repository.ReportRepository;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
+import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
@@ -335,5 +336,29 @@ class TimeCapsuleServiceTest {
                 .hasMessageContaining(ErrorCode.TIME_CAPSULE_FAVORITE_LIMIT_EXCEEDED.getMessage());
 
         assertThat(timeCapsuleRepository.countByUser_IdAndIsFavoriteTrue(userId)).isEqualTo(30);
+    }
+
+    @Test
+    void 타임캡슐_상세_조회에_성공한다() {
+        // given
+        TimeCapsule target = timeCapsuleRepository.findAll().stream()
+                .filter(tc -> Boolean.TRUE.equals(tc.getIsFavorite()))
+                .findFirst()
+                .orElseThrow();
+
+        // when
+        TimeCapsuleDetailResponse response = timeCapsuleService.getTimeCapsuleDetail(target.getId(), userId);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(target.getId());
+        assertThat(response.title()).isEqualTo(target.getOneLineSummary());
+        assertThat(response.summary()).isEqualTo(target.getDialogueSummary());
+        assertThat(response.note()).isEqualTo(target.getMyMindNote());
+        assertThat(response.isFavorite()).isTrue();
+        assertThat(response.emotionDetails()).isEmpty();
+        assertThat(response.comments()).isEmpty();
+        assertThat(response.status()).isEqualTo("도착");
+        assertThat(response.openAt()).isEqualTo(target.getOpenedAt());
     }
 }

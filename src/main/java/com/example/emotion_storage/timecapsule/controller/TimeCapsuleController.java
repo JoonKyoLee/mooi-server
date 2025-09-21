@@ -45,7 +45,7 @@ public class TimeCapsuleController {
         log.info("사용자 {}의 {}년 {}월의 타임캡슐 목록 조회를 요청받았습니다.", userId, year, month);
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessMessage.GET_MONTHLY_TIME_CAPSULE_DATES_SUCCESS.getMessage(),
-                timeCapsuleService.getMonthlyActiveDates(year, month, userId)
+                timeCapsuleService.getActiveDatesForMonth(year, month, userId)
         ));
     }
 
@@ -60,7 +60,7 @@ public class TimeCapsuleController {
         log.info("사용자 {}의 타임캡슐 목록 조회를 요청받았습니다.", userId);
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessMessage.GET_TIME_CAPSULE_LIST_SUCCESS.getMessage(),
-                timeCapsuleService.getTimeCapsuleList(startDate, endDate, page, limit, status, userId)
+                timeCapsuleService.fetchTimeCapsules(startDate, endDate, page, limit, status, userId)
         ));
     }
 
@@ -73,7 +73,7 @@ public class TimeCapsuleController {
         log.info("사용자 {}의 즐겨찾기 타임캡슐 목록 조회를 요청받았습니다.", userId);
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessMessage.GET_FAVORITE_TIME_CAPSULE_LIST_SUCCESS.getMessage(),
-                timeCapsuleService.getFavoriteTimeCapsules(page, limit, sort, userId)
+                timeCapsuleService.fetchFavoriteTimeCapsules(page, limit, sort, userId)
         ));
     }
 
@@ -135,7 +135,7 @@ public class TimeCapsuleController {
     ) {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}가 타임캡슐 {}의 마음노트 수정을 요청했습니다.", userId, timeCapsuleId);
-        timeCapsuleService.updateTimeCapsuleNote(timeCapsuleId, request, userId);
+        timeCapsuleService.updateMindNote(timeCapsuleId, request, userId);
         return ResponseEntity.ok(ApiResponse.success(
                 HttpStatus.NO_CONTENT.value(),
                 SuccessMessage.UPDATE_TIME_CAPSULE_MIND_NOTE_SUCCESS.getMessage(),

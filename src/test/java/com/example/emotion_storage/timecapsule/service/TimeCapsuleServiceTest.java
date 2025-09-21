@@ -1,11 +1,16 @@
 package com.example.emotion_storage.timecapsule.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.emotion_storage.global.exception.BaseException;
+import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.report.domain.Report;
 import com.example.emotion_storage.report.repository.ReportRepository;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
+import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
+import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
 import com.example.emotion_storage.timecapsule.repository.TimeCapsuleRepository;
 import com.example.emotion_storage.user.domain.Gender;
@@ -230,5 +235,105 @@ class TimeCapsuleServiceTest {
 
         assertThat(response.timeCapsules().get(0).title()).isEqualTo("한 줄 요약 2");
         assertThat(response.timeCapsules().get(9).title()).isEqualTo("한 줄 요약 20");
+    }
+
+    @Test
+    void 즐겨찾기_추가에_성공한다() {
+        // given
+        TimeCapsule target = timeCapsuleRepository.findAll().stream()
+                .filter(tc -> Boolean.FALSE.equals(tc.getIsFavorite()))
+                .filter(tc -> Boolean.FALSE.equals(tc.getIsTempSave()))
+                .findFirst()
+                .orElseThrow();
+
+        long beforeFavoritesCount = timeCapsuleRepository.countByUser_IdAndIsFavoriteTrue(userId);
+
+        // when
+        TimeCapsuleFavoriteResponse response =
+                timeCapsuleService.setFavorite(target.getId(), new TimeCapsuleFavoriteRequest(true), userId);
+
+        // then
+        assertThat(response.isFavorite()).isTrue();
+        assertThat(response.favoriteAt()).isNotNull();
+        assertThat(response.favoritesCnt()).isEqualTo(beforeFavoritesCount + 1);
+
+        TimeCapsule reloaded = timeCapsuleRepository.findById(target.getId()).orElseThrow();
+        assertThat(reloaded.getIsFavorite()).isTrue();
+        assertThat(reloaded.getFavoriteAt()).isNotNull();
+    }
+
+    @Test
+    void 즐겨찾기_해제에_성공한다() {
+        // given
+        TimeCapsule target = timeCapsuleRepository.findAll().stream()
+                .filter(tc -> Boolean.TRUE.equals(tc.getIsFavorite()))
+                .findFirst()
+                .orElseThrow();
+
+        long beforeFavoritesCount = timeCapsuleRepository.countByUser_IdAndIsFavoriteTrue(userId);
+
+        // when
+        TimeCapsuleFavoriteResponse response =
+                timeCapsuleService.setFavorite(target.getId(), new TimeCapsuleFavoriteRequest(false), userId);
+
+        // then
+        assertThat(response.isFavorite()).isFalse();
+        assertThat(response.favoriteAt()).isNull();
+        assertThat(response.favoritesCnt()).isEqualTo(beforeFavoritesCount - 1);
+
+        TimeCapsule reloaded = timeCapsuleRepository.findById(target.getId()).orElseThrow();
+        assertThat(reloaded.getIsFavorite()).isFalse();
+        assertThat(reloaded.getFavoriteAt()).isNull();
+    }
+
+    @Test
+    void 즐겨찾기_상한_초과시_예외가_발생한다() {
+        //given
+        // 타임캡슐 즐겨찾기가 30개일 때까지 추가
+        while (timeCapsuleRepository.countByUser_IdAndIsFavoriteTrue(userId) < 30) {
+            TimeCapsule toFav = timeCapsuleRepository.findAll().stream()
+                    .filter(tc -> Boolean.FALSE.equals(tc.getIsFavorite()))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        // 부족하면 새 캡슐 만들어서 채우기
+                        Report report = reportRepository.findAll().get(0);
+                        return timeCapsuleRepository.save(TimeCapsule.builder()
+                                .user(userRepository.findById(userId).orElseThrow())
+                                .report(report)
+                                .chatroomId(9999L + System.nanoTime())
+                                .historyDate(LocalDateTime.now())
+                                .oneLineSummary("상한 채우기")
+                                .dialogueSummary("상한 채우기")
+                                .myMindNote("상한 채우기")
+                                .isOpened(false)
+                                .isTempSave(false)
+                                .isFavorite(false)
+                                .build());
+                    });
+
+            timeCapsuleService.setFavorite(toFav.getId(), new TimeCapsuleFavoriteRequest(true), userId);
+        }
+
+        // 31번째 즐겨찾기를 시도할 타임캡슐
+        Report report = reportRepository.findAll().get(0);
+        TimeCapsule newOne = timeCapsuleRepository.save(TimeCapsule.builder()
+                .user(userRepository.findById(userId).orElseThrow())
+                .report(report)
+                .chatroomId(123456L)
+                .historyDate(LocalDateTime.now())
+                .oneLineSummary("상한 초과 대상")
+                .dialogueSummary("상한 초과 대상")
+                .myMindNote("상한 초과 대상")
+                .isOpened(false)
+                .isTempSave(false)
+                .isFavorite(false)
+                .build());
+
+        // when & then
+        assertThatThrownBy(() -> timeCapsuleService.setFavorite(newOne.getId(), new TimeCapsuleFavoriteRequest(true), userId))
+                .isInstanceOf(BaseException.class)
+                .hasMessageContaining(ErrorCode.TIME_CAPSULE_FAVORITE_LIMIT_EXCEEDED.getMessage());
+
+        assertThat(timeCapsuleRepository.countByUser_IdAndIsFavoriteTrue(userId)).isEqualTo(30);
     }
 }

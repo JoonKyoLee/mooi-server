@@ -292,8 +292,8 @@ class TimeCapsuleServiceTest {
         //given
         // 타임캡슐 즐겨찾기가 30개일 때까지 추가
         while (timeCapsuleRepository.countByUser_IdAndIsFavoriteTrue(userId) < 30) {
-            TimeCapsule toFav = timeCapsuleRepository.findAll().stream()
-                    .filter(tc -> Boolean.FALSE.equals(tc.getIsFavorite()))
+            TimeCapsule toFavorite = timeCapsuleRepository.findAll().stream()
+                    .filter(timeCapsule -> Boolean.FALSE.equals(timeCapsule.getIsFavorite()))
                     .findFirst()
                     .orElseGet(() -> {
                         // 부족하면 새 캡슐 만들어서 채우기
@@ -312,7 +312,7 @@ class TimeCapsuleServiceTest {
                                 .build());
                     });
 
-            timeCapsuleService.setFavorite(toFav.getId(), new TimeCapsuleFavoriteRequest(true), userId);
+            timeCapsuleService.setFavorite(toFavorite.getId(), new TimeCapsuleFavoriteRequest(true), userId);
         }
 
         // 31번째 즐겨찾기를 시도할 타임캡슐
@@ -360,5 +360,62 @@ class TimeCapsuleServiceTest {
         assertThat(response.comments()).isEmpty();
         assertThat(response.status()).isEqualTo("도착");
         assertThat(response.openAt()).isEqualTo(target.getOpenedAt());
+    }
+
+    @Test
+    void 도착한_타임캡슐을_열림_상태로_전환한다() {
+        // given
+        TimeCapsule arrived = timeCapsuleRepository.findAll().stream()
+                .filter(timeCapsule -> timeCapsule.getOpenedAt() != null && timeCapsule.getOpenedAt().isBefore(LocalDateTime.now()))
+                .findFirst()
+                .orElseThrow();
+
+        long beforeKeys = userRepository.findById(userId).orElseThrow().getKeyCount();
+
+        // when
+        timeCapsuleService.openTimeCapsule(arrived.getId(), userId);
+
+        // then
+        long afterKeys = userRepository.findById(userId).orElseThrow().getKeyCount();
+        assertThat(afterKeys).isEqualTo(beforeKeys);
+
+        TimeCapsule reloaded = timeCapsuleRepository.findById(arrived.getId()).orElseThrow();
+        assertThat(reloaded.getIsOpened()).isTrue();
+    }
+
+    @Test
+    void 잠김_상태의_타임캡슐을_열_때는_열쇠가_소모된다() {
+        // given
+        User user = userRepository.findById(userId).orElseThrow();
+        Report report = reportRepository.findAll().get(0);
+
+        LocalDateTime futureOpenAt = LocalDateTime.now().plusDays(8); // 8 ~ 30일 → 3개 소모 필요
+        TimeCapsule futureTimeCapsule = timeCapsuleRepository.save(
+                TimeCapsule.builder()
+                        .user(user)
+                        .report(report)
+                        .chatroomId(7777L)
+                        .historyDate(LocalDateTime.now())
+                        .openedAt(futureOpenAt)
+                        .oneLineSummary("미래 캡슐")
+                        .dialogueSummary("미래 캡슐")
+                        .myMindNote("미래 캡슐")
+                        .isOpened(false)
+                        .isTempSave(false)
+                        .isFavorite(false)
+                        .build()
+        );
+
+        long beforeKeys = user.getKeyCount();
+
+        // when
+        timeCapsuleService.openTimeCapsule(futureTimeCapsule.getId(), userId);
+
+        // then
+        long afterKeys = userRepository.findById(userId).orElseThrow().getKeyCount();
+        assertThat(afterKeys).isEqualTo(beforeKeys - 3);
+
+        TimeCapsule reloaded = timeCapsuleRepository.findById(futureTimeCapsule.getId()).orElseThrow();
+        assertThat(reloaded.getIsOpened()).isTrue();
     }
 }

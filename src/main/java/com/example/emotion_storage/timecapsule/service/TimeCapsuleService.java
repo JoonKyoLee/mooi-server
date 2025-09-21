@@ -41,6 +41,8 @@ public class TimeCapsuleService {
     private static final String SORT_BY_DEFAULT_TIME = "historyDate";
     private static final String SORT_BY_ARRIVED_TIME = "openedAt";
     private static final String SORT_BY_FAVORITE_TIME = "favoriteAt";
+    private static final int TIME_CAPSULE_FAVORITES_LIMIT = 30;
+    private static final long SECONDS_PER_DAY = 24 * 60 * 60;
 
     private final TimeCapsuleRepository timeCapsuleRepository;
     private final UserRepository userRepository;
@@ -184,7 +186,7 @@ public class TimeCapsuleService {
     private void validateFavoriteLimit(Long userId) {
         log.info("즐겨찾기된 타임캡슐 개수를 조회합니다.");
         int favoriteCnt = timeCapsuleRepository.countByUser_IdAndIsFavoriteTrue(userId);
-        if (favoriteCnt >= 30) {
+        if (favoriteCnt >= TIME_CAPSULE_FAVORITES_LIMIT) {
             throw new BaseException(ErrorCode.TIME_CAPSULE_FAVORITE_LIMIT_EXCEEDED);
         }
     }
@@ -222,9 +224,7 @@ public class TimeCapsuleService {
         }
 
         long seconds = Duration.between(now, openDate).getSeconds();
-        long secondsPerDay = 24 * 60 * 60;
-
-        return (seconds + secondsPerDay - 1) / secondsPerDay;
+        return (seconds + SECONDS_PER_DAY - 1) / SECONDS_PER_DAY;
     }
 
     private void useKeysForOpening(User user, long days) {

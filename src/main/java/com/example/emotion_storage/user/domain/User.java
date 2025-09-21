@@ -1,6 +1,8 @@
 package com.example.emotion_storage.user.domain;
 
 import com.example.emotion_storage.global.entity.BaseTimeEntity;
+import com.example.emotion_storage.global.exception.BaseException;
+import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.notification.domain.Notification;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
 import jakarta.persistence.CascadeType;
@@ -112,7 +114,10 @@ public class User extends BaseTimeEntity {
         notification.setUser(null);
     }
 
-    public void useKeys(Long keyCount) {
-        this.keyCount -= keyCount;
+    public void consumeKeys(Long requiredKeys) {
+        if (this.keyCount < requiredKeys) {
+            throw new BaseException(ErrorCode.TIME_CAPSULE_KEY_NOT_ENOUGH);
+        }
+        this.keyCount -= requiredKeys;
     }
 }

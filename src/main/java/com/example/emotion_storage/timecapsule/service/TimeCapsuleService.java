@@ -229,15 +229,9 @@ public class TimeCapsuleService {
 
     private void useKeysForOpening(User user, long days) {
         log.info("타임캡슐을 열 때 필요한 열쇠의 개수를 계산합니다.");
-
-        long keys = TimeCapsuleOpenCost.getRequiredKeys(days);
-        long currentKeys = user.getKeyCount();
-        if (currentKeys < keys) {
-            throw new BaseException(ErrorCode.TIME_CAPSULE_KEY_NOT_ENOUGH);
-        }
-
-        user.useKeys(keys);
-        log.info("열쇠 {}개를 사용했습니다. 남은 열쇠의 개수는 {}개입니다.", keys, user.getKeyCount());
+        long requiredKeys = TimeCapsuleOpenCost.getRequiredKeys(days);
+        user.consumeKeys(requiredKeys);
+        log.info("열쇠 {}개를 사용했습니다. 남은 열쇠의 개수는 {}개입니다.", requiredKeys, user.getKeyCount());
     }
 
     @Transactional

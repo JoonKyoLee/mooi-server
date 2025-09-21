@@ -9,6 +9,7 @@ import com.example.emotion_storage.report.domain.Report;
 import com.example.emotion_storage.report.repository.ReportRepository;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
+import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
@@ -417,5 +418,39 @@ class TimeCapsuleServiceTest {
 
         TimeCapsule reloaded = timeCapsuleRepository.findById(futureTimeCapsule.getId()).orElseThrow();
         assertThat(reloaded.getIsOpened()).isTrue();
+    }
+
+    @Test
+    void 타임캡슐_마음노트를_수정한다() {
+        // given
+        TimeCapsule target = timeCapsuleRepository.findAll().stream()
+                .filter(tc -> Boolean.TRUE.equals(tc.getIsFavorite()))
+                .findFirst()
+                .orElseThrow();
+
+        String content = "마음노트 업데이트 입니다.";
+
+        // when
+        timeCapsuleService.updateMindNote(target.getId(), new TimeCapsuleNoteUpdateRequest(content), userId);
+
+        // then
+        TimeCapsule reloaded = timeCapsuleRepository.findById(target.getId()).orElseThrow();
+        assertThat(reloaded.getMyMindNote()).isEqualTo(content);
+    }
+
+    @Test
+    void 타임캡슐_삭제에_성공한다() {
+        // given
+        TimeCapsule target = timeCapsuleRepository.findAll().stream()
+                .filter(tc -> Boolean.TRUE.equals(tc.getIsFavorite()))
+                .findFirst()
+                .orElseThrow();
+
+        // when
+        timeCapsuleService.deleteTimeCapsule(target.getId(), userId);
+
+        // then
+        TimeCapsule reloaded = timeCapsuleRepository.findById(target.getId()).orElseThrow();
+        assertThat(reloaded.getDeletedAt()).isNotNull();
     }
 }

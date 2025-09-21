@@ -38,6 +38,8 @@ class TimeCapsuleServiceTest {
     @Autowired
     private ReportRepository reportRepository;
 
+    private Long userId;
+
     @BeforeEach
     void setup() {
         // 1. 유저 생성
@@ -57,6 +59,7 @@ class TimeCapsuleServiceTest {
                 .build();
 
         userRepository.save(user);
+        userId = user.getId();
 
         // 2. 리포트 생성
         Report report = Report.builder()
@@ -108,7 +111,6 @@ class TimeCapsuleServiceTest {
         int month = now.getMonthValue();
         int day = now.getDayOfMonth();
         int totalDays = Math.min(10, Math.max(0, day - 1));
-        Long userId = 1L;
 
         // when
         TimeCapsuleExistDateResponse response =
@@ -131,7 +133,6 @@ class TimeCapsuleServiceTest {
         LocalDate targetDate = LocalDate.now().minusDays(1);
         int page = 1;
         int limit = 10;
-        Long userId = 1L;
 
         // when
         TimeCapsuleListResponse response =
@@ -157,7 +158,6 @@ class TimeCapsuleServiceTest {
         LocalDate endDate = LocalDate.now();
         int page = 1;
         int limit = 10;
-        Long userId = 1L;
 
         // when
         TimeCapsuleListResponse response =
@@ -181,5 +181,54 @@ class TimeCapsuleServiceTest {
             assertThat(response.timeCapsules().get(i).openAt())
                     .isAfterOrEqualTo(response.timeCapsules().get(i + 1).openAt());
         }
+    }
+
+    @Test
+    void 즐겨찾기된_타임캡슐을_타임캡슐_날짜_순으로_조회한다() {
+        // given
+        int page = 1;
+        int limit = 10;
+        String sort = "favorite";
+
+        // when
+        TimeCapsuleListResponse response = timeCapsuleService.fetchFavoriteTimeCapsules(page, limit, sort, userId);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.pagination().page()).isEqualTo(page);
+        assertThat(response.pagination().limit()).isEqualTo(limit);
+
+        assertThat(response.totalCapsules()).isEqualTo(limit);
+        assertThat(response.timeCapsules()).hasSize(limit);
+
+        assertThat(response.timeCapsules().get(0).title()).isEqualTo("한 줄 요약 2");
+        assertThat(response.timeCapsules().get(9).title()).isEqualTo("한 줄 요약 20");
+
+        for (int i = 0; i < response.timeCapsules().size() - 1; i++) {
+            assertThat(response.timeCapsules().get(i).historyDate())
+                    .isAfterOrEqualTo(response.timeCapsules().get(i + 1).historyDate());
+        }
+    }
+
+    @Test
+    void 즐겨찾기된_타임캡슐을_즐겨찾기한_순으로_조회한다() {
+        // given
+        int page = 1;
+        int limit = 10;
+        String sort = "all";
+
+        // when
+        TimeCapsuleListResponse response = timeCapsuleService.fetchFavoriteTimeCapsules(page, limit, sort, userId);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.pagination().page()).isEqualTo(page);
+        assertThat(response.pagination().limit()).isEqualTo(limit);
+
+        assertThat(response.totalCapsules()).isEqualTo(limit);
+        assertThat(response.timeCapsules()).hasSize(limit);
+
+        assertThat(response.timeCapsules().get(0).title()).isEqualTo("한 줄 요약 2");
+        assertThat(response.timeCapsules().get(9).title()).isEqualTo("한 줄 요약 20");
     }
 }

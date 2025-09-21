@@ -85,16 +85,12 @@ public class TimeCapsuleServiceTest {
                 .thenReturn(repoResult);
 
         // when
-        ApiResponse<TimeCapsuleExistDateResponse> response = timeCapsuleService.getMonthlyActiveDates(year, month, userId);
+        TimeCapsuleExistDateResponse response = timeCapsuleService.getMonthlyActiveDates(year, month, userId);
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.message())
-                .isEqualTo(SuccessMessage.GET_MONTHLY_TIME_CAPSULE_DATES_SUCCESS.getMessage());
-
-        TimeCapsuleExistDateResponse data = response.data();
-        assertThat(data.totalDates()).isEqualTo(2);
-        assertThat(data.dates()).containsExactly(
+        assertThat(response.totalDates()).isEqualTo(2);
+        assertThat(response.dates()).containsExactly(
                 LocalDate.of(year, month, 2),
                 LocalDate.of(year, month, 18)
         );
@@ -120,18 +116,15 @@ public class TimeCapsuleServiceTest {
         )).thenReturn(capsules);
 
         // when
-        ApiResponse<TimeCapsuleListResponse> response =
+        TimeCapsuleListResponse response =
                 timeCapsuleService.getTimeCapsuleList(startDate, endDate, page, limit, ALL_STATUS, userId);
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.message()).isEqualTo(SuccessMessage.GET_TIME_CAPSULE_LIST_SUCCESS.getMessage());
-
-        TimeCapsuleListResponse data = response.data();
-        assertThat(data.totalCapsules()).isEqualTo(2);
-        assertThat(data.pagination().page()).isEqualTo(page);
-        assertThat(data.pagination().limit()).isEqualTo(limit);
-        assertThat(data.pagination().totalPage()).isEqualTo(1);
+        assertThat(response.totalCapsules()).isEqualTo(2);
+        assertThat(response.pagination().page()).isEqualTo(page);
+        assertThat(response.pagination().limit()).isEqualTo(limit);
+        assertThat(response.pagination().totalPage()).isEqualTo(1);
 
         Pageable used = pageableCaptor.getValue();
         assertThat(used.getPageSize()).isEqualTo(limit);
@@ -166,18 +159,15 @@ public class TimeCapsuleServiceTest {
         )).thenReturn(capsules);
 
         // when
-        ApiResponse<TimeCapsuleListResponse> response =
+        TimeCapsuleListResponse response =
                 timeCapsuleService.getTimeCapsuleList(startDate, endDate, page, limit, ARRIVED_STATUS, userId);
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.message()).isEqualTo(SuccessMessage.GET_TIME_CAPSULE_LIST_SUCCESS.getMessage());
-
-        TimeCapsuleListResponse data = response.data();
-        assertThat(data.totalCapsules()).isEqualTo(2);
-        assertThat(data.pagination().page()).isEqualTo(page);
-        assertThat(data.pagination().limit()).isEqualTo(limit);
-        assertThat(data.pagination().totalPage()).isEqualTo(1);
+        assertThat(response.totalCapsules()).isEqualTo(2);
+        assertThat(response.pagination().page()).isEqualTo(page);
+        assertThat(response.pagination().limit()).isEqualTo(limit);
+        assertThat(response.pagination().totalPage()).isEqualTo(1);
 
         Pageable used = pageableCaptor.getValue();
         assertThat(used.getPageSize()).isEqualTo(limit);

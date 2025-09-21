@@ -1,6 +1,7 @@
 package com.example.emotion_storage.timecapsule.controller;
 
 import com.example.emotion_storage.global.api.ApiResponse;
+import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,8 +43,10 @@ public class TimeCapsuleController {
     ) {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}의 {}년 {}월의 타임캡슐 목록 조회를 요청받았습니다.", userId, year, month);
-        ApiResponse<TimeCapsuleExistDateResponse> response = timeCapsuleService.getMonthlyActiveDates(year, month, userId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessMessage.GET_MONTHLY_TIME_CAPSULE_DATES_SUCCESS.getMessage(),
+                timeCapsuleService.getMonthlyActiveDates(year, month, userId)
+        ));
     }
 
     @GetMapping
@@ -54,9 +58,10 @@ public class TimeCapsuleController {
     ) {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}의 타임캡슐 목록 조회를 요청받았습니다.", userId);
-        ApiResponse<TimeCapsuleListResponse> response =
-                timeCapsuleService.getTimeCapsuleList(startDate, endDate, page, limit, status, userId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessMessage.GET_TIME_CAPSULE_LIST_SUCCESS.getMessage(),
+                timeCapsuleService.getTimeCapsuleList(startDate, endDate, page, limit, status, userId)
+        ));
     }
 
     @GetMapping("/favorites")
@@ -66,9 +71,10 @@ public class TimeCapsuleController {
     ) {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}의 즐겨찾기 타임캡슐 목록 조회를 요청받았습니다.", userId);
-        ApiResponse<TimeCapsuleListResponse> response =
-                timeCapsuleService.getFavoriteTimeCapsules(page, limit, sort, userId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessMessage.GET_FAVORITE_TIME_CAPSULE_LIST_SUCCESS.getMessage(),
+                timeCapsuleService.getFavoriteTimeCapsules(page, limit, sort, userId)
+        ));
     }
 
     @PatchMapping("{capsuleId}/favorite")
@@ -80,8 +86,15 @@ public class TimeCapsuleController {
     ) {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}가 타임캡슐 {} 즐겨찾기 변경을 요청했습니다.", userId, timeCapsuleId);
-        ApiResponse<TimeCapsuleFavoriteResponse> response = timeCapsuleService.setFavorite(timeCapsuleId, request, userId);
-        return ResponseEntity.ok(response);
+
+        SuccessMessage successMessage = request.addFavorite()
+                ? SuccessMessage.ADD_FAVORITE_TIME_CAPSULE_SUCCESS
+                : SuccessMessage.REMOVE_FAVORITE_TIME_CAPSULE_SUCCESS;
+
+        return ResponseEntity.ok(ApiResponse.success(
+                successMessage.getMessage(),
+                timeCapsuleService.setFavorite(timeCapsuleId, request, userId)
+        ));
     }
 
     @PatchMapping("{capsuleId}/open")
@@ -91,8 +104,12 @@ public class TimeCapsuleController {
     ) {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}가 타임캡슐 {} 열람을 요청했습니다.", userId, timeCapsuleId);
-        ApiResponse<Void> response = timeCapsuleService.openTimeCapsule(timeCapsuleId, userId);
-        return ResponseEntity.ok(response);
+        timeCapsuleService.openTimeCapsule(timeCapsuleId, userId);
+        return ResponseEntity.ok(ApiResponse.success(
+                HttpStatus.NO_CONTENT.value(),
+                SuccessMessage.OPEN_TIME_CAPSULE_SUCCESS.getMessage(),
+                null
+        ));
     }
 
     @GetMapping("{capsuleId}")
@@ -103,8 +120,10 @@ public class TimeCapsuleController {
     ) {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}가 타임캡슐 {}의 상세 조회를 요청했습니다.", userId, timeCapsuleId);
-        ApiResponse<TimeCapsuleDetailResponse> response = timeCapsuleService.getTimeCapsuleDetail(timeCapsuleId, userId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessMessage.GET_TIME_CAPSULE_DETAIL_SUCCESS.getMessage(),
+                timeCapsuleService.getTimeCapsuleDetail(timeCapsuleId, userId)
+        ));
     }
 
     @PatchMapping("{capsuleId}/note")
@@ -116,8 +135,12 @@ public class TimeCapsuleController {
     ) {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}가 타임캡슐 {}의 마음노트 수정을 요청했습니다.", userId, timeCapsuleId);
-        ApiResponse<Void> response = timeCapsuleService.updateTimeCapsuleNote(timeCapsuleId, request, userId);
-        return ResponseEntity.ok(response);
+        timeCapsuleService.updateTimeCapsuleNote(timeCapsuleId, request, userId);
+        return ResponseEntity.ok(ApiResponse.success(
+                HttpStatus.NO_CONTENT.value(),
+                SuccessMessage.UPDATE_TIME_CAPSULE_MIND_NOTE_SUCCESS.getMessage(),
+                null
+        ));
     }
 
     @DeleteMapping("{capsuleId}")
@@ -128,7 +151,11 @@ public class TimeCapsuleController {
     ) {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}가 타임캡슐 {} 삭제를 요청했습니다.", userId, timeCapsuleId);
-        ApiResponse<Void> response = timeCapsuleService.deleteTimeCapsule(timeCapsuleId, userId);
-        return ResponseEntity.ok(response);
+        timeCapsuleService.deleteTimeCapsule(timeCapsuleId, userId);
+        return ResponseEntity.ok(ApiResponse.success(
+                HttpStatus.NO_CONTENT.value(),
+                SuccessMessage.DELETE_TIME_CAPSULE_SUCCESS.getMessage(),
+                null
+        ));
     }
 }

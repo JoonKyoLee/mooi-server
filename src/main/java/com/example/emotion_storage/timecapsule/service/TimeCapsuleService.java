@@ -1,7 +1,5 @@
 package com.example.emotion_storage.timecapsule.service;
 
-import com.example.emotion_storage.global.api.ApiResponse;
-import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
@@ -47,7 +45,7 @@ public class TimeCapsuleService {
     private final TimeCapsuleRepository timeCapsuleRepository;
     private final UserRepository userRepository;
 
-    public ApiResponse<TimeCapsuleExistDateResponse> getMonthlyActiveDates(
+    public TimeCapsuleExistDateResponse getMonthlyActiveDates(
             int year, int month, Long userId
     ) {
         YearMonth yearMonth = YearMonth.of(year, month);
@@ -63,47 +61,39 @@ public class TimeCapsuleService {
 
         int activeDays = dates.size();
 
-        return ApiResponse.success(
-                SuccessMessage.GET_MONTHLY_TIME_CAPSULE_DATES_SUCCESS.getMessage(),
-                new TimeCapsuleExistDateResponse(activeDays, dates)
-        );
+        return new TimeCapsuleExistDateResponse(activeDays, dates);
     }
 
-    public ApiResponse<TimeCapsuleListResponse> getTimeCapsuleList(
+    public TimeCapsuleListResponse getTimeCapsuleList(
             LocalDate startDate, LocalDate endDate, int page, int limit, String status, Long userId
     ) {
         LocalDateTime start = startDate.atStartOfDay();
-        TimeCapsuleListResponse timeCapsuleList;
         Pageable pageable;
 
         if (ARRIVED_STATUS.equals(status)) {
             log.info("사용자 {}의 {}-{}의 도착한 타임캡슐 목록을 조회합니다.", userId, startDate, endDate);
             pageable = pageDesc(page, limit, SORT_BY_ARRIVED_TIME);
             LocalDateTime end = LocalDateTime.now();
-            timeCapsuleList = getArrivedTimeCapsuleList(start, end, page, limit, userId, pageable);
+            return getArrivedTimeCapsuleList(start, end, page, limit, userId, pageable);
         } else {
             log.info("사용자 {}의 {}-{}의 타임캡슐 목록을 조회합니다.", userId, startDate, endDate);
             LocalDateTime end = endDate.plusDays(1).atStartOfDay();
-            timeCapsuleList = getOneDayTimeCapsuleList(start, end, page, limit, userId);
+            return getOneDayTimeCapsuleList(start, end, page, limit, userId);
         }
-
-        return ApiResponse.success(SuccessMessage.GET_TIME_CAPSULE_LIST_SUCCESS.getMessage(), timeCapsuleList);
     }
 
-    public ApiResponse<TimeCapsuleListResponse> getFavoriteTimeCapsules(
+    public TimeCapsuleListResponse getFavoriteTimeCapsules(
             int page, int limit, String sort, Long userId
     ) {
         final boolean sortFavorite = SORT_FAVORITE.equals(sort);
         Pageable pageable = pageDesc(page, limit, sortFavorite ? SORT_BY_FAVORITE_TIME : SORT_BY_DEFAULT_TIME);
 
         log.info("사용자 {}의 즐겨찾기 리스트를 조회합니다.", userId);
-        TimeCapsuleListResponse timeCapsuleList = getFavoriteTimeCapsuleList(page, limit, userId, pageable);
-
-        return ApiResponse.success(SuccessMessage.GET_FAVORITE_TIME_CAPSULE_LIST_SUCCESS.getMessage(), timeCapsuleList);
+        return getFavoriteTimeCapsuleList(page, limit, userId, pageable);
     }
 
     @Transactional
-    public ApiResponse<TimeCapsuleFavoriteResponse> setFavorite(
+    public TimeCapsuleFavoriteResponse setFavorite(
             Long timeCapsuleId, TimeCapsuleFavoriteRequest request, Long userId
     ) {
         TimeCapsule timeCapsule = findOwnedTimeCapsule(timeCapsuleId, userId);
@@ -116,17 +106,11 @@ public class TimeCapsuleService {
             deleteFavorite(timeCapsule);
         }
 
-        TimeCapsuleFavoriteResponse response = new TimeCapsuleFavoriteResponse(
+        return new TimeCapsuleFavoriteResponse(
                 timeCapsule.getIsFavorite(),
                 timeCapsule.getFavoriteAt(),
                 timeCapsuleRepository.countByUser_IdAndIsFavoriteTrue(userId)
         );
-
-        SuccessMessage successMessage = request.addFavorite()
-                ? SuccessMessage.ADD_FAVORITE_TIME_CAPSULE_SUCCESS
-                : SuccessMessage.REMOVE_FAVORITE_TIME_CAPSULE_SUCCESS;
-
-        return ApiResponse.success(successMessage.getMessage(), response);
     }
 
     private Pageable pageDesc(int page, int limit, String sortField) {
@@ -215,15 +199,14 @@ public class TimeCapsuleService {
         timeCapsule.setIsFavorite(false);
     }
 
-    public ApiResponse<TimeCapsuleDetailResponse> getTimeCapsuleDetail(Long timeCapsuleId, Long userId) {
+    public TimeCapsuleDetailResponse getTimeCapsuleDetail(Long timeCapsuleId, Long userId) {
         TimeCapsule timeCapsule = findOwnedTimeCapsule(timeCapsuleId, userId);
         log.info("타임캡슐 {}에 대한 상세 정보를 조회합니다.", timeCapsuleId);
-        TimeCapsuleDetailResponse response = TimeCapsuleDetailResponse.from(timeCapsule);
-        return ApiResponse.success(SuccessMessage.GET_TIME_CAPSULE_DETAIL_SUCCESS.getMessage(), response);
+        return TimeCapsuleDetailResponse.from(timeCapsule);
     }
 
     @Transactional
-    public ApiResponse<Void> openTimeCapsule(Long timeCapsuleId, Long userId) {
+    public void openTimeCapsule(Long timeCapsuleId, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
@@ -237,8 +220,6 @@ public class TimeCapsuleService {
         }
 
         timeCapsule.setIsOpened(true);
-
-        return ApiResponse.success(204, SuccessMessage.OPEN_TIME_CAPSULE_SUCCESS.getMessage(), null);
     }
 
     private long calculateDaysToOpen(LocalDateTime openDate) {
@@ -270,22 +251,18 @@ public class TimeCapsuleService {
     }
 
     @Transactional
-    public ApiResponse<Void> updateTimeCapsuleNote(Long timeCapsuleId, TimeCapsuleNoteUpdateRequest request, Long userId) {
+    public void updateTimeCapsuleNote(Long timeCapsuleId, TimeCapsuleNoteUpdateRequest request, Long userId) {
         TimeCapsule timeCapsule = findOwnedTimeCapsule(timeCapsuleId, userId);
 
         log.info("타임캡슐 {}의 내 마음 노트를 업데이트 합니다.", timeCapsuleId);
         timeCapsule.updateMyMindNote(request.content());
-
-        return ApiResponse.success(204, SuccessMessage.UPDATE_TIME_CAPSULE_MIND_NOTE_SUCCESS.getMessage(), null);
     }
 
     @Transactional
-    public ApiResponse<Void> deleteTimeCapsule(Long timeCapsuleId, Long userId) {
+    public void deleteTimeCapsule(Long timeCapsuleId, Long userId) {
         TimeCapsule timeCapsule = findOwnedTimeCapsule(timeCapsuleId, userId);
 
         log.info("타임캡슐 {}를 삭제합니다.", timeCapsuleId);
         timeCapsule.setDeletedAt(LocalDateTime.now());
-
-        return ApiResponse.success(204, SuccessMessage.DELETE_TIME_CAPSULE_SUCCESS.getMessage(), null);
     }
 }

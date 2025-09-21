@@ -1,67 +1,103 @@
 package com.example.emotion_storage.timecapsule.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
-import com.example.emotion_storage.global.api.ApiResponse;
-import com.example.emotion_storage.global.api.SuccessMessage;
+import com.example.emotion_storage.report.domain.Report;
+import com.example.emotion_storage.report.repository.ReportRepository;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
 import com.example.emotion_storage.timecapsule.repository.TimeCapsuleRepository;
+import com.example.emotion_storage.user.domain.Gender;
+import com.example.emotion_storage.user.domain.SocialType;
+import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
-import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.YearMonth;
-import java.util.List;
-import java.util.stream.StreamSupport;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
-@ExtendWith(MockitoExtension.class)
-public class TimeCapsuleServiceTest {
+@SpringBootTest
+@Transactional
+@ActiveProfiles("test")
+class TimeCapsuleServiceTest {
 
-    private static final String ALL_STATUS = "all";
-    private static final String ARRIVED_STATUS = "arrived";
-    private static final String SORT_FAVORITE = "favorite";
-    private static final String SORT_BY_TEMP_SAVED = "isTempSave";
-    private static final String SORT_BY_DEFAULT_TIME = "historyDate";
-    private static final String SORT_BY_ARRIVED_TIME = "openedAt";
-    private static final String SORT_BY_FAVORITE_TIME = "favoriteAt";
+    @Autowired
+    private TimeCapsuleService timeCapsuleService;
 
-    @InjectMocks private TimeCapsuleService timeCapsuleService;
-    @Mock private UserRepository userRepository;
-    @Mock private TimeCapsuleRepository timeCapsuleRepository;
+    @Autowired
+    private TimeCapsuleRepository timeCapsuleRepository;
 
-    private TimeCapsule sampleCapsule(Long id, boolean isTempSave, boolean isOpened, LocalDateTime openAt, boolean isFavorite) {
-        // 임의의 최소 필드만 세팅(연관관계/필수 컬럼은 프로젝트 엔티티 제약에 맞게 보완해도 OK)
-        return TimeCapsule.builder()
-                .id(id)
-                .user(null)
-                .report(null)
-                .chatroomId(1000L + id)
-                .historyDate(LocalDateTime.now().minusDays(5))
-                .oneLineSummary("요약 " + id)
-                .dialogueSummary("대화요약 " + id)
-                .myMindNote("노트 " + id)
-                .favoriteAt(isFavorite ? LocalDateTime.now().minusHours(1) : null)
-                .openedAt(openAt)
-                .isOpened(isOpened)
-                .isTempSave(isTempSave)
-                .isFavorite(isFavorite)
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private ReportRepository reportRepository;
+
+    @BeforeEach
+    void setup() {
+        // 1. 유저 생성
+        User user = User.builder()
+                .socialType(SocialType.GOOGLE)
+                .socialId("social123")
+                .email("test@example.com")
+                .profileImageUrl("http://example.com/profile.png")
+                .nickname("tester")
+                .gender(Gender.MALE)
+                .birthday(LocalDate.of(2000,1,1))
+                .keyCount(5L)
+                .ticketCount(10L)
+                .isTermsAgreed(true)
+                .isPrivacyAgreed(true)
+                .isMarketingAgreed(false)
                 .build();
+
+        userRepository.save(user);
+
+        // 2. 리포트 생성
+        Report report = Report.builder()
+                .historyDate(LocalDate.now())
+                .todaySummary("오늘 하루 요약")
+                .stressIndex(3)
+                .happinessIndex(7)
+                .emotionSummary("감정 요약")
+                .keywords("공부, 프로젝트")
+                .isOpened(true)
+                .build();
+
+        reportRepository.save(report);
+
+        // 3. 타임캡슐 생성
+        for (int i = 1; i <= 20; i++) {
+            boolean isFavorite = i % 2 == 0;
+            int group = (i + 1) / 2;
+            boolean isOne = i == 1;
+
+            LocalDateTime historyDate = LocalDateTime.now().minusDays(group);
+            LocalDateTime favoriteAt = LocalDateTime.now().minusHours(i);
+            LocalDateTime openAt = LocalDateTime.now().minusHours(i);
+
+            TimeCapsule timeCapsule = TimeCapsule.builder()
+                    .user(user)
+                    .report(report)
+                    .chatroomId(100L + i)
+                    .historyDate(historyDate)
+                    .favoriteAt(favoriteAt)
+                    .openedAt(isOne ? null : openAt)
+                    .oneLineSummary("한 줄 요약 " + i)
+                    .dialogueSummary("대화 요약 " + i)
+                    .myMindNote("내 마음 노트 " + i)
+                    .isOpened(false)
+                    .isTempSave(isOne)
+                    .isFavorite(isFavorite)
+                    .build();
+
+            timeCapsuleRepository.save(timeCapsule);
+        }
     }
 
     @Test
@@ -70,54 +106,36 @@ public class TimeCapsuleServiceTest {
         LocalDateTime now = LocalDateTime.now();
         int year = now.getYear();
         int month = now.getMonthValue();
+        int day = now.getDayOfMonth();
+        int totalDays = Math.min(10, Math.max(0, day - 1));
         Long userId = 1L;
 
-        YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDateTime start = yearMonth.atDay(1).atStartOfDay();
-        LocalDateTime end = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
-
-        List<Date> repoResult = List.of(
-                Date.valueOf(LocalDate.of(year, month, 2)),
-                Date.valueOf(LocalDate.of(year, month, 18))
-        );
-
-        when(timeCapsuleRepository.findActiveDatesInRange(eq(userId), eq(start), eq(end)))
-                .thenReturn(repoResult);
-
         // when
-        TimeCapsuleExistDateResponse response = timeCapsuleService.getMonthlyActiveDates(year, month, userId);
+        TimeCapsuleExistDateResponse response =
+                timeCapsuleService.getActiveDatesForMonth(year, month, userId);
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.totalDates()).isEqualTo(2);
-        assertThat(response.dates()).containsExactly(
-                LocalDate.of(year, month, 2),
-                LocalDate.of(year, month, 18)
-        );
+        assertThat(response.totalDates()).isEqualTo(totalDays);
+        assertThat(response.dates()).hasSize(totalDays);
+
+        assertThat(response.dates()).allSatisfy(dates -> {
+            assertThat(dates.getYear()).isEqualTo(year);
+            assertThat(dates.getMonthValue()).isEqualTo(month);
+        });
     }
 
     @Test
     void 특정_날짜의_타임캡슐_목록을_조회한다() {
         // given
-        LocalDate startDate = LocalDate.now();
-        LocalDate endDate = LocalDate.now();
+        LocalDate targetDate = LocalDate.now().minusDays(1);
         int page = 1;
         int limit = 10;
         Long userId = 1L;
 
-        TimeCapsule a = sampleCapsule(201L, false, false, LocalDateTime.now().minusSeconds(5), false);
-        TimeCapsule b = sampleCapsule(202L, true, true,  LocalDateTime.now().minusSeconds(30), true);
-
-        Page<TimeCapsule> capsules = new PageImpl<>(List.of(b, a), PageRequest.of(0, limit), 2);
-        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-
-        when(timeCapsuleRepository.findByUser_IdAndDeletedAtIsNullAndHistoryDateBetween(
-                eq(userId), any(LocalDateTime.class), any(LocalDateTime.class), pageableCaptor.capture()
-        )).thenReturn(capsules);
-
         // when
         TimeCapsuleListResponse response =
-                timeCapsuleService.getTimeCapsuleList(startDate, endDate, page, limit, ALL_STATUS, userId);
+                timeCapsuleService.fetchTimeCapsules(targetDate, targetDate, page, limit, "all", userId);
 
         // then
         assertThat(response).isNotNull();
@@ -126,53 +144,42 @@ public class TimeCapsuleServiceTest {
         assertThat(response.pagination().limit()).isEqualTo(limit);
         assertThat(response.pagination().totalPage()).isEqualTo(1);
 
-        Pageable used = pageableCaptor.getValue();
-        assertThat(used.getPageSize()).isEqualTo(limit);
-
-        Sort sort = used.getSort();
-        List<Sort.Order> orders = StreamSupport.stream(sort.spliterator(), false).toList();
-
-        assertThat(orders).hasSize(2);
-        assertThat(orders.get(0).getProperty()).isEqualTo(SORT_BY_TEMP_SAVED);
-        assertThat(orders.get(0).getDirection()).isEqualTo(Sort.Direction.DESC);
-        assertThat(orders.get(1).getProperty()).isEqualTo(SORT_BY_DEFAULT_TIME);
-        assertThat(orders.get(1).getDirection()).isEqualTo(Sort.Direction.DESC);
+        // 정렬 검증: 임시저장(true)인 항목이 먼저
+        assertThat(response.timeCapsules()).hasSize(2);
+        assertThat(response.timeCapsules().get(0).title()).isEqualTo("한 줄 요약 1");
+        assertThat(response.timeCapsules().get(1).title()).isEqualTo("한 줄 요약 2");
     }
 
     @Test
-    void 도착한_타임캡슐_목록을_조회한다() {
+    void 도착한_날짜의_타임캡슐을_조회한다() {
         // given
-        LocalDate startDate = LocalDate.now();
+        LocalDate startDate = LocalDate.now().minusDays(21);
         LocalDate endDate = LocalDate.now();
         int page = 1;
         int limit = 10;
         Long userId = 1L;
 
-        TimeCapsule a = sampleCapsule(201L, false, false, LocalDateTime.now().minusSeconds(5), false);
-        TimeCapsule b = sampleCapsule(202L, false, true,  LocalDateTime.now().minusSeconds(30), true);
-
-        Page<TimeCapsule> capsules = new PageImpl<>(List.of(a, b), PageRequest.of(0, limit), 2);
-        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-
-        when(timeCapsuleRepository.findByUser_IdAndDeletedAtIsNullAndIsOpenedFalseAndOpenedAtGreaterThanEqualAndOpenedAtLessThanEqual(
-                eq(userId), any(LocalDateTime.class), any(LocalDateTime.class), pageableCaptor.capture()
-        )).thenReturn(capsules);
-
         // when
         TimeCapsuleListResponse response =
-                timeCapsuleService.getTimeCapsuleList(startDate, endDate, page, limit, ARRIVED_STATUS, userId);
+                timeCapsuleService.fetchTimeCapsules(startDate, endDate, page, limit, "arrived", userId);
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.totalCapsules()).isEqualTo(2);
+
         assertThat(response.pagination().page()).isEqualTo(page);
         assertThat(response.pagination().limit()).isEqualTo(limit);
-        assertThat(response.pagination().totalPage()).isEqualTo(1);
+        assertThat(response.pagination().totalPage()).isEqualTo(2);
 
-        Pageable used = pageableCaptor.getValue();
-        assertThat(used.getPageSize()).isEqualTo(limit);
-        Sort.Order order = used.getSort().getOrderFor(SORT_BY_ARRIVED_TIME);
-        assertThat(order).isNotNull();
-        assertThat(order.getDirection()).isEqualTo(Sort.Direction.DESC);
+        assertThat(response.totalCapsules()).isEqualTo(limit);
+        assertThat(response.timeCapsules()).hasSize(limit);
+
+        // 도착한 타임캡슐의 경우에는 임시저장 항목이 들어가지 않기 때문에 2부터 확인(도착 시간이 null이기 때문)
+        assertThat(response.timeCapsules().get(0).title()).isEqualTo("한 줄 요약 2");
+        assertThat(response.timeCapsules().get(9).title()).isEqualTo("한 줄 요약 11");
+
+        for (int i = 0; i < response.timeCapsules().size() - 1; i++) {
+            assertThat(response.timeCapsules().get(i).openAt())
+                    .isAfterOrEqualTo(response.timeCapsules().get(i + 1).openAt());
+        }
     }
 }

@@ -134,15 +134,52 @@ public class TimeCapsuleRepositoryTest {
 
         // then
         assertThat(timeCapsules.getTotalElements()).isEqualTo(3);
+
         assertThat(timeCapsules.getContent())
                 .extracting(TimeCapsule::getOneLineSummary)
                 .containsExactly(
                         "1(임시 저장)", "3", "2"
                 );
+
         assertThat(timeCapsules.getContent())
                 .allSatisfy(timeCapsule -> {
                     assertThat(timeCapsule.getHistoryDate()).isAfterOrEqualTo(targetStart);
                     assertThat(timeCapsule.getHistoryDate()).isBefore(targetEnd);
+                });
+    }
+
+    @Test
+    void 도착한_타임캡슐_목록을_반환한다() {
+        // given
+        LocalDateTime startDate = BASE.toLocalDate().minusDays(21).atStartOfDay();
+        LocalDateTime endDate = BASE.toLocalDate().atStartOfDay();
+
+        saveTimeCapsule(startDate.plusHours(1), startDate.plusDays(3), false, false, false, null, "1");
+        saveTimeCapsule(startDate.plusHours(10), startDate.plusDays(5), false, false, false, null, "2");
+        saveTimeCapsule(startDate.plusHours(20), startDate.plusDays(7), false, false, false, null, "3");
+        saveTimeCapsule(endDate.minusHours(5), endDate.minusHours(2), true, false, false, null, "오픈1");
+        saveTimeCapsule(endDate.minusDays(1), endDate.minusHours(1), true, false, false, null, "오픈2");
+
+        PageRequest pageable = PageRequest.of(0, 10, Sort.by("openedAt").descending());
+
+        // when
+        Page<TimeCapsule> timeCapsules = timeCapsuleRepository
+                .findByUser_IdAndDeletedAtIsNullAndIsOpenedFalseAndOpenedAtGreaterThanEqualAndOpenedAtLessThanEqual(
+                        user.getId(), startDate, endDate, pageable
+                );
+
+        // then
+        assertThat(timeCapsules.getTotalElements()).isEqualTo(3);
+
+        assertThat(timeCapsules.getContent())
+                .extracting(TimeCapsule::getOneLineSummary)
+                .containsExactly("3", "2", "1");
+
+        assertThat(timeCapsules.getContent())
+                .allSatisfy(tc -> {
+                    assertThat(tc.getIsOpened()).isFalse();
+                    assertThat(tc.getOpenedAt()).isAfterOrEqualTo(startDate);
+                    assertThat(tc.getOpenedAt()).isBeforeOrEqualTo(endDate);
                 });
     }
 }

@@ -3,7 +3,6 @@ package com.example.emotion_storage.user.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -51,5 +50,26 @@ public class UserTest {
         assertThat(user.isTermsAgreed()).isEqualTo(isTermsAgreed);
         assertThat(user.isPrivacyAgreed()).isEqualTo(isPrivacyAgreed);
         assertThat(user.isMarketingAgreed()).isEqualTo(isMarketingAgreed);
+    }
+
+    @Test
+    void 열쇠_차감에_성공한다() {
+        // given
+        User user = User.builder()
+                .socialType(SocialType.KAKAO)
+                .socialId("socialId")
+                .email("test@example.com")
+                .nickname("mooi")
+                .gender(Gender.MALE)
+                .keyCount(10L)
+                .build();
+
+        Long requiredKeys = 4L;
+
+        // when
+        user.consumeKeys(requiredKeys);
+
+        // then
+        assertThat(user.getKeyCount()).isEqualTo(6L);
     }
 }

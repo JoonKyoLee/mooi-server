@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -15,6 +16,7 @@ import com.example.emotion_storage.timecapsule.dto.EmotionDetailDto;
 import com.example.emotion_storage.timecapsule.dto.PaginationDto;
 import com.example.emotion_storage.timecapsule.dto.TimeCapsuleDto;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
+import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
@@ -29,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -478,5 +481,53 @@ class TimeCapsuleControllerTest {
                 .andExpect(jsonPath("$.data.comments[0]").value("코멘트1"))
                 .andExpect(jsonPath("$.data.comments[1]").value("코멘트2"))
                 .andExpect(jsonPath("$.data.note").value(""));
+    }
+
+    @Test
+    void 타임캡슐_열람에_성공한다() throws Exception {
+        // given
+        Long capsuleId = 1L;
+        willDoNothing().given(timeCapsuleService).openTimeCapsule(eq(capsuleId), anyLong());
+
+        // when & then
+        mockMvc.perform(patch("/api/v1/time-capsule/{capsuleId}/open", capsuleId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.NO_CONTENT.value()))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.OPEN_TIME_CAPSULE_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    void 타임캡슐_마음노트_수정에_성공한다() throws Exception {
+        // given
+        Long capsuleId = 1L;
+        TimeCapsuleNoteUpdateRequest request = new TimeCapsuleNoteUpdateRequest(
+                "타임캡슐 마음노트 업데이트"
+        );
+
+        willDoNothing().given(timeCapsuleService).updateMindNote(eq(capsuleId), eq(request), anyLong());
+
+        // when & then
+        mockMvc.perform(patch("/api/v1/time-capsule/{capsuleId}/note", capsuleId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.NO_CONTENT.value()))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.UPDATE_TIME_CAPSULE_MIND_NOTE_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    void 타임캡슐_삭제에_성공한다() throws Exception {
+        // given
+        Long capsuleId = 1L;
+        willDoNothing().given(timeCapsuleService).deleteTimeCapsule(eq(capsuleId), anyLong());
+
+        // when & then
+        mockMvc.perform(delete("/api/v1/time-capsule/{capsuleId}", capsuleId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.NO_CONTENT.value()))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.DELETE_TIME_CAPSULE_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data").doesNotExist());
     }
 }

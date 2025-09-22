@@ -11,24 +11,33 @@ import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.config.TestSecurityConfig;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
+import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import com.example.emotion_storage.user.auth.service.TokenService;
 import jakarta.servlet.http.Cookie;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AuthController.class)
 @Import(TestSecurityConfig.class)
+@ActiveProfiles("test")
 public class AuthControllerTest {
 
     @Autowired private MockMvc mockMvc;
 
     @MockitoBean TokenService tokenService;
+    @MockitoBean JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
     @Test
     void 쿠키에_리프레시_토큰이_존재하면_액세스_토큰을_재발급한다() throws Exception {
@@ -61,8 +70,19 @@ public class AuthControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "1", roles = "USER")
+    @WithMockUser(username = "1L", roles = "USER")
     void 액세스_토큰이_유효하면_success_true가_반환된다() throws Exception {
+        // given
+        CustomUserPrincipal principal = new CustomUserPrincipal(
+                1L,
+                "test@example.com",
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(principal, "N/A", principal.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        // when, then
         mockMvc.perform(get("/auth/session"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))

@@ -26,17 +26,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(UserController.class)
 @Import(TestSecurityConfig.class)
+@ActiveProfiles("test")
 public class UserControllerTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
     @MockitoBean UserService userService;
+    @MockitoBean JpaMetamodelMappingContext jpaMetamodelMappingContext;
 
     @Test
     void 구글_로그인_성공할_때는_액세스_토큰을_반환한다() throws Exception {

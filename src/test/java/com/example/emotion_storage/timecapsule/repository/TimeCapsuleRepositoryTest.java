@@ -176,10 +176,64 @@ public class TimeCapsuleRepositoryTest {
                 .containsExactly("3", "2", "1");
 
         assertThat(timeCapsules.getContent())
-                .allSatisfy(tc -> {
-                    assertThat(tc.getIsOpened()).isFalse();
-                    assertThat(tc.getOpenedAt()).isAfterOrEqualTo(startDate);
-                    assertThat(tc.getOpenedAt()).isBeforeOrEqualTo(endDate);
+                .allSatisfy(timeCapsule -> {
+                    assertThat(timeCapsule.getIsOpened()).isFalse();
+                    assertThat(timeCapsule.getOpenedAt()).isAfterOrEqualTo(startDate);
+                    assertThat(timeCapsule.getOpenedAt()).isBeforeOrEqualTo(endDate);
                 });
+    }
+
+    @Test
+    void 즐겨찾기한_타임캡슐_목록을_최신_타임캡슐이_먼저_오도록_반환한다() {
+        // given
+        LocalDateTime startDate = BASE.toLocalDate().minusDays(21).atStartOfDay();
+        LocalDateTime endDate = BASE.toLocalDate().atStartOfDay();
+
+        saveTimeCapsule(startDate.plusHours(1), startDate.plusDays(3), false, false, false, null, "1");
+        saveTimeCapsule(startDate.plusHours(10), startDate.plusDays(5), false, false, false, null, "2");
+        saveTimeCapsule(startDate.plusHours(20), startDate.plusDays(7), false, false, false, null, "3");
+        saveTimeCapsule(endDate.minusHours(5), endDate.minusHours(2), true, false, true, endDate.minusMinutes(10), "오픈1");
+        saveTimeCapsule(endDate.minusHours(3), endDate.minusHours(1), true, false, true, endDate.minusMinutes(30), "오픈2");
+
+        // when
+        PageRequest pageable = PageRequest.of(0, 10, Sort.by("historyDate").descending());
+        Page<TimeCapsule> timeCapsules = timeCapsuleRepository
+                .findByUser_IdAndDeletedAtIsNullAndIsFavoriteIsTrue(user.getId(), pageable);
+
+        // then
+        assertThat(timeCapsules.getTotalElements()).isEqualTo(2);
+
+        assertThat(timeCapsules.getContent())
+                .extracting(TimeCapsule::getOneLineSummary)
+                .containsExactly("오픈2", "오픈1");
+
+        assertThat(timeCapsules.getContent()).allSatisfy(timeCapsule -> assertThat(timeCapsule.getIsFavorite()).isTrue());
+    }
+
+    @Test
+    void 즐겨찾기한_타임캡슐_목록을_즐겨찾기한_순서대로_반환한다() {
+        // given
+        LocalDateTime startDate = BASE.toLocalDate().minusDays(21).atStartOfDay();
+        LocalDateTime endDate = BASE.toLocalDate().atStartOfDay();
+
+        saveTimeCapsule(startDate.plusHours(1), startDate.plusDays(3), false, false, false, null, "1");
+        saveTimeCapsule(startDate.plusHours(10), startDate.plusDays(5), false, false, false, null, "2");
+        saveTimeCapsule(startDate.plusHours(20), startDate.plusDays(7), false, false, false, null, "3");
+        saveTimeCapsule(endDate.minusHours(5), endDate.minusHours(2), true, false, true, endDate.minusMinutes(10), "오픈1");
+        saveTimeCapsule(endDate.minusHours(3), endDate.minusHours(1), true, false, true, endDate.minusMinutes(30), "오픈2");
+
+        // when
+        PageRequest pageable = PageRequest.of(0, 10, Sort.by("favoriteAt").descending());
+        Page<TimeCapsule> timeCapsules = timeCapsuleRepository
+                .findByUser_IdAndDeletedAtIsNullAndIsFavoriteIsTrue(user.getId(), pageable);
+
+        // then
+        assertThat(timeCapsules.getTotalElements()).isEqualTo(2);
+
+        assertThat(timeCapsules.getContent())
+                .extracting(TimeCapsule::getOneLineSummary)
+                .containsExactly("오픈1", "오픈2");
+
+        assertThat(timeCapsules.getContent()).allSatisfy(timeCapsule -> assertThat(timeCapsule.getIsFavorite()).isTrue());
     }
 }

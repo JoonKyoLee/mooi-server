@@ -18,6 +18,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
@@ -108,5 +111,38 @@ public class TimeCapsuleRepositoryTest {
                 yearMonth.atDay(2),
                 yearMonth.atDay(15)
         );
+    }
+
+    @Test
+    void 날짜에_따른_전체_타임캡슐_목록을_조회한다() {
+        // given
+        LocalDateTime targetStart = BASE.toLocalDate().atStartOfDay();
+        LocalDateTime targetEnd = targetStart.plusDays(1);
+
+        saveTimeCapsule(targetStart.plusHours(1), null, false, true, false, null, "1(임시 저장)");
+        saveTimeCapsule(targetStart.plusHours(2), targetStart.plusHours(5), false, false, false, null, "2");
+        saveTimeCapsule(targetStart.plusHours(3), targetStart.plusHours(7), false, false, false, null, "3");
+        saveTimeCapsule(targetStart.minusHours(1), targetStart.plusDays(7), false, false, false, null, "전날");
+        saveTimeCapsule(targetEnd.plusHours(1), targetStart.plusMonths(1), false, false, false, null, "다음날");
+
+        PageRequest pageable = PageRequest.of(0, 10, Sort.by("isTempSave").descending().and(Sort.by("historyDate").descending()));
+
+        // when
+        Page<TimeCapsule> timeCapsules = timeCapsuleRepository.findByUser_IdAndDeletedAtIsNullAndHistoryDateBetween(
+                user.getId(), targetStart, targetEnd, pageable
+        );
+
+        // then
+        assertThat(timeCapsules.getTotalElements()).isEqualTo(3);
+        assertThat(timeCapsules.getContent())
+                .extracting(TimeCapsule::getOneLineSummary)
+                .containsExactly(
+                        "1(임시 저장)", "3", "2"
+                );
+        assertThat(timeCapsules.getContent())
+                .allSatisfy(timeCapsule -> {
+                    assertThat(timeCapsule.getHistoryDate()).isAfterOrEqualTo(targetStart);
+                    assertThat(timeCapsule.getHistoryDate()).isBefore(targetEnd);
+                });
     }
 }

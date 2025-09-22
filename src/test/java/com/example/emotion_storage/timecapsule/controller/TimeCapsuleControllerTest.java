@@ -9,9 +9,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.config.TestSecurityConfig;
+import com.example.emotion_storage.global.exception.BaseException;
+import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.timecapsule.dto.PaginationDto;
 import com.example.emotion_storage.timecapsule.dto.TimeCapsuleDto;
+import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
+import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
 import com.example.emotion_storage.timecapsule.service.TimeCapsuleService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -341,5 +346,79 @@ class TimeCapsuleControllerTest {
                 .andExpect(jsonPath("$.data.timeCapsules[1].status").value("도착"))
                 .andExpect(jsonPath("$.data.timeCapsules[1].openAt", notNullValue()))
                 .andExpect(jsonPath("$.data.timeCapsules[1].title").value("먼저 즐겨찾기한 타임캡슐"));
+    }
+
+    @Test
+    void 타임캡슐_즐겨찾기에_성공한다() throws Exception {
+        // given
+        Long capsuleId = 1L;
+        TimeCapsuleFavoriteRequest request = new TimeCapsuleFavoriteRequest(
+                true
+        );
+
+        TimeCapsuleFavoriteResponse response = new TimeCapsuleFavoriteResponse(
+                true, LocalDateTime.now(), 10
+        );
+
+        given(timeCapsuleService.setFavorite(eq(capsuleId), any(TimeCapsuleFavoriteRequest.class), anyLong()))
+                .willReturn(response);
+
+        // when & then
+        mockMvc.perform(patch("/api/v1/time-capsule/{capsuleId}/favorite", capsuleId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.ADD_FAVORITE_TIME_CAPSULE_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data.isFavorite").value(true))
+                .andExpect(jsonPath("$.data.favoriteAt", notNullValue()))
+                .andExpect(jsonPath("$.data.favoritesCnt").value(10));
+    }
+
+    @Test
+    void 타임캡슐_즐겨찾기_해제에_성공한다() throws Exception {
+        // given
+        Long capsuleId = 1L;
+        TimeCapsuleFavoriteRequest request = new TimeCapsuleFavoriteRequest(
+                false
+        );
+
+        TimeCapsuleFavoriteResponse response = new TimeCapsuleFavoriteResponse(
+                false, null, 9
+        );
+
+        given(timeCapsuleService.setFavorite(eq(capsuleId), any(TimeCapsuleFavoriteRequest.class), anyLong()))
+                .willReturn(response);
+
+        // when & then
+        mockMvc.perform(patch("/api/v1/time-capsule/{capsuleId}/favorite", capsuleId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.REMOVE_FAVORITE_TIME_CAPSULE_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data.isFavorite").value(false))
+                .andExpect(jsonPath("$.data.favoriteAt", nullValue()))
+                .andExpect(jsonPath("$.data.favoritesCnt").value(9));
+    }
+
+    @Test
+    void 타임캡술_즐겨찾기_상한_초과일_때_예외를_반환한다() throws Exception {
+        // given
+        Long capsuleId = 1L;
+        TimeCapsuleFavoriteRequest request = new TimeCapsuleFavoriteRequest(
+                true
+        );
+
+        given(timeCapsuleService.setFavorite(eq(capsuleId), any(TimeCapsuleFavoriteRequest.class), anyLong()))
+                .willThrow(new BaseException(ErrorCode.TIME_CAPSULE_FAVORITE_LIMIT_EXCEEDED));
+
+        // when & then
+        mockMvc.perform(patch("/api/v1/time-capsule/{capsuleId}/favorite", capsuleId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest()) // ErrorCode 매핑된 HTTP 상태 확인
+                .andExpect(jsonPath("$.status").value(ErrorCode.TIME_CAPSULE_FAVORITE_LIMIT_EXCEEDED.getHttpStatus().value()))
+                .andExpect(jsonPath("$.message").value(ErrorCode.TIME_CAPSULE_FAVORITE_LIMIT_EXCEEDED.getMessage()));
     }
 }

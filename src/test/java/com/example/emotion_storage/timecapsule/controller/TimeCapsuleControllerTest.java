@@ -11,9 +11,11 @@ import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.config.TestSecurityConfig;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
+import com.example.emotion_storage.timecapsule.dto.EmotionDetailDto;
 import com.example.emotion_storage.timecapsule.dto.PaginationDto;
 import com.example.emotion_storage.timecapsule.dto.TimeCapsuleDto;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
+import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
@@ -417,8 +419,64 @@ class TimeCapsuleControllerTest {
         mockMvc.perform(patch("/api/v1/time-capsule/{capsuleId}/favorite", capsuleId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest()) // ErrorCode 매핑된 HTTP 상태 확인
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(ErrorCode.TIME_CAPSULE_FAVORITE_LIMIT_EXCEEDED.getHttpStatus().value()))
                 .andExpect(jsonPath("$.message").value(ErrorCode.TIME_CAPSULE_FAVORITE_LIMIT_EXCEEDED.getMessage()));
+    }
+
+    @Test
+    void 타임캡슐_상세_정보를_반환한다() throws Exception {
+        // given
+        Long capsuleId = 1L;
+
+        TimeCapsuleDetailResponse response = new TimeCapsuleDetailResponse(
+                1L,
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().minusDays(1),
+                LocalDateTime.now().minusDays(1),
+                "도착",
+                LocalDateTime.now().minusMinutes(10),
+                true,
+                "오늘 아침에 ...",
+                "오늘 아침에는 ...",
+                List.of(
+                        new EmotionDetailDto(
+                        "기쁨", 40
+                        ),
+                        new EmotionDetailDto(
+                                "뿌듯함", 50
+                        )
+                ),
+                List.of(
+                        "코멘트1", "코멘트2"
+                ),
+                ""
+        );
+
+        given(timeCapsuleService.getTimeCapsuleDetail(eq(capsuleId), anyLong()))
+                .willReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/time-capsule/{capsuleId}", capsuleId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.GET_TIME_CAPSULE_DETAIL_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data.id").value(1L))
+                .andExpect(jsonPath("$.data.historyDate", notNullValue()))
+                .andExpect(jsonPath("$.data.createdAt", notNullValue()))
+                .andExpect(jsonPath("$.data.updatedAt", notNullValue()))
+                .andExpect(jsonPath("$.data.status").value("도착"))
+                .andExpect(jsonPath("$.data.openAt", notNullValue()))
+                .andExpect(jsonPath("$.data.isFavorite").value(true))
+                .andExpect(jsonPath("$.data.title").value("오늘 아침에 ..."))
+                .andExpect(jsonPath("$.data.summary").value("오늘 아침에는 ..."))
+                .andExpect(jsonPath("$.data.emotionDetails[0].label").value("기쁨"))
+                .andExpect(jsonPath("$.data.emotionDetails[0].ratio").value(40))
+                .andExpect(jsonPath("$.data.emotionDetails[1].label").value("뿌듯함"))
+                .andExpect(jsonPath("$.data.emotionDetails[1].ratio").value(50))
+                .andExpect(jsonPath("$.data.comments[0]").value("코멘트1"))
+                .andExpect(jsonPath("$.data.comments[1]").value("코멘트2"))
+                .andExpect(jsonPath("$.data.note").value(""));
     }
 }

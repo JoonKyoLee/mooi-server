@@ -236,4 +236,23 @@ public class TimeCapsuleRepositoryTest {
 
         assertThat(timeCapsules.getContent()).allSatisfy(timeCapsule -> assertThat(timeCapsule.getIsFavorite()).isTrue());
     }
+
+    @Test
+    void 즐겨찾기한_타임캡슐의_개수를_반환한다() {
+        // given
+        LocalDateTime startDate = BASE.toLocalDate().minusDays(21).atStartOfDay();
+        LocalDateTime endDate = BASE.toLocalDate().atStartOfDay();
+
+        saveTimeCapsule(startDate.plusHours(1), startDate.plusDays(3), false, false, false, null, "1");
+        saveTimeCapsule(startDate.plusHours(10), startDate.plusDays(5), false, false, false, null, "2");
+        saveTimeCapsule(startDate.plusHours(20), startDate.plusDays(7), false, false, false, null, "3");
+        saveTimeCapsule(endDate.minusHours(5), endDate.minusHours(2), true, false, true, endDate.minusMinutes(10), "오픈1");
+        saveTimeCapsule(endDate.minusHours(3), endDate.minusHours(1), true, false, true, endDate.minusMinutes(30), "오픈2");
+
+        // when
+        int favoriteCount = timeCapsuleRepository.countByUser_IdAndIsFavoriteTrue(user.getId());
+
+        // then
+        assertThat(favoriteCount).isEqualTo(2);
+    }
 }

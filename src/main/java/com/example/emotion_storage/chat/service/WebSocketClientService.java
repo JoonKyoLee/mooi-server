@@ -2,6 +2,7 @@ package com.example.emotion_storage.chat.service;
 
 import com.example.emotion_storage.chat.dto.AiMessageDto;
 import com.example.emotion_storage.chat.dto.AiResponseDto;
+import com.example.emotion_storage.chat.dto.GaugeDto;
 import com.example.emotion_storage.global.config.websocket.WebSocketClientConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class WebSocketClientService {
     private static final String MESSAGE_TYPE_CHAT_DELTA = "chat.delta";
     private static final String MESSAGE_TYPE_CHAT_END = "chat.end";
     private static final String MESSAGE_TYPE_ERROR = "error";
+    private static final String MESSAGE_TYPE_GAUGE_RESULT = "gauge.result";
 
     private final WebSocketClientConfig webSocketClientConfig;
     private final ObjectMapper objectMapper;
@@ -146,7 +148,7 @@ public class WebSocketClientService {
 
     private void handleTextMessage(TextMessage message) {
         String payload = message.getPayload();
-        log.info("AI 서버로부터 응답을 받았습니다: {}", payload);
+        // log.info("AI 서버로부터 응답을 받았습니다: {}", payload);
 
         try {
             AiResponseDto response = objectMapper.readValue(payload, AiResponseDto.class);
@@ -161,6 +163,9 @@ public class WebSocketClientService {
                     break;
                 case MESSAGE_TYPE_ERROR:
                     handleErrorMessage(response);
+                    break;
+                case MESSAGE_TYPE_GAUGE_RESULT:
+                    handleGaugeResultMessage(response);
                     break;
                 default:
                     log.warn("알 수 없는 메시지 타입: {}", type);
@@ -211,6 +216,21 @@ public class WebSocketClientService {
             log.warn("error 메시지에서 세션 ID를 찾을 수 없습니다");
         }
     }
+
+    private void handleGaugeResultMessage(AiResponseDto response) {
+        GaugeDto gauge = response.getGauge();
+        if (gauge != null) {
+            log.info("감정 분석 결과를 받았습니다 - 전체 점수: {}, 턴 수: {}, 감정 표현: {}, 감정 다양성: {}, 사건 참조: {}, 감정 변화: {}, 요약: {}", 
+                    gauge.getGaugeScore(), gauge.getTurnCountScore(), gauge.getEmotionExpressionScore(), 
+                    gauge.getEmotionDiversityScore(), gauge.getEventReferenceScore(), gauge.getEmotionChangeScore(), 
+                    gauge.getSummary());
+        } else {
+            log.warn("gauge.result 메시지에서 gauge 정보가 null입니다.");
+        }
+        // gauge.result는 추가 정보이므로 별도 처리가 필요하지 않음
+        // 필요시 여기서 감정 분석 결과를 저장하거나 다른 처리를 할 수 있음
+    }
+
     private String getCurrentSessionId() {
         // 현재 처리 중인 세션 ID를 반환
         // AI 서버의 응답에는 session_id가 포함되지 않으므로 현재 세션 ID 사용

@@ -15,6 +15,7 @@ public class AiResponseDto {
     private String message; // error 메시지용
     private String sessionId;
     private String fullResponse;
+    private GaugeDto gauge; // gauge.result 메시지의 gauge 필드
 
     public String getResponse() {
         return fullResponse != null ? fullResponse : text;

@@ -33,7 +33,7 @@ public class Chat extends BaseTimeEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chatroom_id")
+    @JoinColumn(name = "chatroom_id", nullable = false)
     private ChatRoom chatRoom;
 
     @Column(name = "message", nullable = false, columnDefinition = "TEXT")
@@ -45,4 +45,8 @@ public class Chat extends BaseTimeEntity {
 
     @Column(name = "chat_time", nullable = false)
     private LocalDateTime chatTime;
+
+    public void setChatRoom(ChatRoom chatRoom) {
+        this.chatRoom = chatRoom;
+    }
 }

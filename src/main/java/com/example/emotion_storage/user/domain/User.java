@@ -1,5 +1,6 @@
 package com.example.emotion_storage.user.domain;
 
+import com.example.emotion_storage.chat.domain.ChatRoom;
 import com.example.emotion_storage.global.entity.BaseTimeEntity;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
@@ -88,11 +89,25 @@ public class User extends BaseTimeEntity {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    private List<ChatRoom> chatRooms = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<TimeCapsule> timeCapsules = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Notification> notifications = new ArrayList<>();
+
+    public void addChatRoom(ChatRoom room) {
+        this.chatRooms.add(room);
+        room.setUser(this);
+    }
+
+    public void removeChatRoom(ChatRoom room) {
+        this.chatRooms.remove(room);
+        room.setUser(null);
+    }
 
     public void addTimeCapsule(TimeCapsule timeCapsule) {
         this.timeCapsules.add(timeCapsule);

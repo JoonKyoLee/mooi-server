@@ -39,6 +39,7 @@ public class ChatService {
                 .user(user)
                 .isEnded(false)
                 .build();
+        user.addChatRoom(chatRoom);
 
         chatRoomRepository.save(chatRoom);
 
@@ -68,6 +69,7 @@ public class ChatService {
                 .chatTime(LocalDateTime.parse(userMessage.timestamp(), formatter))
                 .build();
 
+        chatRoom.addChat(chat);
         chatRepository.save(chat);
     }
 

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
+import com.example.emotion_storage.report.domain.Keyword;
 import com.example.emotion_storage.report.domain.Report;
 import com.example.emotion_storage.report.repository.ReportRepository;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
@@ -75,9 +76,11 @@ class TimeCapsuleServiceTest {
                 .stressIndex(3)
                 .happinessIndex(7)
                 .emotionSummary("감정 요약")
-                .keywords("공부, 프로젝트")
                 .isOpened(true)
                 .build();
+
+        report.addKeyword(Keyword.builder().keyword("집중").build());
+        report.addKeyword(Keyword.builder().keyword("운동").build());
 
         reportRepository.save(report);
 

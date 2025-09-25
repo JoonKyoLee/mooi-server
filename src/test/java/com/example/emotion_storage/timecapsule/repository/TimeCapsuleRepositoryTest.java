@@ -2,6 +2,7 @@ package com.example.emotion_storage.timecapsule.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.emotion_storage.report.domain.Keyword;
 import com.example.emotion_storage.report.domain.Report;
 import com.example.emotion_storage.report.repository.ReportRepository;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
@@ -55,12 +56,14 @@ public class TimeCapsuleRepositoryTest {
         report = reportRepository.save(Report.builder()
                 .historyDate(LocalDate.now())
                 .todaySummary("요약")
-                .keywords("키워드1, 키워드2") // 키워드 형태는 추후 변경 예정 -> 수정 필요
                 .stressIndex(30)
                 .happinessIndex(80)
                 .emotionSummary("감정")
                 .isOpened(true)
                 .build());
+
+        report.addKeyword(Keyword.builder().keyword("집중").build());
+        report.addKeyword(Keyword.builder().keyword("운동").build());
     }
 
     private void saveTimeCapsule(

@@ -18,29 +18,20 @@ public class StompChatController {
 
     private final ChatService chatService;
 
-    @MessageMapping("/v1/test")
-    public void test(UserMessageDto userMessage) {
-        log.info("유저에게 메시지를 받았습니다.");
-
-        chatService.saveUserMessage(userMessage);
-        log.info("사용자가 전송한 메시지를 저장했습니다.");
-
-        chatService.chatTest(userMessage);
-    }
-
     @MessageMapping("/v1/chat")
     public void processMessage(
             UserMessageDto userMessage,
-            @AuthenticationPrincipal CustomUserPrincipal userPrincipal) {
-
-        String userId = userPrincipal.getId().toString();
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = (userPrincipal != null && userPrincipal.getId() != null) ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}가 채팅 메시지를 전송했습니다: {}", userId, userMessage.content());
 
         chatService.saveUserMessage(userMessage);
+        log.info("사용자 {}가 전송한 메시지 저장을 완료했습니다.", userId);
 
         // AI 메시지 프로세스 진행
         // ChatResponse response = chatService.....
-        String message  = "hello";
+        String message = "안녕하세요, 저는 MOOI입니다. 메시지를 보내주세요.";
         chatService.sendToUser(userMessage.roomId(), message);
     }
 }

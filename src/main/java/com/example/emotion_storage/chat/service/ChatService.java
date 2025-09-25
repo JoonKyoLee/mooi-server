@@ -30,11 +30,6 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRepository chatRepository;
 
-    public void chatTest(UserMessageDto userMessage) {
-        String message = "안녕하세요, 저는 MOOI입니다. 메시지를 보내주세요.";
-        messagingTemplate.convertAndSend("/sub/chatroom/" + userMessage.roomId(), message);
-    }
-
     @Transactional
     public ChatRoomCreateResponse createChatRoom(Long userId) {
         User user = userRepository.findById(userId)

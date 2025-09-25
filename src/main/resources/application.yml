@@ -3,3 +3,8 @@ spring:
     name: emotion-storage
   profiles:
     active: local
+  task:
+    scheduling:
+      pool:
+        size: 5
+      thread-name-prefix: "scheduled-task-"

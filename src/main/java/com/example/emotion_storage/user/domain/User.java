@@ -120,4 +120,8 @@ public class User extends BaseTimeEntity {
         }
         this.keyCount -= requiredKeys;
     }
+
+    public void initTicketCount() {
+        this.ticketCount = 10L;
+    }
 }

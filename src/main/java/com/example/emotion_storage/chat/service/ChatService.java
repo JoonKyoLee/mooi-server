@@ -50,7 +50,7 @@ public class ChatService {
 
     @Transactional
     public void saveUserMessage(UserMessageDto userMessage) {
-        ChatRoom chatRoom = chatRoomRepository.findById(Long.parseLong(userMessage.roomId()))
+        ChatRoom chatRoom = chatRoomRepository.findById(userMessage.roomId())
                 .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"); // 프론트 포맷에 맞춰 변경 필요
@@ -88,7 +88,7 @@ public class ChatService {
         return new ChatRoomCloseResponse(true);
     }
 
-    public void sendToUser(String roomId, String message) { // 추루에 AI 메시지 DTO 형식으로 변경
+    public void sendToUser(Long roomId, String message) { // 추루에 AI 메시지 DTO 형식으로 변경
         messagingTemplate.convertAndSend("/sub/chatroom/" + roomId, message);
         // messagingTemplate.convertAndSend("sub/chatroom/" + roomId, AiMessageDto);
     }

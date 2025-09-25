@@ -3,7 +3,10 @@ package com.example.emotion_storage.chat.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.emotion_storage.chat.domain.Chat;
 import com.example.emotion_storage.chat.domain.ChatRoom;
+import com.example.emotion_storage.chat.domain.SenderType;
+import com.example.emotion_storage.chat.dto.UserMessageDto;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCloseResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCreateResponse;
 import com.example.emotion_storage.chat.repository.ChatRepository;
@@ -15,6 +18,9 @@ import com.example.emotion_storage.user.domain.SocialType;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -126,5 +132,105 @@ public class ChatServiceTest {
         assertThatThrownBy(() -> chatService.closeChatRoom(999L, chatRoom.getId()))
                 .isInstanceOf(BaseException.class)
                 .hasMessageContaining(ErrorCode.CHAT_ROOM_ACCESS_DENIED.getMessage());
+    }
+
+    @Test
+    void 유저_메시지_저장에_성공한다() {
+        // given
+        User user = newUser();
+        ChatRoom chatRoom = newChatRoom(user);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+        LocalDateTime now = LocalDateTime.now();
+        String timestamp = formatter.format(now);
+
+        UserMessageDto userMessageDto = new UserMessageDto(
+              "message-1",
+                chatRoom.getId(),
+                "안녕하세요",
+                "USER",
+                timestamp
+        );
+
+        // when
+        chatService.saveUserMessage(userMessageDto);
+
+        // then
+        ChatRoom reloaded = chatRoomRepository.findById(chatRoom.getId())
+                .orElseThrow();
+        assertThat(reloaded.getFirstChatTime()).isEqualTo(LocalDateTime.parse(timestamp, formatter));
+
+        List<Chat> chats = chatRepository.findAll();
+        assertThat(chats.get(0).getChatRoom().getId()).isEqualTo(chatRoom.getId());
+        assertThat(chats.get(0).getMessage()).isEqualTo("안녕하세요");
+        assertThat(chats.get(0).getSender()).isEqualTo(SenderType.USER);
+        assertThat(chats.get(0).getChatTime()).isEqualTo(LocalDateTime.parse(timestamp, formatter));
+    }
+
+    @Test
+    void 첫_메시지_이후_다시_저장해도_첫_채팅_시각은_변경되지_않는다() {
+        // given
+        User user = newUser();
+        ChatRoom chatRoom = newChatRoom(user);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+        LocalDateTime firstTime = LocalDateTime.now().minusMinutes(1);
+        LocalDateTime secondTime = LocalDateTime.now();
+        String firstTimestamp = formatter.format(firstTime);
+        String secondTimestamp = formatter.format(secondTime);
+
+        UserMessageDto firstMessage = new UserMessageDto(
+                "message-1",
+                chatRoom.getId(),
+                "메시지 1",
+                "USER",
+                firstTimestamp
+        );
+        UserMessageDto secondMessage = new UserMessageDto(
+                "message-2",
+                chatRoom.getId(),
+                "메시지 2",
+                "USER",
+                secondTimestamp
+        );
+
+        // when
+        chatService.saveUserMessage(firstMessage);
+        LocalDateTime firstChatTime = chatRoomRepository.findById(chatRoom.getId())
+                .orElseThrow()
+                .getFirstChatTime();
+
+        chatService.saveUserMessage(secondMessage);
+
+        // then
+        ChatRoom reloaded = chatRoomRepository.findById(chatRoom.getId())
+                .orElseThrow();
+        assertThat(reloaded.getFirstChatTime()).isEqualTo(firstChatTime);
+
+        List<Chat> chats = chatRepository.findAll();
+        assertThat(chats).hasSize(2);
+        assertThat(chats.get(0).getMessage()).isEqualTo("메시지 1");
+        assertThat(chats.get(1).getMessage()).isEqualTo("메시지 2");
+    }
+
+    @Test
+    void 존재하지_않는_채팅방이면_유저_메시지_저장_시_예외가_발생한다() {
+        // given
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+        LocalDateTime now = LocalDateTime.now();
+        String timestamp = formatter.format(now);
+
+        UserMessageDto userMessageDto = new UserMessageDto(
+                "message-1",
+                9999L, // 존재하지 않는 roomId
+                "안녕하세요",
+                "USER",
+                timestamp
+        );
+
+        // when & then
+        assertThatThrownBy(() -> chatService.saveUserMessage(userMessageDto))
+                .isInstanceOf(BaseException.class)
+                .hasMessageContaining(ErrorCode.CHAT_ROOM_NOT_FOUND.getMessage());
     }
 }

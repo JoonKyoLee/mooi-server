@@ -8,8 +8,6 @@ import com.example.emotion_storage.chat.dto.response.ChatRoomCloseResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCreateResponse;
 import com.example.emotion_storage.chat.repository.ChatRepository;
 import com.example.emotion_storage.chat.repository.ChatRoomRepository;
-import com.example.emotion_storage.global.api.ApiResponse;
-import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.user.domain.User;
@@ -21,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 
 @Slf4j
 @Service
@@ -80,37 +77,22 @@ public class ChatService {
     }
 
     @Transactional
-    public ApiResponse<ChatRoomCloseResponse> closeTestChatRoom(String roomId) {
-        ChatRoom chatRoom = chatRoomRepository.findById(Long.parseLong(roomId))
+    public ChatRoomCloseResponse closeChatRoom(Long userId, Long roomId) {
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
+        if (!chatRoom.getUser().getId().equals(userId)) {
+            throw new BaseException(ErrorCode.CHAT_ROOM_ACCESS_DENIED);
+        }
+
         log.info("채팅방 {}에서 감정 대화 종료를 요청했습니다.", roomId);
-        chatRoom.updateChatRoomStatus(true);
+        chatRoom.closeChatRoom(true);
 
-        ChatRoomCloseResponse response = new ChatRoomCloseResponse(true);
-
-        return ApiResponse.success(SuccessMessage.CHAT_ROOM_CLOSE_SUCCESS.getMessage(), response);
+        return new ChatRoomCloseResponse(true);
     }
 
     public void sendToUser(String roomId, String message) { // 추루에 AI 메시지 DTO 형식으로 변경
         messagingTemplate.convertAndSend("/sub/chatroom/" + roomId, message);
         // messagingTemplate.convertAndSend("sub/chatroom/" + roomId, AiMessageDto);
-    }
-
-    @Transactional
-    public ApiResponse<ChatRoomCloseResponse> closeChatRoom(String roomId, CustomUserPrincipal userPrincipal) {
-        ChatRoom chatRoom = chatRoomRepository.findById(Long.parseLong(roomId))
-                .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
-
-        if (!chatRoom.getUser().getId().equals(userPrincipal.getId())) {
-            throw new BaseException(ErrorCode.CHAT_ROOM_ACCESS_DENIED);
-        }
-
-        log.info("채팅방 {}에서 감정 대화 종료를 요청했습니다.", roomId);
-        chatRoom.updateChatRoomStatus(true);
-
-        ChatRoomCloseResponse response = new ChatRoomCloseResponse(true);
-
-        return ApiResponse.success(SuccessMessage.CHAT_ROOM_CLOSE_SUCCESS.getMessage(), response);
     }
 }

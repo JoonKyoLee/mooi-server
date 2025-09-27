@@ -36,6 +36,9 @@ public enum SuccessMessage {
     
     // Report
     DAILY_REPORT_DETAIL_GET_SUCCESS("일일리포트 상세 조회 성공"),
+
+    // My Page
+    GET_MY_PAGE_USER_INFO_SUCCESS("마이페이지 내 사용자 정보 조회 성공"),
     ;
 
     private final String message;

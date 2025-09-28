@@ -2,6 +2,7 @@ package com.example.emotion_storage.mypage.service;
 
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
+import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.response.UserInfoResponse;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
@@ -20,8 +21,7 @@ public class MyPageService {
     private final UserRepository userRepository;
 
     public UserInfoResponse getUserInfo(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+        User user = findUserById(userId);
 
         log.info("사용자 {}의 닉네임, 가입 일수, 열쇠 개수를 조회합니다.", userId);
         String nickname = user.getNickname();
@@ -32,5 +32,17 @@ public class MyPageService {
         long totalDays = ChronoUnit.DAYS.between(signupDate, now);
 
         return new UserInfoResponse(nickname, totalDays, keys);
+    }
+
+    public void changeUserNickname(NicknameChangeRequest request, Long userId) {
+        User user = findUserById(userId);
+
+        log.info("사용자 {}의 닉네임을 수정합니다.", userId);
+        user.updateNickname(request.nickname());
+    }
+
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
     }
 }

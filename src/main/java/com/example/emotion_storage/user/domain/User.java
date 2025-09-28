@@ -139,4 +139,8 @@ public class User extends BaseTimeEntity {
     public void initTicketCount() {
         this.ticketCount = 10L;
     }
+
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
 }

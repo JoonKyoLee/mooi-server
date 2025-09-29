@@ -4,7 +4,8 @@ import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
-import com.example.emotion_storage.mypage.dto.response.UserInfoResponse;
+import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
+import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
 import com.example.emotion_storage.mypage.service.MyPageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,13 +30,13 @@ public class MyPageController {
     private final MyPageService myPageService;
 
     @GetMapping
-    @Operation(summary = "유저 정보 API", description = "닉네임, 가입 기간, 보유 열쇠를 반환합니다.")
-    public ResponseEntity<ApiResponse<UserInfoResponse>> createChatRoomForTest(
+    @Operation(summary = "먀이페이지 초기 화면 조회 API", description = "닉네임, 가입 기간, 보유 열쇠를 반환합니다.")
+    public ResponseEntity<ApiResponse<MyPageOverviewResponse>> getMyPageOverview(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal
     ) {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}의 마이페이지 내 정보 조회를 요청받았습니다.", userId);
-        UserInfoResponse response = myPageService.getUserInfo(userId);
+        MyPageOverviewResponse response = myPageService.getMyPageOverview(userId);
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessMessage.GET_MY_PAGE_USER_INFO_SUCCESS.getMessage(), response));
     }
@@ -53,5 +54,17 @@ public class MyPageController {
                 HttpStatus.NO_CONTENT.value(),
                 SuccessMessage.CHANGE_USER_NICKNAME_SUCCESS.getMessage(),
                 null));
+    }
+
+    @GetMapping
+    @Operation(summary = "사용자 계정 정보 API", description = "이메일, 연동 정보 등을 반환합니다.")
+    public ResponseEntity<ApiResponse<UserAccountInfoResponse>> getUserAccountInfo(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}의 계정 정보 조회를 요청받았습니다.", userId);
+        UserAccountInfoResponse response = myPageService.getUserAccountInfo(userId);
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessMessage.GET_USER_ACCOUNT_INFO_SUCCESS.getMessage(), response));
     }
 }

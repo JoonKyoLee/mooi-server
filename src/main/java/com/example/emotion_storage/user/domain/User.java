@@ -200,4 +200,8 @@ public class User extends BaseTimeEntity {
     public void updateMarketingInfoNotify(boolean marketingInfoNotify) {
         this.marketingInfoNotify = marketingInfoNotify;
     }
+
+    public void withdrawUser() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }

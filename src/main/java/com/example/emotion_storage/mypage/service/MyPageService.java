@@ -15,6 +15,7 @@ import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -23,6 +24,7 @@ public class MyPageService {
 
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
     public MyPageOverviewResponse getMyPageOverview(Long userId) {
         User user = findUserById(userId);
 
@@ -35,6 +37,7 @@ public class MyPageService {
         return new MyPageOverviewResponse(user.getNickname(), totalDays, user.getKeyCount());
     }
 
+    @Transactional
     public void changeUserNickname(NicknameChangeRequest request, Long userId) {
         User user = findUserById(userId);
 
@@ -42,6 +45,7 @@ public class MyPageService {
         user.updateNickname(request.nickname());
     }
 
+    @Transactional(readOnly = true)
     public UserAccountInfoResponse getUserAccountInfo(Long userId) {
         User user = findUserById(userId);
 
@@ -51,6 +55,7 @@ public class MyPageService {
         );
     }
 
+    @Transactional(readOnly = true)
     public NotificationSettingsResponse getNotificationSettings(Long userId) {
         User user = findUserById(userId);
 
@@ -65,6 +70,7 @@ public class MyPageService {
         );
     }
 
+    @Transactional
     public void updateNotificationSettings(NotificationSettingsUpdateRequest request, Long userId) {
         User user = findUserById(userId);
 
@@ -76,12 +82,21 @@ public class MyPageService {
         user.updateMarketingInfoNotify(request.marketingInfoNotify());
     }
 
+    @Transactional(readOnly = true)
+    public PolicyResponse getPolicy() {
+        return new PolicyResponse("정책"); // 약관 및 개인정보 처리 방침은 논의 필요
+    }
+
+    @Transactional
+    public void withdrawUser(Long userId) {
+        User user = findUserById(userId);
+
+        log.info("회원 {}의 탈퇴 처리를 진행합니다.", userId);
+        user.withdrawUser();
+    }
+
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    public PolicyResponse getPolicy() {
-        return new PolicyResponse("정책"); // 약관 및 개인정보 처리 방침은 논의 필요
     }
 }

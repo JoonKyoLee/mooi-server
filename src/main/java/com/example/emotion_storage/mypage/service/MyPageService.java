@@ -8,8 +8,11 @@ import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
 import com.example.emotion_storage.mypage.dto.response.NotificationSettingsResponse;
 import com.example.emotion_storage.mypage.dto.response.PolicyResponse;
 import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
+import com.example.emotion_storage.user.auth.service.TokenService;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MyPageService {
 
     private final UserRepository userRepository;
+    private final TokenService tokenService;
 
     @Transactional(readOnly = true)
     public MyPageOverviewResponse getMyPageOverview(Long userId) {
@@ -88,11 +92,19 @@ public class MyPageService {
     }
 
     @Transactional
-    public void withdrawUser(Long userId) {
+    public void withdrawUser(Long userId, HttpServletRequest request, HttpServletResponse response) {
         User user = findUserById(userId);
 
         log.info("회원 {}의 탈퇴 처리를 진행합니다.", userId);
         user.withdrawUser();
+
+        logout(userId, request, response);
+    }
+
+    @Transactional
+    public void logout(Long userId, HttpServletRequest request, HttpServletResponse response) {
+        log.info("회원 {}의 로그아웃을 진행합니다.", userId);
+        tokenService.revokeTokens(request, response, userId);
     }
 
     private User findUserById(Long userId) {

@@ -45,6 +45,7 @@ public enum SuccessMessage {
     UPDATE_NOTIFICATION_SETTINGS_SUCCESS("사용자 알림 설정 상태 정보 업데이트 성공"),
     GET_POLICY_SUCCESS("이용 약관 및 개인정보 처리방침 조회 성공"),
     WITHDRAW_USER_SUCCESS("회원 탈퇴 처리 성공"),
+    LOGOUT_USER_SUCCESS("회원 로그아웃 처리 성공"),
     ;
 
     private final String message;

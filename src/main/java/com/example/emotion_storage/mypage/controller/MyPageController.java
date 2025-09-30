@@ -12,6 +12,8 @@ import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
 import com.example.emotion_storage.mypage.service.MyPageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -111,14 +114,30 @@ public class MyPageController {
     @DeleteMapping("/account")
     @Operation(summary = "회원 탈퇴 API", description = "회원 탈퇴를 진행합니다.")
     public ResponseEntity<ApiResponse<Void>> withdrawUser(
-            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
+            HttpServletRequest request, HttpServletResponse response
     ) {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("회원 {}의 탈퇴를 요청받았습니다.", userId);
-        myPageService.withdrawUser(userId);
+        myPageService.withdrawUser(userId, request, response);
         return ResponseEntity.ok(ApiResponse.success(
                 HttpStatus.NO_CONTENT.value(),
                 SuccessMessage.WITHDRAW_USER_SUCCESS.getMessage(),
+                null));
+    }
+
+    @DeleteMapping("/logout")
+    @Operation(summary = "로그아웃 API", description = "로그아웃을 진행합니다.")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
+            HttpServletRequest request, HttpServletResponse response
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("회원 {}의 로그아웃을 요청받았습니다.", userId);
+        myPageService.logout(userId, request, response);
+        return ResponseEntity.ok(ApiResponse.success(
+                HttpStatus.NO_CONTENT.value(),
+                SuccessMessage.LOGOUT_USER_SUCCESS.getMessage(),
                 null));
     }
 }

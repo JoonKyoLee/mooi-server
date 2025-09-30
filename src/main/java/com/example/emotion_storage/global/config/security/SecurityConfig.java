@@ -3,6 +3,7 @@ package com.example.emotion_storage.global.config.security;
 import com.example.emotion_storage.global.security.jwt.JwtAuthEntryPoint;
 import com.example.emotion_storage.global.security.jwt.JwtTokenProvider;
 import com.example.emotion_storage.global.security.jwt.TokenAuthenticationFilter;
+import com.example.emotion_storage.user.auth.service.RedisService;
 import com.example.emotion_storage.user.repository.UserRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final RedisService redisService;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final JwtAuthEntryPoint jwtAuthEntryPoint;
@@ -73,6 +75,6 @@ public class SecurityConfig {
 
     @Bean
     public TokenAuthenticationFilter tokenAuthenticationFilter() {
-        return new TokenAuthenticationFilter(jwtTokenProvider, userRepository);
+        return new TokenAuthenticationFilter(redisService, jwtTokenProvider, userRepository);
     }
 }

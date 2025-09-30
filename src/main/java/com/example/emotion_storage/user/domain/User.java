@@ -6,6 +6,7 @@ import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.notification.domain.Notification;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -173,11 +174,22 @@ public class User extends BaseTimeEntity {
         this.appPushNotify = appPushNotify;
     }
 
-    public void updateEmotionReminderNotify(boolean emotionReminderNotify) {
+    public void updateEmotionReminder(
+            boolean emotionReminderNotify, @Nullable Set<DayOfWeek> emotionReminderDays, @Nullable LocalTime emotionReminderTime
+    ) {
         this.emotionReminderNotify = emotionReminderNotify;
-    }
 
-    public void updateEmotionReminderTime(LocalTime emotionReminderTime) {
+        if (!emotionReminderNotify) {
+            this.emotionReminderDays = null;
+            this.emotionReminderTime = null;
+            return;
+        }
+
+        if (emotionReminderDays == null || emotionReminderDays.isEmpty()) throw new BaseException(ErrorCode.EMOTION_REMINDER_DAYS_REQUIRED);
+        if (emotionReminderTime == null) throw new BaseException(ErrorCode.EMOTION_REMINDER_TIME_REQUIRED);
+
+        this.emotionReminderDays.clear();
+        this.emotionReminderDays.addAll(emotionReminderDays);
         this.emotionReminderTime = emotionReminderTime;
     }
 

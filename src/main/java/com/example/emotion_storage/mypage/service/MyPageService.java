@@ -71,12 +71,7 @@ public class MyPageService {
         log.info("사용자 {}의 알림 설정 상태를 업데이트합니다.", userId);
 
         user.updateAppPushNotify(request.appPushNotify());
-
-        user.updateEmotionReminderNotify(request.emotionReminderNotify());
-        user.getEmotionReminderDays().clear();
-        user.getEmotionReminderDays().addAll(request.emotionReminderDays());
-        user.updateEmotionReminderTime(request.emotionReminderTime());
-
+        user.updateEmotionReminder(request.emotionReminderNotify(), request.emotionReminderDays(), request.emotionReminderTime());
         user.updateTimeCapsuleReportNotify(request.timeCapsuleReportNotify());
         user.updateMarketingInfoNotify(request.marketingInfoNotify());
     }

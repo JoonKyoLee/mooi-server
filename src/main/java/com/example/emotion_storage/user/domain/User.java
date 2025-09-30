@@ -168,4 +168,24 @@ public class User extends BaseTimeEntity {
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }
+
+    public void updateAppPushNotify(boolean appPushNotify) {
+        this.appPushNotify = appPushNotify;
+    }
+
+    public void updateEmotionReminderNotify(boolean emotionReminderNotify) {
+        this.emotionReminderNotify = emotionReminderNotify;
+    }
+
+    public void updateEmotionReminderTime(LocalTime emotionReminderTime) {
+        this.emotionReminderTime = emotionReminderTime;
+    }
+
+    public void updateTimeCapsuleReportNotify(boolean timeCapsuleReportNotify) {
+        this.timeCapsuleReportNotify = timeCapsuleReportNotify;
+    }
+
+    public void updateMarketingInfoNotify(boolean marketingInfoNotify) {
+        this.marketingInfoNotify = marketingInfoNotify;
+    }
 }

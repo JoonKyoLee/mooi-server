@@ -3,6 +3,7 @@ package com.example.emotion_storage.mypage.service;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
+import com.example.emotion_storage.mypage.dto.request.NotificationSettingsUpdateRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
 import com.example.emotion_storage.mypage.dto.response.NotificationSettingsResponse;
 import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
@@ -61,6 +62,22 @@ public class MyPageService {
                 user.isTimeCapsuleReportNotify(),
                 user.isMarketingInfoNotify()
         );
+    }
+
+    public void updateNotificationSettings(NotificationSettingsUpdateRequest request, Long userId) {
+        User user = findUserById(userId);
+
+        log.info("사용자 {}의 알림 설정 상태를 업데이트합니다.", userId);
+
+        user.updateAppPushNotify(request.appPushNotify());
+
+        user.updateEmotionReminderNotify(request.emotionReminderNotify());
+        user.getEmotionReminderDays().clear();
+        user.getEmotionReminderDays().addAll(request.emotionReminderDays());
+        user.updateEmotionReminderTime(request.emotionReminderTime());
+
+        user.updateTimeCapsuleReportNotify(request.timeCapsuleReportNotify());
+        user.updateMarketingInfoNotify(request.marketingInfoNotify());
     }
 
     private User findUserById(Long userId) {

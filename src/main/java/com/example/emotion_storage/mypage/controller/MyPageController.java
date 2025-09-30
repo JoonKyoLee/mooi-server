@@ -4,6 +4,7 @@ import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
+import com.example.emotion_storage.mypage.dto.request.NotificationSettingsUpdateRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
 import com.example.emotion_storage.mypage.dto.response.NotificationSettingsResponse;
 import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
@@ -79,5 +80,18 @@ public class MyPageController {
         NotificationSettingsResponse response = myPageService.getNotificationSettings(userId);
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessMessage.GET_NOTIFICATION_SETTINGS_SUCCESS.getMessage(), response));
+    }
+
+    @PatchMapping("/notification-settings")
+    @Operation(summary = "사용자 알림 설정 상태 업데이트 API", description = "사용자가 선택한 알림 설정 상태를 업데이트 합니다.")
+    public ResponseEntity<ApiResponse<Void>> updateNotificationSettings(
+            @RequestBody NotificationSettingsUpdateRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}의 알림설정 상태 업데이트를 요청받았습니다.", userId);
+        myPageService.updateNotificationSettings(request, userId);
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessMessage.GET_NOTIFICATION_SETTINGS_SUCCESS.getMessage(), null));
     }
 }

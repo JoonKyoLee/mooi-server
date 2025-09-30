@@ -6,6 +6,7 @@ import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.request.NotificationSettingsUpdateRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
 import com.example.emotion_storage.mypage.dto.response.NotificationSettingsResponse;
+import com.example.emotion_storage.mypage.dto.response.PolicyResponse;
 import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
@@ -83,5 +84,9 @@ public class MyPageService {
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    public PolicyResponse getPolicy() {
+        return new PolicyResponse("정책"); // 약관 및 개인정보 처리 방침은 논의 필요
     }
 }

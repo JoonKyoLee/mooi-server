@@ -7,6 +7,7 @@ import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.request.NotificationSettingsUpdateRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
 import com.example.emotion_storage.mypage.dto.response.NotificationSettingsResponse;
+import com.example.emotion_storage.mypage.dto.response.PolicyResponse;
 import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
 import com.example.emotion_storage.mypage.service.MyPageService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -93,5 +94,15 @@ public class MyPageController {
         myPageService.updateNotificationSettings(request, userId);
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessMessage.GET_NOTIFICATION_SETTINGS_SUCCESS.getMessage(), null));
+    }
+
+    @GetMapping("/policy")
+    @Operation(summary = "이용 약관 및 개인정보 처리방침 조회 API", description = "이용 약관 및 개인정보 처리방침을 반환합니다.")
+    public ResponseEntity<ApiResponse<PolicyResponse>> getPolicy(
+    ) {
+        log.info("이용 약관 및 개인정보 처리방침을 조회합니다.");
+        PolicyResponse response = myPageService.getPolicy();
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessMessage.GET_POLICY_SUCCESS.getMessage(), response));
     }
 }

@@ -42,6 +42,7 @@ public enum SuccessMessage {
     CHANGE_USER_NICKNAME_SUCCESS("사용자 닉네임 업데이트 성공"),
     GET_USER_ACCOUNT_INFO_SUCCESS("사용자 계정 정보 조회 성공"),
     GET_NOTIFICATION_SETTINGS_SUCCESS("사용자 알림 설정 상태 정보 조회 성공"),
+    GET_POLICY_SUCCESS("이용 약관 및 개인정보 처리방침 조회 성공"),
     ;
 
     private final String message;

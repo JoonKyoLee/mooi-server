@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,7 @@ public class TokenService {
     private int refreshTokenExpiration;
 
     private static final String REFRESH_TOKEN_PREFIX = "refreshToken";
+    private static final String ACCESS_TOKEN_PREFIX = "Bearer ";
 
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisService redisService;
@@ -78,5 +80,44 @@ public class TokenService {
                 .map(Cookie::getValue)
                 .findFirst()
                 .orElseThrow(() -> new BaseException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
+    }
+
+    public void revokeTokens(HttpServletRequest request, HttpServletResponse response, Long userId) {
+        String accessToken = resolveToken(request);
+
+        // 액세스 토큰 무효화
+        if (accessToken != null && !accessToken.isBlank()) {
+            long remainMillis = jwtTokenProvider.getRemainingMillis(accessToken);
+            if (remainMillis > 0) {
+                redisService.addAccessTokenToBlacklist(accessToken, remainMillis);
+            }
+        }
+
+        // 리프레시 토큰 삭제
+        redisService.deleteByUserId(userId.toString());
+
+        // 리프레시 쿠키 삭제
+        clearRefreshTokenCookie(response);
+    }
+
+    private void clearRefreshTokenCookie(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from(REFRESH_TOKEN_PREFIX, "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        response.addHeader("Set-Cookie", cookie.toString());
+    }
+
+    private String resolveToken(HttpServletRequest request) {
+        String bearer = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+        if (bearer != null && bearer.startsWith(ACCESS_TOKEN_PREFIX)) {
+            return bearer.substring(ACCESS_TOKEN_PREFIX.length());
+        }
+        return null;
     }
 }

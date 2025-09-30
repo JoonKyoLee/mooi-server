@@ -3,6 +3,7 @@ package com.example.emotion_storage.global.security.jwt;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
+import com.example.emotion_storage.user.auth.service.RedisService;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
@@ -25,6 +26,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
+    private final RedisService redisService;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private static final String TOKEN_PREFIX = "Bearer ";
@@ -68,17 +70,23 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         log.debug("[AUTH] path={}, authHeader={}", request.getServletPath(), request.getHeader(HttpHeaders.AUTHORIZATION));
         log.debug("[AUTH] tokenStatus={}", status);
         if (status == TokenStatus.VALID) {
-            Long userId = jwtTokenProvider.getUserIdFromToken(token);
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+            if (redisService.isAccessTokenBlacklisted(token)) {
+                log.warn("블랙리스트에 등록된 액세스 토큰입니다.");
+                SecurityContextHolder.clearContext();
+                request.setAttribute("authErrorCode", ErrorCode.ACCESS_TOKEN_INVALID);
+            } else {
+                Long userId = jwtTokenProvider.getUserIdFromToken(token);
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
-            List<GrantedAuthority> authorities = Collections.emptyList();
-            CustomUserPrincipal principal =
-                    new CustomUserPrincipal(user.getId(), user.getEmail(), authorities);
+                List<GrantedAuthority> authorities = Collections.emptyList();
+                CustomUserPrincipal principal =
+                        new CustomUserPrincipal(user.getId(), user.getEmail(), authorities);
 
-            UsernamePasswordAuthenticationToken authenticationToken =
-                    new UsernamePasswordAuthenticationToken(principal, null, authorities);
-            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                UsernamePasswordAuthenticationToken authenticationToken =
+                        new UsernamePasswordAuthenticationToken(principal, null, authorities);
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            }
         } else {
             SecurityContextHolder.clearContext();
             ErrorCode errorCode = (status == TokenStatus.EXPIRED)

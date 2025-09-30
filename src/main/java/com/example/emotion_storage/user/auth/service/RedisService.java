@@ -23,6 +23,10 @@ public class RedisService {
         return "refresh:token:" + token;
     }
 
+    private String blacklistAccessTokenKey(String token) {
+        return "blacklist:access:" + token;
+    }
+
     public void saveRefreshToken(String userId, String refreshToken) {
         Duration ttl = Duration.ofDays(refreshTokenExpiration);
         redisTemplate.opsForValue().set(userKey(userId), refreshToken, ttl);
@@ -64,5 +68,15 @@ public class RedisService {
         }
         redisTemplate.delete(userKey(userId));
         saveRefreshToken(userId, newToken);
+    }
+
+    public void addAccessTokenToBlacklist(String accessToken, long remainingMillis) {
+        if (remainingMillis <= 0) return;
+        redisTemplate.opsForValue().set(
+                blacklistAccessTokenKey(accessToken), "true", Duration.ofMillis(remainingMillis));
+    }
+
+    public boolean isAccessTokenBlacklisted(String accessToken) {
+        return redisTemplate.hasKey(blacklistAccessTokenKey(accessToken));
     }
 }

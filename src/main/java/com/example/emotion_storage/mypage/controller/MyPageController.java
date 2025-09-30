@@ -5,6 +5,7 @@ import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
+import com.example.emotion_storage.mypage.dto.response.NotificationSettingsResponse;
 import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
 import com.example.emotion_storage.mypage.service.MyPageService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -56,8 +57,8 @@ public class MyPageController {
                 null));
     }
 
-    @GetMapping
-    @Operation(summary = "사용자 계정 정보 API", description = "이메일, 연동 정보 등을 반환합니다.")
+    @GetMapping("/profile")
+    @Operation(summary = "사용자 계정 정보 조회 API", description = "이메일, 연동 정보 등을 반환합니다.")
     public ResponseEntity<ApiResponse<UserAccountInfoResponse>> getUserAccountInfo(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal
     ) {
@@ -66,5 +67,17 @@ public class MyPageController {
         UserAccountInfoResponse response = myPageService.getUserAccountInfo(userId);
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessMessage.GET_USER_ACCOUNT_INFO_SUCCESS.getMessage(), response));
+    }
+
+    @GetMapping("/notification-settings")
+    @Operation(summary = "사용자 알림설정 상태 정보 조회 API", description = "사용자가 알림설정 상태를 설정한 정보를 조회합니다.")
+    public ResponseEntity<ApiResponse<NotificationSettingsResponse>> getNotificationSettings(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}의 알림설정 상태 정보 조회를 요청받았습니다.", userId);
+        NotificationSettingsResponse response = myPageService.getNotificationSettings(userId);
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessMessage.GET_NOTIFICATION_SETTINGS_SUCCESS.getMessage(), response));
     }
 }

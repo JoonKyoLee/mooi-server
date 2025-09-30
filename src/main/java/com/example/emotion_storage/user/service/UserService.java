@@ -17,7 +17,10 @@ import com.example.emotion_storage.user.dto.request.GoogleLoginRequest;
 import com.example.emotion_storage.user.dto.request.GoogleSignUpRequest;
 import com.example.emotion_storage.user.dto.response.LoginResponse;
 import jakarta.servlet.http.HttpServletResponse;
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+
+    private static final int NOTIFICATION_DEFAULT_HOUR = 21;
+    private static final int NOTIFICATION_DEFAULT_MINUTE = 0;
 
     private final UserRepository userRepository;
     private final GoogleTokenVerifier googleTokenVerifier;
@@ -77,6 +83,13 @@ public class UserService {
                 .isMarketingAgreed(request.isMarketingAgreed())
                 .keyCount(5L)
                 .ticketCount(10L)
+                .appPushNotify(true)
+                .emotionReminderNotify(true)
+                .emotionReminderDays(Set.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+                                DayOfWeek.THURSDAY,DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY))
+                .emotionReminderTime(LocalTime.of(NOTIFICATION_DEFAULT_HOUR, NOTIFICATION_DEFAULT_MINUTE))
+                .timeCapsuleReportNotify(true)
+                .marketingInfoNotify(request.isMarketingAgreed())
                 .build();
 
         userRepository.save(user);
@@ -138,6 +151,13 @@ public class UserService {
                 .isMarketingAgreed(request.isMarketingAgreed())
                 .keyCount(5L)
                 .ticketCount(10L)
+                .appPushNotify(true)
+                .emotionReminderNotify(true)
+                .emotionReminderDays(Set.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+                        DayOfWeek.THURSDAY,DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY))
+                .emotionReminderTime(LocalTime.of(NOTIFICATION_DEFAULT_HOUR, NOTIFICATION_DEFAULT_MINUTE))
+                .timeCapsuleReportNotify(true)
+                .marketingInfoNotify(request.isMarketingAgreed())
                 .build();
 
         userRepository.save(user);

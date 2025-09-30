@@ -4,6 +4,7 @@ import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
+import com.example.emotion_storage.mypage.dto.response.NotificationSettingsResponse;
 import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
@@ -45,6 +46,20 @@ public class MyPageService {
         log.info("사용자 {}의 계정 정보를 조회합니다.", userId);
         return new UserAccountInfoResponse(
                 user.getEmail(), user.getSocialType(), user.getGender(), user.getBirthday()
+        );
+    }
+
+    public NotificationSettingsResponse getNotificationSettings(Long userId) {
+        User user = findUserById(userId);
+
+        log.info("사용자 {}의 알림 설정 상태 정보를 조회합니다.", userId);
+        return new NotificationSettingsResponse(
+                user.isAppPushNotify(),
+                user.isEmotionReminderNotify(),
+                user.getEmotionReminderDays(),
+                user.getEmotionReminderTime(),
+                user.isTimeCapsuleReportNotify(),
+                user.isMarketingInfoNotify()
         );
     }
 

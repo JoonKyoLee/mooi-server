@@ -19,10 +19,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -84,6 +88,27 @@ public class User extends BaseTimeEntity {
 
     @Column(nullable = false)
     private boolean isMarketingAgreed;
+
+    @Column(nullable = false)
+    private boolean appPushNotify;
+
+    @Column(nullable = false)
+    private boolean emotionReminderNotify;
+
+    @ElementCollection
+    @CollectionTable(name = "user_emotion_reminder_days", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "emotion_reminder_day")
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private Set<DayOfWeek> emotionReminderDays = new LinkedHashSet<>();
+
+    private LocalTime emotionReminderTime;
+
+    @Column(nullable = false)
+    private boolean timeCapsuleReportNotify;
+
+    @Column(nullable = false)
+    private boolean marketingInfoNotify;
 
     private LocalDateTime deletedAt;
 

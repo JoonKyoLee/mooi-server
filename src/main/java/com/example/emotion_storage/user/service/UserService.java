@@ -75,6 +75,8 @@ public class UserService {
                 .isTermsAgreed(request.isTermsAgreed())
                 .isPrivacyAgreed(request.isPrivacyAgreed())
                 .isMarketingAgreed(request.isMarketingAgreed())
+                .keyCount(5L)
+                .ticketCount(10L)
                 .build();
 
         userRepository.save(user);
@@ -134,6 +136,8 @@ public class UserService {
                 .isTermsAgreed(request.isTermsAgreed())
                 .isPrivacyAgreed(request.isPrivacyAgreed())
                 .isMarketingAgreed(request.isMarketingAgreed())
+                .keyCount(5L)
+                .ticketCount(10L)
                 .build();
 
         userRepository.save(user);

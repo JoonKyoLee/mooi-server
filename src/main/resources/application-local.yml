@@ -37,3 +37,5 @@ ai:
   websocket:
     url: ${AI_WEBSOCKET_URL:ws://localhost:8000/ws/chat}
     timeout: 30000
+  server:
+    base-url: ${AI_SERVER_BASE_URL:http://localhost:8000}

@@ -86,11 +86,6 @@ public class MyPageService {
         user.updateMarketingInfoNotify(request.marketingInfoNotify());
     }
 
-    @Transactional(readOnly = true)
-    public PolicyResponse getPolicy() {
-        return new PolicyResponse("정책"); // 약관 및 개인정보 처리 방침은 논의 필요
-    }
-
     @Transactional
     public void withdrawUser(Long userId, HttpServletRequest request, HttpServletResponse response) {
         User user = findUserById(userId);

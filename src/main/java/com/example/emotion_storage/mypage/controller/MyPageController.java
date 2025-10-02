@@ -102,15 +102,6 @@ public class MyPageController {
                 null));
     }
 
-    @GetMapping("/policy")
-    @Operation(summary = "이용 약관 및 개인정보 처리방침 조회 API", description = "이용 약관 및 개인정보 처리방침을 반환합니다.")
-    public ResponseEntity<ApiResponse<PolicyResponse>> getPolicy() {
-        log.info("이용 약관 및 개인정보 처리방침을 조회합니다.");
-        PolicyResponse response = myPageService.getPolicy();
-        return ResponseEntity.ok(ApiResponse.success(
-                SuccessMessage.GET_POLICY_SUCCESS.getMessage(), response));
-    }
-
     @DeleteMapping("/account")
     @Operation(summary = "회원 탈퇴 API", description = "회원 탈퇴를 진행합니다.")
     public ResponseEntity<ApiResponse<Void>> withdrawUser(

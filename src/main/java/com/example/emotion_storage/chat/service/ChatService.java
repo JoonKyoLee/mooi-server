@@ -9,6 +9,8 @@ import com.example.emotion_storage.chat.dto.response.ChatRoomCloseResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCreateResponse;
 import com.example.emotion_storage.chat.repository.ChatRepository;
 import com.example.emotion_storage.chat.repository.ChatRoomRepository;
+import com.example.emotion_storage.global.api.ApiResponse;
+import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.user.domain.User;

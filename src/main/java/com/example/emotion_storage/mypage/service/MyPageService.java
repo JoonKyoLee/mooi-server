@@ -36,7 +36,7 @@ public class MyPageService {
 
         LocalDateTime signupDate = user.getCreatedAt();
         LocalDateTime now = LocalDateTime.now();
-        long totalDays = ChronoUnit.DAYS.between(signupDate, now);
+        long totalDays = ChronoUnit.DAYS.between(signupDate, now) + 1; // 가입한 순간부터 1일로 계산
 
         return new MyPageOverviewResponse(user.getNickname(), totalDays, user.getKeyCount());
     }

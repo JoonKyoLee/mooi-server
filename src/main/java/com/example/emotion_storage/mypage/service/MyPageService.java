@@ -6,14 +6,13 @@ import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.request.NotificationSettingsUpdateRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
 import com.example.emotion_storage.mypage.dto.response.NotificationSettingsResponse;
-import com.example.emotion_storage.mypage.dto.response.PolicyResponse;
 import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
 import com.example.emotion_storage.user.auth.service.TokenService;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +33,9 @@ public class MyPageService {
 
         log.info("사용자 {}의 닉네임, 가입 일수, 열쇠 개수를 조회합니다.", userId);
 
-        LocalDateTime signupDate = user.getCreatedAt();
-        LocalDateTime now = LocalDateTime.now();
-        long totalDays = ChronoUnit.DAYS.between(signupDate, now) + 1; // 가입한 순간부터 1일로 계산
+        LocalDate signupDate = user.getCreatedAt().toLocalDate();
+        LocalDate today = LocalDate.now();
+        long totalDays = ChronoUnit.DAYS.between(signupDate, today) + 1; // 가입한 순간부터 1일로 계산
 
         return new MyPageOverviewResponse(user.getNickname(), totalDays, user.getKeyCount());
     }

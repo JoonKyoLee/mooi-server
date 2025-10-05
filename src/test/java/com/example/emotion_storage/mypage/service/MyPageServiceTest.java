@@ -172,4 +172,17 @@ public class MyPageServiceTest {
         assertThat(user.getDeletedAt()).isNotNull();
         verify(tokenService).revokeTokens(request, response, userId);
     }
+
+    @Test
+    void 로그아웃_처리가_잘_진행된다() {
+        // given
+        HttpServletRequest request = new MockHttpServletRequest();
+        HttpServletResponse response = new MockHttpServletResponse();
+
+        // when
+        myPageService.logout(userId, request, response);
+
+        // then
+        verify(tokenService).revokeTokens(request, response, userId);
+    }
 }

@@ -7,6 +7,7 @@ import com.example.emotion_storage.mypage.dto.request.NotificationSettingsUpdate
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
 import com.example.emotion_storage.mypage.dto.response.NotificationSettingsResponse;
 import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
+import com.example.emotion_storage.mypage.dto.response.UserKeyCountResponse;
 import com.example.emotion_storage.user.auth.service.TokenService;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
@@ -46,6 +47,14 @@ public class MyPageService {
 
         log.info("사용자 {}의 닉네임을 수정합니다.", userId);
         user.updateNickname(request.nickname());
+    }
+
+    @Transactional(readOnly = true)
+    public UserKeyCountResponse getUserKeyCount(Long userId) {
+        User user = findUserById(userId);
+
+        log.info("사용자 {}의 열쇠 개수를 조회합니다.", userId);
+        return new UserKeyCountResponse(user.getKeyCount());
     }
 
     @Transactional(readOnly = true)

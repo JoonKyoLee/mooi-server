@@ -48,6 +48,7 @@ public enum SuccessMessage {
     WITHDRAW_USER_SUCCESS("회원 탈퇴 처리 성공"),
     LOGOUT_USER_SUCCESS("회원 로그아웃 처리 성공"),
     SENTIMENT_ANALYSIS_SUCCESS("감정 분석 성공"),
+    GET_USER_KEY_COUNT_SUCCESS("회원 열쇠 개수 조회 성공"),
     ;
 
     private final String message;

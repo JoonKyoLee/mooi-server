@@ -8,6 +8,7 @@ import com.example.emotion_storage.mypage.dto.request.NotificationSettingsUpdate
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
 import com.example.emotion_storage.mypage.dto.response.NotificationSettingsResponse;
 import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
+import com.example.emotion_storage.mypage.dto.response.UserKeyCountResponse;
 import com.example.emotion_storage.mypage.service.MyPageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -59,6 +60,18 @@ public class MyPageController {
                 HttpStatus.NO_CONTENT.value(),
                 SuccessMessage.CHANGE_USER_NICKNAME_SUCCESS.getMessage(),
                 null));
+    }
+
+    @GetMapping("/keys")
+    @Operation(summary = "열쇠 개수 조회 API", description = "사용자의 열쇠 개수를 조회합니다.")
+    public ResponseEntity<ApiResponse<UserKeyCountResponse>> getUserKeyCount(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}의 열쇠 개수 조회를 요청받았습니다.", userId);
+        UserKeyCountResponse response = myPageService.getUserKeyCount(userId);
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessMessage.GET_USER_KEY_COUNT_SUCCESS.getMessage(), response));
     }
 
     @GetMapping("/profile")

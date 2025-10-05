@@ -3,6 +3,7 @@ package com.example.emotion_storage.mypage.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
+import com.example.emotion_storage.mypage.dto.request.NotificationSettingsUpdateRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
 import com.example.emotion_storage.mypage.dto.response.NotificationSettingsResponse;
 import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
@@ -128,5 +129,26 @@ public class MyPageServiceTest {
         assertThat(response.emotionReminderTime()).isEqualTo(LocalTime.of(21, 0));
         assertThat(response.timeCapsuleReportNotify()).isTrue();
         assertThat(response.marketingInfoNotify()).isFalse();
+    }
+
+    @Test
+    void 사용자_알림_설정_상태_업데이트에_성공한다() {
+        // given
+        NotificationSettingsUpdateRequest request = new NotificationSettingsUpdateRequest(
+                true, false, null, null,
+                true, true
+        );
+
+        // when
+        myPageService.updateNotificationSettings(request, userId);
+
+        // then
+        User user = userRepository.findById(userId).orElseThrow();
+        assertThat(user.isAppPushNotify()).isTrue();
+        assertThat(user.isEmotionReminderNotify()).isFalse();
+        assertThat(user.getEmotionReminderDays()).isNull();
+        assertThat(user.getEmotionReminderTime()).isNull();
+        assertThat(user.isTimeCapsuleReportNotify()).isTrue();
+        assertThat(user.isMarketingInfoNotify()).isTrue();
     }
 }

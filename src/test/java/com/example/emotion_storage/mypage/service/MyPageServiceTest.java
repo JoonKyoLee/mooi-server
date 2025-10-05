@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
+import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
 import com.example.emotion_storage.mypage.dto.response.UserKeyCountResponse;
 import com.example.emotion_storage.user.auth.service.TokenService;
 import com.example.emotion_storage.user.domain.Gender;
@@ -98,5 +99,18 @@ public class MyPageServiceTest {
         // then
         assertThat(response).isNotNull();
         assertThat(response.keyCount()).isEqualTo(5L);
+    }
+
+    @Test
+    void 사용자_계정_정보_조회에_성공한다() {
+        // when
+        UserAccountInfoResponse response = myPageService.getUserAccountInfo(userId);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.email()).isEqualTo("test@example.com");
+        assertThat(response.socialType()).isEqualTo(SocialType.GOOGLE);
+        assertThat(response.gender()).isEqualTo(Gender.MALE);
+        assertThat(response.birthday()).isEqualTo(LocalDate.of(2000, 1, 1));
     }
 }

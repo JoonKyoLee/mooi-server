@@ -1,6 +1,7 @@
 package com.example.emotion_storage.mypage.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.request.NotificationSettingsUpdateRequest;
@@ -13,6 +14,8 @@ import com.example.emotion_storage.user.domain.Gender;
 import com.example.emotion_storage.user.domain.SocialType;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -21,7 +24,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -31,7 +37,7 @@ public class MyPageServiceTest {
 
     @Autowired MyPageService myPageService;
     @Autowired UserRepository userRepository;
-    @Autowired TokenService tokenService;
+    @MockitoBean TokenService tokenService;
 
     private Long userId;
 
@@ -150,5 +156,20 @@ public class MyPageServiceTest {
         assertThat(user.getEmotionReminderTime()).isNull();
         assertThat(user.isTimeCapsuleReportNotify()).isTrue();
         assertThat(user.isMarketingInfoNotify()).isTrue();
+    }
+
+    @Test
+    void 탈퇴_처리가_잘_진행된다() {
+        // given
+        HttpServletRequest request = new MockHttpServletRequest();
+        HttpServletResponse response = new MockHttpServletResponse();
+
+        // when
+        myPageService.withdrawUser(userId, request, response);
+
+        // then
+        User user = userRepository.findById(userId).orElseThrow();
+        assertThat(user.getDeletedAt()).isNotNull();
+        verify(tokenService).revokeTokens(request, response, userId);
     }
 }

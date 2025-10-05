@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
+import com.example.emotion_storage.mypage.dto.response.UserKeyCountResponse;
 import com.example.emotion_storage.user.auth.service.TokenService;
 import com.example.emotion_storage.user.domain.Gender;
 import com.example.emotion_storage.user.domain.SocialType;
@@ -87,5 +88,15 @@ public class MyPageServiceTest {
         String afterNickname = changed.getNickname();
         assertThat(beforeNickname).isNotEqualTo(afterNickname);
         assertThat(afterNickname).isEqualTo("모이");
+    }
+
+    @Test
+    void 사용자_열쇠_개수_조회에_성공한다() {
+        // when
+        UserKeyCountResponse response = myPageService.getUserKeyCount(userId);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.keyCount()).isEqualTo(5L);
     }
 }

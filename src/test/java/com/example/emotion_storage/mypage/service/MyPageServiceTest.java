@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
+import com.example.emotion_storage.mypage.dto.response.NotificationSettingsResponse;
 import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
 import com.example.emotion_storage.mypage.dto.response.UserKeyCountResponse;
 import com.example.emotion_storage.user.auth.service.TokenService;
@@ -112,5 +113,20 @@ public class MyPageServiceTest {
         assertThat(response.socialType()).isEqualTo(SocialType.GOOGLE);
         assertThat(response.gender()).isEqualTo(Gender.MALE);
         assertThat(response.birthday()).isEqualTo(LocalDate.of(2000, 1, 1));
+    }
+
+    @Test
+    void 사용자_알림_설정_상태_정보_조회에_성공한다() {
+        // when
+        NotificationSettingsResponse response = myPageService.getNotificationSettings(userId);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.appPushNotify()).isTrue();
+        assertThat(response.emotionReminderNotify()).isTrue();
+        assertThat(response.emotionReminderDays()).isEqualTo(Set.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY));
+        assertThat(response.emotionReminderTime()).isEqualTo(LocalTime.of(21, 0));
+        assertThat(response.timeCapsuleReportNotify()).isTrue();
+        assertThat(response.marketingInfoNotify()).isFalse();
     }
 }

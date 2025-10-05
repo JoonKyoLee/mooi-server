@@ -2,6 +2,7 @@ package com.example.emotion_storage.mypage.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
 import com.example.emotion_storage.user.auth.service.TokenService;
 import com.example.emotion_storage.user.domain.Gender;
@@ -68,5 +69,23 @@ public class MyPageServiceTest {
         assertThat(response.nickname()).isEqualTo("MOOI");
         assertThat(response.days()).isEqualTo(1L);
         assertThat(response.keys()).isEqualTo(5L);
+    }
+
+    @Test
+    void 닉네임_변경에_성공한다() {
+        // given
+        User user = userRepository.findById(userId).orElseThrow();
+        String nicknameToChange = "모이";
+        NicknameChangeRequest request = new NicknameChangeRequest(nicknameToChange);
+        String beforeNickname = user.getNickname();
+
+        // when
+        myPageService.changeUserNickname(request, userId);
+
+        // then
+        User changed = userRepository.findById(userId).orElseThrow();
+        String afterNickname = changed.getNickname();
+        assertThat(beforeNickname).isNotEqualTo(afterNickname);
+        assertThat(afterNickname).isEqualTo("모이");
     }
 }

@@ -24,11 +24,12 @@ public class RedisServiceTest {
     private static final String USER_ID = "1";
     private static final String REFRESH_TOKEN = "refresh-token";
     private static final String NEW_REFRESH_TOKEN = "new-refresh-token";
+    private static final String ACCESS_TOKEN = "access-token";
+    private static final long ACCESS_TOKEN_REMAINING_MILLIS = 3600;
 
     @Mock private RedisTemplate<String, String> redisTemplate;
     @Mock private ValueOperations<String, String> valueOperations;
     @InjectMocks private RedisService redisService;
-
 
     @BeforeEach
     void init() {
@@ -38,6 +39,9 @@ public class RedisServiceTest {
 
     private static String userKey(String userId) { return "refresh:user:" + userId; }
     private static String tokenKey(String token) { return "refresh:token:" + token; }
+    private String blacklistAccessTokenKey(String token) {
+        return "blacklist:access:" + token;
+    }
 
     @Test
     void 리프레시_토큰_저장_시에_유저키와_토큰키에_모두_저장한다() {
@@ -119,5 +123,31 @@ public class RedisServiceTest {
         verify(redisTemplate).delete(userKey(USER_ID));
         verify(valueOperations).set(eq(userKey(USER_ID)), eq(NEW_REFRESH_TOKEN), any(Duration.class));
         verify(valueOperations).set(eq(tokenKey(NEW_REFRESH_TOKEN)), eq(USER_ID), any(Duration.class));
+    }
+
+    @Test
+    void 액세스_토큰을_블랙리스트에_저장한다() {
+        // when
+        redisService.addAccessTokenToBlacklist(ACCESS_TOKEN, ACCESS_TOKEN_REMAINING_MILLIS);
+
+        // then
+        verify(valueOperations).set(
+                eq(blacklistAccessTokenKey(ACCESS_TOKEN)),
+                eq("true"),
+                eq(Duration.ofMillis(ACCESS_TOKEN_REMAINING_MILLIS))
+        );
+    }
+
+    @Test
+    void 액세스_토큰이_블랙리스트에_저장되었을_때_블랙리스트에_포함되었다고_반환한다() {
+        // given
+        when(redisTemplate.hasKey(blacklistAccessTokenKey(ACCESS_TOKEN))).thenReturn(true);
+
+        // when
+        redisService.addAccessTokenToBlacklist(ACCESS_TOKEN, ACCESS_TOKEN_REMAINING_MILLIS);
+        boolean isAccessTokenBlacklisted = redisService.isAccessTokenBlacklisted(ACCESS_TOKEN);
+
+        // then
+        assertThat(isAccessTokenBlacklisted).isTrue();
     }
 }

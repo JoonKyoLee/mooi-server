@@ -14,6 +14,7 @@ import com.example.emotion_storage.global.security.jwt.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.http.HttpHeaders;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -127,5 +128,31 @@ public class TokenServiceTest {
         assertThatThrownBy(() -> tokenService.reissueAccessToken(request, response))
                 .isInstanceOf(BaseException.class)
                 .hasMessageContaining(ErrorCode.REFRESH_TOKEN_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void 리프레시_토큰과_액세스_토큰을_무효화한다() {
+         // given
+        Long userId = 10L;
+        String accessToken = "access-token";
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer " + accessToken);
+        when(jwtTokenProvider.getRemainingMillis(accessToken)).thenReturn(3600L);
+
+        // when
+        tokenService.revokeTokens(request, response, userId);
+
+        // then
+        verify(redisService).deleteByUserId(eq(userId.toString()));
+        verify(redisService).addAccessTokenToBlacklist(eq(accessToken), eq(3600L));
+
+        verify(response).addHeader(headerNameCaptor.capture(), headerValueCaptor.capture());
+        assertThat(headerNameCaptor.getValue()).isEqualTo("Set-Cookie");
+        assertThat(headerValueCaptor.getValue())
+                .contains("refreshToken=")
+                .contains("HttpOnly")
+                .contains("Secure")
+                .contains("SameSite=None")
+                .contains("Path=/")
+                .contains("Max-Age=0");
     }
 }

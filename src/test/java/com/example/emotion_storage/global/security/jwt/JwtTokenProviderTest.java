@@ -73,4 +73,17 @@ public class JwtTokenProviderTest {
     void 유효하지_않은_토큰일_때_INVALID를_반환한다() {
         assertThat(jwtTokenProvider.validateToken("strange-token")).isEqualTo(TokenStatus.INVALID);
     }
+
+    @Test
+    void 액세스_토큰에서_remaining_millis를_추출한다() {
+        // given
+        Long userId = 10L;
+
+        // when
+        String accessToken = jwtTokenProvider.generateAccessToken(userId);
+        long remainingMillis = jwtTokenProvider.getRemainingMillis(accessToken);
+
+        // then
+        assertThat(remainingMillis).isNotEqualTo(0L);
+    }
 }

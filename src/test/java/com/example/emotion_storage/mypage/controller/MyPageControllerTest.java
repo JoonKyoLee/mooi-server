@@ -12,6 +12,7 @@ import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.config.TestSecurityConfig;
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
+import com.example.emotion_storage.mypage.dto.response.UserKeyCountResponse;
 import com.example.emotion_storage.mypage.service.MyPageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -67,5 +68,22 @@ public class MyPageControllerTest {
                 .andExpect(jsonPath("$.status").value(HttpStatus.NO_CONTENT.value()))
                 .andExpect(jsonPath("$.message").value(SuccessMessage.CHANGE_USER_NICKNAME_SUCCESS.getMessage()))
                 .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    void 열쇠_개수_조회에_성공한다() throws Exception {
+        // given
+        UserKeyCountResponse response = new UserKeyCountResponse(10L);
+
+        given(myPageService.getUserKeyCount(anyLong()))
+                .willReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/mypage/keys"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.GET_USER_KEY_COUNT_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data.keyCount").value(10L));
+
     }
 }

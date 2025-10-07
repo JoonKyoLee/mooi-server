@@ -12,9 +12,13 @@ import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.config.TestSecurityConfig;
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
+import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
 import com.example.emotion_storage.mypage.dto.response.UserKeyCountResponse;
 import com.example.emotion_storage.mypage.service.MyPageService;
+import com.example.emotion_storage.user.domain.Gender;
+import com.example.emotion_storage.user.domain.SocialType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -84,6 +88,26 @@ public class MyPageControllerTest {
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value(SuccessMessage.GET_USER_KEY_COUNT_SUCCESS.getMessage()))
                 .andExpect(jsonPath("$.data.keyCount").value(10L));
+    }
 
+    @Test
+    void 사용자_계정_정보_조회에_성공한다() throws Exception {
+        // given
+        UserAccountInfoResponse response = new UserAccountInfoResponse(
+                "test@example.com", SocialType.GOOGLE, Gender.MALE, LocalDate.of(2000, 1, 1)
+        );
+
+        given(myPageService.getUserAccountInfo(anyLong()))
+                .willReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/mypage/profile"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.GET_USER_ACCOUNT_INFO_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data.email").value("test@example.com"))
+                .andExpect(jsonPath("$.data.socialType").value("GOOGLE"))
+                .andExpect(jsonPath("$.data.gender").value("MALE"))
+                .andExpect(jsonPath("$.data.birthday").value("2000-01-01"));
     }
 }

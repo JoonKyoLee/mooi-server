@@ -1,13 +1,16 @@
 package com.example.emotion_storage.mypage.controller;
 
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.config.TestSecurityConfig;
+import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
 import com.example.emotion_storage.mypage.service.MyPageService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -46,5 +51,21 @@ public class MyPageControllerTest {
                 .andExpect(jsonPath("$.data.nickname").value("MOOI"))
                 .andExpect(jsonPath("$.data.days").value(200L))
                 .andExpect(jsonPath("$.data.keys").value(10L));
+    }
+
+    @Test
+    void 닉네임_수정에_성공한다() throws Exception {
+        // given
+        NicknameChangeRequest request = new NicknameChangeRequest("모이");
+        willDoNothing().given(myPageService).changeUserNickname(eq(request), anyLong());
+
+        // when & then
+        mockMvc.perform(patch("/api/v1/mypage/nickname")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.NO_CONTENT.value()))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.CHANGE_USER_NICKNAME_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data").doesNotExist());
     }
 }

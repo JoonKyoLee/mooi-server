@@ -1,6 +1,7 @@
 package com.example.emotion_storage.mypage.controller;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -157,6 +158,32 @@ public class MyPageControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.NO_CONTENT.value()))
                 .andExpect(jsonPath("$.message").value(SuccessMessage.UPDATE_NOTIFICATION_SETTINGS_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    void 회원_탈퇴에_성공한다() throws Exception {
+        // given
+        willDoNothing().given(myPageService).withdrawUser(anyLong(), any(), any());
+
+        // when & then
+        mockMvc.perform(delete("/api/v1/mypage/account"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.NO_CONTENT.value()))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.WITHDRAW_USER_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    void 로그아웃에_성공한다() throws Exception {
+        // given
+        willDoNothing().given(myPageService).logout(anyLong(), any(), any());
+
+        // when & then
+        mockMvc.perform(delete("/api/v1/mypage/logout"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.NO_CONTENT.value()))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.LOGOUT_USER_SUCCESS.getMessage()))
                 .andExpect(jsonPath("$.data").doesNotExist());
     }
 }

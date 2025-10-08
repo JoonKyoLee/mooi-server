@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.config.TestSecurityConfig;
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
+import com.example.emotion_storage.mypage.dto.request.NotificationSettingsUpdateRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
 import com.example.emotion_storage.mypage.dto.response.NotificationSettingsResponse;
 import com.example.emotion_storage.mypage.dto.response.UserAccountInfoResponse;
@@ -138,5 +139,24 @@ public class MyPageControllerTest {
                 .andExpect(jsonPath("$.data.emotionReminderTime").value("21:00:00"))
                 .andExpect(jsonPath("$.data.timeCapsuleReportNotify").value(true))
                 .andExpect(jsonPath("$.data.marketingInfoNotify").value(true));
+    }
+
+    @Test
+    void 사용자_알림_설정_상태_업데이트에_성공한다() throws Exception {
+        // given
+        NotificationSettingsUpdateRequest request = new NotificationSettingsUpdateRequest(
+                true, true, Set.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
+                LocalTime.of(21, 0), true, true
+        );
+        willDoNothing().given(myPageService).updateNotificationSettings(eq(request), anyLong());
+
+        // when & then
+        mockMvc.perform(patch("/api/v1/mypage/notification-settings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(HttpStatus.NO_CONTENT.value()))
+                .andExpect(jsonPath("$.message").value(SuccessMessage.UPDATE_NOTIFICATION_SETTINGS_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data").doesNotExist());
     }
 }

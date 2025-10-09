@@ -16,6 +16,8 @@ import org.springframework.stereotype.Controller;
 @Tag(name = "StompChat", description = "웹소켓 STOMP 관련 API")
 public class StompChatController {
 
+    private static final String ERROR_MESSAGE_PROCESSING_FAILED = "메시지 처리 중 오류가 발생했습니다. 다시 시도해주세요.";
+
     private final ChatService chatService;
 
     @MessageMapping("/v1/chat")
@@ -35,8 +37,7 @@ public class StompChatController {
             log.error("[채팅방:{}] 메시지 처리 중 오류 발생", userMessage.roomId(), e);
             
             // 오류 발생 시 클라이언트에게 에러 메시지 전송
-            String errorMessage = "메시지 처리 중 오류가 발생했습니다. 다시 시도해주세요.";
-            chatService.sendToUser(userMessage.roomId(), errorMessage);
+            chatService.sendToUser(userMessage.roomId(), ERROR_MESSAGE_PROCESSING_FAILED);
         }
     }
 }

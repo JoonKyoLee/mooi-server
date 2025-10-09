@@ -23,8 +23,10 @@ public class WebSocketClientService {
 
     // 상수 정의
     private static final int REQUEST_TIMEOUT_SECONDS = 30;
+    private static final int GAUGE_WAIT_MILLISECONDS = 1000;
     private static final String MESSAGE_TYPE_CHAT_DELTA = "chat.delta";
     private static final String MESSAGE_TYPE_CHAT_END = "chat.end";
+    private static final String MESSAGE_TYPE_CHAT_COMPLETED = "chat.complete";
     private static final String MESSAGE_TYPE_ERROR = "error";
     private static final String MESSAGE_TYPE_GAUGE_RESULT = "gauge.result";
 
@@ -32,6 +34,8 @@ public class WebSocketClientService {
     private final ObjectMapper objectMapper;
     private final ConcurrentHashMap<String, CompletableFuture<AiResponseDto>> pendingRequests = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, StringBuilder> responseBuilders = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, GaugeDto> gaugeResults = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Boolean> chatEndReceived = new ConcurrentHashMap<>();
     private volatile WebSocketSession currentSession;
     private volatile String currentSessionId;
 
@@ -82,12 +86,16 @@ public class WebSocketClientService {
     private void cleanupRequest(String sessionId) {
         pendingRequests.remove(sessionId);
         responseBuilders.remove(sessionId);
+        gaugeResults.remove(sessionId);
+        chatEndReceived.remove(sessionId);
     }
 
     private void cleanupAllRequests(Throwable exception) {
         pendingRequests.values().forEach(future -> future.completeExceptionally(exception));
         pendingRequests.clear();
         responseBuilders.clear();
+        gaugeResults.clear();
+        chatEndReceived.clear();
     }
 
     private WebSocketSession getOrCreateSession() {
@@ -190,16 +198,40 @@ public class WebSocketClientService {
     private void handleChatEndMessage(AiResponseDto response) {
         String sessionId = getCurrentSessionId();
         if (sessionId != null) {
-            CompletableFuture<AiResponseDto> future = pendingRequests.remove(sessionId);
-            StringBuilder builder = responseBuilders.remove(sessionId);
-            if (future != null && builder != null) {
-                String fullResponse = builder.toString();
-                AiResponseDto finalResponse = AiResponseDto.createChatComplete(sessionId, fullResponse);
-                future.complete(finalResponse);
-                log.info("AI 응답 완료: {}", fullResponse);
-            }
+            chatEndReceived.put(sessionId, true);
+            
+            CompletableFuture.delayedExecutor(GAUGE_WAIT_MILLISECONDS, TimeUnit.MILLISECONDS)
+                    .execute(() -> completeResponse(sessionId));
+            
+            log.debug("[세션:{}] chat.end 수신, gauge 대기 중...", sessionId);
         } else {
             log.warn("chat.end 메시지에서 세션 ID를 찾을 수 없습니다");
+        }
+    }
+    
+    private synchronized void completeResponse(String sessionId) {
+        CompletableFuture<AiResponseDto> future = pendingRequests.remove(sessionId);
+        if (future == null) {
+            log.debug("[세션:{}] 이미 완료된 응답입니다", sessionId);
+            return;
+        }
+        
+        StringBuilder builder = responseBuilders.remove(sessionId);
+        GaugeDto gauge = gaugeResults.remove(sessionId);
+        chatEndReceived.remove(sessionId);
+        
+        if (builder != null) {
+            String fullResponse = builder.toString();
+            
+            AiResponseDto finalResponse = AiResponseDto.builder()
+                    .type(MESSAGE_TYPE_CHAT_COMPLETED)
+                    .sessionId(sessionId)
+                    .fullResponse(fullResponse)
+                    .gauge(gauge)  // gauge 정보 포함
+                    .build();
+            
+            future.complete(finalResponse);
+            log.info("[세션:{}] AI 응답 완료, gauge 포함: {}", sessionId, gauge != null);
         }
     }
 
@@ -208,6 +240,9 @@ public class WebSocketClientService {
         if (sessionId != null) {
             CompletableFuture<AiResponseDto> future = pendingRequests.remove(sessionId);
             responseBuilders.remove(sessionId);
+            gaugeResults.remove(sessionId);
+            chatEndReceived.remove(sessionId);
+            
             if (future != null) {
                 future.completeExceptionally(new RuntimeException("AI 서버 오류: " + response.getMessage()));
             }
@@ -217,17 +252,29 @@ public class WebSocketClientService {
     }
 
     private void handleGaugeResultMessage(AiResponseDto response) {
+        String sessionId = currentSessionId;
         GaugeDto gauge = response.getGauge();
-        if (gauge != null) {
-            log.info("감정 분석 결과를 받았습니다 - 전체 점수: {}, 턴 수: {}, 감정 표현: {}, 감정 다양성: {}, 사건 참조: {}, 감정 변화: {}, 요약: {}", 
-                    gauge.getGaugeScore(), gauge.getTurnCountScore(), gauge.getEmotionExpressionScore(), 
+        
+        if (sessionId != null && gauge != null) {
+            gaugeResults.put(sessionId, gauge);
+            
+            log.info("[세션:{}] 감정 분석 결과를 받았습니다 - 전체 점수: {}, 턴 수: {}, 감정 표현: {}, 감정 다양성: {}, 사건 참조: {}, 감정 변화: {}, 요약: {}", 
+                    sessionId, gauge.getGaugeScore(), gauge.getTurnCountScore(), gauge.getEmotionExpressionScore(), 
                     gauge.getEmotionDiversityScore(), gauge.getEventReferenceScore(), gauge.getEmotionChangeScore(), 
                     gauge.getSummary());
+            
+            if (chatEndReceived.containsKey(sessionId)) {
+                log.debug("[세션:{}] chat.end를 이미 받았으므로 즉시 응답 완료", sessionId);
+                completeResponse(sessionId);
+            }
         } else {
-            log.warn("gauge.result 메시지에서 gauge 정보가 null입니다.");
+            if (sessionId == null) {
+                log.warn("gauge.result 메시지에서 세션 ID를 찾을 수 없습니다.");
+            }
+            if (gauge == null) {
+                log.warn("gauge.result 메시지에서 gauge 정보가 null입니다.");
+            }
         }
-        // gauge.result는 추가 정보이므로 별도 처리가 필요하지 않음
-        // 필요시 여기서 감정 분석 결과를 저장하거나 다른 처리를 할 수 있음
     }
 
     private String getCurrentSessionId() {

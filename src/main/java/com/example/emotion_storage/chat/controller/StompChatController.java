@@ -23,15 +23,20 @@ public class StompChatController {
             UserMessageDto userMessage,
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal
     ) {
+        // 사용자 ID 추출 (인증되지 않은 경우 개발 테스트용 ID 사용)
         Long userId = (userPrincipal != null && userPrincipal.getId() != null) ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
-        log.info("사용자 {}가 채팅 메시지를 전송했습니다: {}", userId, userMessage.content());
+        
+        log.info("[채팅방:{}] 사용자 {}가 메시지를 전송했습니다: {}", 
+                userMessage.roomId(), userId, userMessage.content());
 
-        chatService.saveUserMessage(userMessage);
-        log.info("사용자 {}가 전송한 메시지 저장을 완료했습니다.", userId);
-
-        // AI 메시지 프로세스 진행
-        // ChatResponse response = chatService.....
-        String message = "안녕하세요, 저는 MOOI입니다. 메시지를 보내주세요.";
-        chatService.sendToUser(userMessage.roomId(), message);
+        try {
+            chatService.processUserMessageAsync(userMessage, userId);
+        } catch (Exception e) {
+            log.error("[채팅방:{}] 메시지 처리 중 오류 발생", userMessage.roomId(), e);
+            
+            // 오류 발생 시 클라이언트에게 에러 메시지 전송
+            String errorMessage = "메시지 처리 중 오류가 발생했습니다. 다시 시도해주세요.";
+            chatService.sendToUser(userMessage.roomId(), errorMessage);
+        }
     }
 }

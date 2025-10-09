@@ -148,7 +148,6 @@ public class WebSocketClientService {
 
     private void handleTextMessage(TextMessage message) {
         String payload = message.getPayload();
-        // log.info("AI 서버로부터 응답을 받았습니다: {}", payload);
 
         try {
             AiResponseDto response = objectMapper.readValue(payload, AiResponseDto.class);

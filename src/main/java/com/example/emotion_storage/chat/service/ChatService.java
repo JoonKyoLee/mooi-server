@@ -49,7 +49,6 @@ public class ChatService {
                 .user(user)
                 .isEnded(false)
                 .build();
-        user.addChatRoom(chatRoom);
 
         chatRoomRepository.save(chatRoom);
 
@@ -65,13 +64,14 @@ public class ChatService {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"); // 프론트 포맷에 맞춰 변경 필요
 
+        // 첫 채팅 시각 기록
         if (chatRoom.getFirstChatTime() == null) {
             log.info("채팅방 {}의 첫 채팅시각을 기록합니다.", chatRoom.getId());
             LocalDateTime firstChatTime = LocalDateTime.parse(userMessage.timestamp(), formatter);
             chatRoom.setFirstChatTime(firstChatTime);
         }
 
-        log.info("채팅방 {}에 전송된 채팅을 저장합니다.", userMessage.roomId());
+        log.info("채팅방 {}에 전송된 사용자 메시지를 저장합니다.", userMessage.roomId());
         Chat chat = Chat.builder()
                 .chatRoom(chatRoom)
                 .message(userMessage.content())
@@ -79,8 +79,9 @@ public class ChatService {
                 .chatTime(LocalDateTime.parse(userMessage.timestamp(), formatter))
                 .build();
 
-        chatRoom.addChat(chat);
         chatRepository.save(chat);
+        
+        log.debug("채팅방 {}에 사용자 메시지 저장 완료", userMessage.roomId());
     }
 
     @Transactional
@@ -98,11 +99,85 @@ public class ChatService {
         return new ChatRoomCloseResponse(true);
     }
 
-    public void sendToUser(Long roomId, String message) { // 추루에 AI 메시지 DTO 형식으로 변경
+    public void sendToUser(Long roomId, String message) {
         messagingTemplate.convertAndSend("/sub/chatroom/" + roomId, message);
-        // messagingTemplate.convertAndSend("sub/chatroom/" + roomId, AiMessageDto);
+        log.debug("채팅방 {}로 메시지 전송 완료", roomId);
     }
 
+    private String generateSessionId(Long userId, Long roomId) {
+        return String.format("session-%d-%d", userId, roomId);
+    }
+
+    @Transactional
+    public void saveAiMessage(Long roomId, String message, String timestamp) {
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        // AI 서버에서 받은 timestamp는 ISO 형식 (예: 2025-10-10T00:40:02.230468)
+        LocalDateTime chatTime = LocalDateTime.parse(timestamp);
+
+        log.info("채팅방 {}에 전송된 AI 메시지를 저장합니다.", roomId);
+        Chat chat = Chat.builder()
+                .chatRoom(chatRoom)
+                .message(message)
+                .sender(SenderType.MOOI)
+                .chatTime(chatTime)
+                .build();
+
+        chatRepository.save(chat);
+
+        log.debug("채팅방 {}에 AI 메시지 저장 완료", roomId);
+    }
+
+    /**
+     * FE와의 WebSocket 통신
+     */
+    public void processUserMessageAsync(UserMessageDto userMessage, Long userId) {
+        Long roomId = userMessage.roomId();
+        
+        // 1. 사용자 메시지 저장
+        saveUserMessage(userMessage);
+        log.info("[채팅방:{}] 사용자 메시지 저장 완료", roomId);
+
+        // 2. AI 서버로 메시지 전송
+        String sessionId = generateSessionId(userId, roomId);
+        log.info("[채팅방:{}] 사용자 {}의 메시지를 AI 서버로 전송합니다: {}", roomId, userId, userMessage.content());
+
+        AiMessageDto aiMessage = AiMessageDto.createChatStartMessage(
+                sessionId,
+                ChatPromptMessages.EMOTION_ANALYSIS.getMessage(),
+                userMessage.content()
+        );
+
+        // 3, 4. 비동기로 AI 응답 처리 및 저장, 전송
+        webSocketClientService.sendMessageToAI(aiMessage)
+                .thenAccept(aiResponse -> {
+                    log.info("[채팅방:{}] AI 서버로부터 응답을 받았습니다: {}", roomId, aiResponse.getResponse());
+
+                    // AI 메시지 저장
+                    try {
+                        saveAiMessage(roomId, aiResponse.getResponse(), aiResponse.getTimestamp());
+                    } catch (Exception e) {
+                        log.error("[채팅방:{}] AI 메시지 저장 중 오류 발생", roomId, e);
+                    }
+
+                    // WebSocket을 통해 클라이언트에게 AI 응답 전송
+                    sendToUser(roomId, aiResponse.getResponse());
+                })
+                .exceptionally(throwable -> {
+                    log.error("[채팅방:{}] AI 서버 통신 중 오류 발생", roomId, throwable);
+
+                    // 오류 메시지를 클라이언트에 전송
+                    String errorMessage = "죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+                    sendToUser(roomId, errorMessage);
+
+                    return null;
+                });
+    }
+
+    /**
+     * REST API를 통한 동기 통신
+     */
     public ApiResponse<ChatResponse> sendMessage(ChatRequest request, Long userId) {
         try {
             String sessionId = request.getSessionId() != null ?
@@ -116,7 +191,7 @@ public class ChatService {
 
             log.info("사용자 {}의 메시지를 AI 서버로 전송합니다: {}", userId, request.getMessage());
 
-            // AI 서버로 메시지 전송 및 응답 대기
+            // AI 서버로 메시지 전송 및 응답 대기 (블로킹)
             AiResponseDto aiResponse = webSocketClientService.sendMessageToAI(aiMessage).get();
 
             // AI 응답을 클라이언트용 응답으로 변환
@@ -137,6 +212,9 @@ public class ChatService {
         }
     }
 
+    /**
+     * REST API를 통한 비동기 통신
+     */
     public ApiResponse<ChatResponse> sendUserMessage(ChatRequest request, Long userId) {
         try {
             String sessionId = request.getSessionId() != null ?
@@ -163,9 +241,8 @@ public class ChatService {
             webSocketClientService.sendMessageToAI(aiMessage)
                     .thenAccept(aiResponse -> {
                         log.info("사용자 {}의 AI 응답을 받았습니다: {}", userId, aiResponse.getResponse());
-                        // 여기서 WebSocket을 통해 클라이언트에게 실시간으로 응답 전송
-                        // TODO: 실시간 전송
-
+                        // WebSocket을 통해 클라이언트에게 실시간으로 응답 전송
+                        // Note: REST API 방식에서는 WebSocket 전송 대상을 특정하기 어려움
                     })
                     .exceptionally(throwable -> {
                         log.error("사용자 {}의 AI 응답 처리 중 오류 발생", userId, throwable);

@@ -6,12 +6,15 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.willThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.config.TestSecurityConfig;
+import com.example.emotion_storage.global.exception.BaseException;
+import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.request.NotificationSettingsUpdateRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
@@ -78,6 +81,23 @@ public class MyPageControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(HttpStatus.NO_CONTENT.value()))
                 .andExpect(jsonPath("$.message").value(SuccessMessage.CHANGE_USER_NICKNAME_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    void 닉네임이_조건에_맞지_않으면_예외가_발생한다() throws Exception {
+        // given
+        NicknameChangeRequest request = new NicknameChangeRequest("1");
+        willThrow(new BaseException(ErrorCode.INVALID_NICKNAME))
+                .given(myPageService).changeUserNickname(eq(request), anyLong());
+
+        // when & then
+        mockMvc.perform(patch("/api/v1/mypage/nickname")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.message").value(ErrorCode.INVALID_NICKNAME.getMessage()))
                 .andExpect(jsonPath("$.data").doesNotExist());
     }
 

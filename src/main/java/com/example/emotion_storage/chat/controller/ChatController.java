@@ -1,7 +1,7 @@
 package com.example.emotion_storage.chat.controller;
 
 import com.example.emotion_storage.chat.dto.request.ChatRequest;
-import com.example.emotion_storage.chat.dto.response.ChatResponse;
+import com.example.emotion_storage.chat.dto.response.AiChatResponse;
 import com.example.emotion_storage.chat.service.ChatService;
 import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
@@ -24,27 +24,27 @@ public class ChatController {
 
     @PostMapping("/send")
     @Operation(summary = "AI와 채팅 메시지 전송", description = "사용자 메시지를 AI 서버로 전송하고 응답을 받습니다.")
-    public ResponseEntity<ApiResponse<ChatResponse>> sendMessage(
+    public ResponseEntity<ApiResponse<AiChatResponse>> sendMessage(
             @RequestBody ChatRequest request,
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal) {
 
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}가 채팅 메시지를 전송했습니다: {}", userId, request.getMessage());
         
-        ApiResponse<ChatResponse> response = chatService.sendMessage(request, userId);
+        ApiResponse<AiChatResponse> response = chatService.sendMessage(request, userId);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/send-async")
     @Operation(summary = "비동기 채팅 메시지 전송", description = "사용자 메시지를 비동기로 AI 서버에 전송합니다.")
-    public ResponseEntity<ApiResponse<ChatResponse>> sendMessageAsync(
+    public ResponseEntity<ApiResponse<AiChatResponse>> sendMessageAsync(
             @RequestBody ChatRequest request,
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal) {
 
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}가 비동기 채팅 메시지를 전송했습니다: {}", userId, request.getMessage());
         
-        ApiResponse<ChatResponse> response = chatService.sendUserMessage(request, userId);
+        ApiResponse<AiChatResponse> response = chatService.sendUserMessage(request, userId);
         return ResponseEntity.ok(response);
     }
 }

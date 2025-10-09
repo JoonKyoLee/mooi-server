@@ -21,6 +21,7 @@ import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserService {
 
+    private static final String NICKNAME_PATTERN = "^[A-Za-z가-힣]{2,8}$";
     private static final int NOTIFICATION_DEFAULT_HOUR = 21;
     private static final int NOTIFICATION_DEFAULT_MINUTE = 0;
 
@@ -68,6 +70,8 @@ public class UserService {
                 throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO);
             }
         }
+
+        validateNickname(request.nickname());
 
         User user = User.builder()
                 .email(claims.email())
@@ -125,6 +129,8 @@ public class UserService {
             throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO);
         }
 
+        validateNickname(request.nickname());
+
 // 카카오 소셜 로그인의 경우 이메일은 비즈 계정에서만 가능하기 때문에 추후에 비즈 계정으로 변경 시 이메일로 구현 가능
 //        Optional<User> existingUser = userRepository.findByEmail(userInfo.kakaoAccount().email());
 //        if (existingUser.isPresent()) {
@@ -161,5 +167,11 @@ public class UserService {
                 .build();
 
         userRepository.save(user);
+    }
+
+    private void validateNickname(String nickname) {
+        if (!Pattern.matches(NICKNAME_PATTERN, nickname)) {
+            throw new BaseException(ErrorCode.INVALID_NICKNAME);
+        }
     }
 }

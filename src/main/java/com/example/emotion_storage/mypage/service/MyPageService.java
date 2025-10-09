@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class MyPageService {
+
+    private static final String NICKNAME_PATTERN = "^[A-Za-z가-힣]{2,8}$";
 
     private final UserRepository userRepository;
     private final TokenService tokenService;
@@ -46,6 +49,7 @@ public class MyPageService {
         User user = findUserById(userId);
 
         log.info("사용자 {}의 닉네임을 수정합니다.", userId);
+        validateNickname(request.nickname());
         user.updateNickname(request.nickname());
     }
 
@@ -113,5 +117,11 @@ public class MyPageService {
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private void validateNickname(String nickname) {
+        if (!Pattern.matches(NICKNAME_PATTERN, nickname)) {
+            throw new BaseException(ErrorCode.INVALID_NICKNAME);
+        }
     }
 }

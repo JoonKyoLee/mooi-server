@@ -1,8 +1,11 @@
 package com.example.emotion_storage.mypage.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 
+import com.example.emotion_storage.global.exception.BaseException;
+import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.mypage.dto.request.NicknameChangeRequest;
 import com.example.emotion_storage.mypage.dto.request.NotificationSettingsUpdateRequest;
 import com.example.emotion_storage.mypage.dto.response.MyPageOverviewResponse;
@@ -19,9 +22,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -97,6 +103,18 @@ public class MyPageServiceTest {
         String afterNickname = changed.getNickname();
         assertThat(beforeNickname).isNotEqualTo(afterNickname);
         assertThat(afterNickname).isEqualTo("모이");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"11", "aaaaaaaaa", "모이모이모이모이모이", "모이1234"})
+    void 닉네임_조건에_해당되지_않으면_예외가_발생한다(String nickname) {
+        // given
+        NicknameChangeRequest request = new NicknameChangeRequest(nickname);
+
+        // when & then
+        assertThatThrownBy(() -> myPageService.changeUserNickname(request, userId))
+                .isInstanceOf(BaseException.class)
+                .hasMessageContaining(ErrorCode.INVALID_NICKNAME.getMessage());
     }
 
     @Test

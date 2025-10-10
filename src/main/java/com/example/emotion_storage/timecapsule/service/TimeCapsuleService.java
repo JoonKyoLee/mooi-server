@@ -1,11 +1,19 @@
 package com.example.emotion_storage.timecapsule.service;
 
+import com.example.emotion_storage.chat.domain.ChatRoom;
+import com.example.emotion_storage.chat.repository.ChatRoomRepository;
+import com.example.emotion_storage.chat.service.ChatService;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsuleOpenCost;
+import com.example.emotion_storage.timecapsule.dto.request.AiTimeCapsuleCreationRequest;
+import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleCreationRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;
+import com.example.emotion_storage.timecapsule.dto.response.AiTimeCapsuleCreationErrorResponse;
+import com.example.emotion_storage.timecapsule.dto.response.AiTimeCapsuleCreationResponse;
+import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleCreationResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
@@ -13,6 +21,7 @@ import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListRespo
 import com.example.emotion_storage.timecapsule.repository.TimeCapsuleRepository;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Date;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -21,12 +30,21 @@ import java.time.YearMonth;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
@@ -42,8 +60,76 @@ public class TimeCapsuleService {
     private static final int TIME_CAPSULE_FAVORITES_LIMIT = 30;
     private static final long SECONDS_PER_DAY = 24 * 60 * 60;
 
+    private final ChatService chatService;
     private final TimeCapsuleRepository timeCapsuleRepository;
+    private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+
+    @Value("${ai.server.base-url:http://localhost:8000}")
+    private String aiServerBaseUrl;
+
+    public TimeCapsuleCreationResponse createTimeCapsule(TimeCapsuleCreationRequest creationRequest, Long userId) {
+        ChatRoom chatRoom = chatRoomRepository.findById(creationRequest.chatRoomId())
+                .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        try {
+            AiTimeCapsuleCreationRequest request = new AiTimeCapsuleCreationRequest(
+                    AiTimeCapsuleCreationPrompts.ROLE_MESSAGE,
+                    AiTimeCapsuleCreationPrompts.REFERENCE_MESSAGE,
+                    AiTimeCapsuleCreationPrompts.ANALYZE_MESSAGE,
+                    creationRequest.sessionId()
+            );
+
+            String url = aiServerBaseUrl + "/timecapsule/create";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<AiTimeCapsuleCreationRequest> requestEntity = new HttpEntity<>(request, headers);
+
+            log.info("AI 서버에 타임캡슐 생성 요청을 전송합니다. URL: {}", url);
+            log.info("요청 데이터: {}", objectMapper.writeValueAsString(request));
+
+            ResponseEntity<AiTimeCapsuleCreationResponse> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    requestEntity,
+                    AiTimeCapsuleCreationResponse.class
+            );
+
+            AiTimeCapsuleCreationResponse responseBody = response.getBody();
+            log.info("AI 서버로부터 생성된 타임캡슐 응답을 받았습니다: {}", objectMapper.writeValueAsString(responseBody));
+
+            chatService.closeChatRoom(userId, chatRoom.getId()); // 타임캡슐 생성 후 채팅방 종료
+
+            return TimeCapsuleCreationResponse.from(chatRoom.getFirstChatTime(), responseBody);
+        } catch (HttpClientErrorException e) {
+            log.error("AI 서버 클라이언트 오류 (4xx): {}", e.getResponseBodyAsString(), e);
+            throw new RuntimeException("AI 서버 요청 오류: " + e.getMessage(), e);
+
+        } catch (HttpServerErrorException e) {
+            log.error("AI 서버 서버 오류 (5xx): {}", e.getResponseBodyAsString(), e);
+
+            // 500 에러 응답 파싱 시도
+            try {
+                AiTimeCapsuleCreationErrorResponse errorResponse = objectMapper.readValue(
+                        e.getResponseBodyAsString(),
+                        AiTimeCapsuleCreationErrorResponse.class
+                );
+                log.error("AI 서버 에러 상세: {}", errorResponse.detail());
+            } catch (Exception parseException) {
+                log.warn("에러 응답 파싱 실패: {}", parseException.getMessage());
+            }
+
+            throw new RuntimeException("AI 서버 내부 오류: " + e.getMessage(), e);
+
+        } catch (Exception e) {
+            log.error("타임캡슐 생성 요청 중 예상치 못한 오류 발생", e);
+            throw new RuntimeException("타임캡슐 생성 요청 실패: " + e.getMessage(), e);
+        }
+    }
 
     public TimeCapsuleExistDateResponse getActiveDatesForMonth(
             int year, int month, Long userId

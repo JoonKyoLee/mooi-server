@@ -3,6 +3,7 @@ package com.example.emotion_storage.timecapsule.repository;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
 import java.sql.Date;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +15,8 @@ import java.util.List;
 
 @Repository
 public interface TimeCapsuleRepository extends JpaRepository<TimeCapsule, Long> {
+
+    Optional<TimeCapsule> findByChatroomIdAndIsTempSaveTrue(Long chatroomId);
     
     @Query("SELECT tc FROM TimeCapsule tc WHERE tc.user.id = :userId AND tc.isOpened = false AND tc.deletedAt IS NULL")
     List<TimeCapsule> findUnopenedTimeCapsulesByUserId(@Param("userId") Long userId);

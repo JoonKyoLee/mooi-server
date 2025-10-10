@@ -211,6 +211,32 @@ public class UserControllerTest {
     }
 
     @Test
+    void 구글_회원가입_시에_닉네임이_유효하지_않으면_예외가_발생한다() throws Exception {
+        // given
+        doThrow(new BaseException(ErrorCode.INVALID_NICKNAME))
+                .when(userService)
+                .googleSignUp(any(GoogleSignUpRequest.class));
+
+        GoogleSignUpRequest request = new GoogleSignUpRequest(
+                "12345",
+                Gender.FEMALE,
+                LocalDate.of(2000,1,1),
+                List.of(),
+                true, true, false,
+                "id-token"
+        );
+
+        // when & then
+        mockMvc.perform(post("/api/v1/users/signup/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("INVALID_NICKNAME"))
+                .andExpect(jsonPath("$.message").value(ErrorCode.INVALID_NICKNAME.getMessage()));
+    }
+
+    @Test
     void 카카오_로그인_성공할_때는_액세스_토큰을_반환한다() throws Exception {
         // given
         given(userService.kakaoLogin(any(KakaoLoginRequest.class), any(HttpServletResponse.class)))
@@ -334,5 +360,31 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.code").value("ALREADY_REGISTERED_WITH_KAKAO"))
                 .andExpect(jsonPath("$.message").value(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO.getMessage()));
+    }
+
+    @Test
+    void 카카오_회원가입_시에_유효하지_않은_닉네임으로_회원가입을_시도하면_예외가_발생한다() throws Exception {
+        // given
+        doThrow(new BaseException(ErrorCode.INVALID_NICKNAME))
+                .when(userService)
+                .kakaoSignUp(any(KakaoSignUpRequest.class));
+
+        KakaoSignUpRequest request = new KakaoSignUpRequest(
+                "12345",
+                Gender.MALE,
+                LocalDate.of(2000,1,1),
+                List.of(),
+                true, true, false,
+                "kakao-access-token"
+        );
+
+        // when & then
+        mockMvc.perform(post("/api/v1/users/signup/kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("INVALID_NICKNAME"))
+                .andExpect(jsonPath("$.message").value(ErrorCode.INVALID_NICKNAME.getMessage()));
     }
 }

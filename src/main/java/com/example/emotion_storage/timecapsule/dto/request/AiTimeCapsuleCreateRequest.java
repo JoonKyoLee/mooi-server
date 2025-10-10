@@ -2,7 +2,7 @@ package com.example.emotion_storage.timecapsule.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record AiTimeCapsuleCreationRequest(
+public record AiTimeCapsuleCreateRequest(
         @JsonProperty("role_message")
         String roleMessage,
 

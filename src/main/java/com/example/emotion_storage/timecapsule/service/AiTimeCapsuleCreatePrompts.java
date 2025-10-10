@@ -1,6 +1,6 @@
 package com.example.emotion_storage.timecapsule.service;
 
-public class AiTimeCapsuleCreationPrompts {
+public class AiTimeCapsuleCreatePrompts {
 
     public static final String ROLE_MESSAGE = "너는 전문 심리 상담사야.";
 
@@ -49,6 +49,6 @@ public class AiTimeCapsuleCreationPrompts {
             "    - “네가 화가 났지만, 사실 속으로는 서운함이 더 컸을 수도 있어요.”\n" +
             "    - “이렇게 솔직하게 털어놓은 것만으로도 충분히 대단한 일이에요.”";
 
-    private AiTimeCapsuleCreationPrompts() {
+    private AiTimeCapsuleCreatePrompts() {
     }
 }

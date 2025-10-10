@@ -13,8 +13,8 @@ public record TimeCapsuleCreateResponse(
         String oneLineSummary,
         String dialogueSummary,
         List<EmotionDetailDto> emotionKeywords,
-        List<String> aiFeedback
-
+        List<String> aiFeedback,
+        LocalDateTime historyDate // 오픈일 계산에 필요
 ) {
     public static TimeCapsuleCreateResponse from(
             LocalDateTime historyDate, AiTimeCapsuleCreateResponse response) {
@@ -23,7 +23,8 @@ public record TimeCapsuleCreateResponse(
                 response.summaryLine(),
                 response.summaryBlock(),
                 parseEmotions(response.keywords()),
-                splitFeedback(response.emotionFeedback())
+                splitFeedback(response.emotionFeedback()),
+                historyDate
         );
     }
 

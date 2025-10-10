@@ -3,7 +3,7 @@ package com.example.emotion_storage.timecapsule.dto.response;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-public record AiTimeCapsuleCreationResponse(
+public record AiTimeCapsuleCreateResponse(
         String title,
 
         @JsonProperty("summary_line")

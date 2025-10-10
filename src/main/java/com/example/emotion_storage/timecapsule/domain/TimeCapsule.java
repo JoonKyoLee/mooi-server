@@ -28,7 +28,7 @@ public class TimeCapsule extends BaseTimeEntity {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "report_id", nullable = false)
+    @JoinColumn(name = "report_id")
     private Report report;
 
     @Column(name = "chatroom_id", nullable = false)
@@ -85,6 +85,14 @@ public class TimeCapsule extends BaseTimeEntity {
 
     public void setReport(Report report) {
         this.report = report;
+    }
+
+    public void updateTempSave(boolean isTempSave) {
+        this.isTempSave = isTempSave;
+    }
+
+    public void setOpenedAt(LocalDateTime openedAt) {
+        this.openedAt = openedAt;
     }
 
     public void updateFavoriteTimestamp(LocalDateTime favoriteAt) {

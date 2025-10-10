@@ -12,6 +12,7 @@ import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailRes
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
+import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleSaveResponse;
 import com.example.emotion_storage.timecapsule.service.TimeCapsuleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -56,17 +57,15 @@ public class TimeCapsuleController {
 
     @PostMapping("/save")
     @Operation(summary = "타임캡슐 저장", description = "타임캡슐을 저장합니다.(임시 저장 시에는 openAt을 null로 요청합니다.)")
-    public ResponseEntity<ApiResponse<Void>> saveTimeCapsule(
+    public ResponseEntity<ApiResponse<TimeCapsuleSaveResponse>> saveTimeCapsule(
             @RequestBody TimeCapsuleSaveRequest request,
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal
     ) {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
         log.info("사용자 {}가 채팅방 {}에 대한 타임캡슐 저장을 요청했습니다.", userId, request.chatroomId());
-        timeCapsuleService.saveTimeCapsule(request, userId);
         return ResponseEntity.ok(ApiResponse.success(
-                HttpStatus.NO_CONTENT.value(),
                 SuccessMessage.SAVE_TIME_CAPSULE_SUCCESS.getMessage(),
-                null
+                timeCapsuleService.saveTimeCapsule(request, userId)
         ));
     }
 

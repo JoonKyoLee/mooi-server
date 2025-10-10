@@ -21,6 +21,7 @@ import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailRes
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
+import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleSaveResponse;
 import com.example.emotion_storage.timecapsule.repository.TimeCapsuleRepository;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
@@ -136,19 +137,23 @@ public class TimeCapsuleService {
     }
 
     @Transactional
-    public void saveTimeCapsule(TimeCapsuleSaveRequest request, Long userId) {
+    public TimeCapsuleSaveResponse saveTimeCapsule(TimeCapsuleSaveRequest request, Long userId) {
         // 임시 저장되어 있는 타임캡슐이 존재하는지 확인하고 최종 저장
         if (!request.isTempSave()) {
+            log.info("채팅방 {}의 임시 저장되어 있는 타임캡슐이 존재하는지 확인합니다.", request.chatroomId());
             Optional<TimeCapsule> tempTimeCapsule = timeCapsuleRepository
                     .findByChatroomIdAndIsTempSaveTrue(request.chatroomId());
 
             if (tempTimeCapsule.isPresent()) {
+                log.info("임시 저장되어 있는 타임캡슐을 최종 저장합니다.");
                 TimeCapsule timeCapsule = tempTimeCapsule.get();
                 timeCapsule.updateTempSave(false);
                 timeCapsule.setOpenedAt(request.openAt());
-                return;
+                return new TimeCapsuleSaveResponse(timeCapsule.getId());
             }
         }
+
+        log.info("사용자 {}의 채팅방 {}에 대한 타임캡슐을 저장합니다.", userId, request.chatroomId());
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
@@ -184,6 +189,9 @@ public class TimeCapsuleService {
                 .forEach(timeCapsule::addAnalyzedFeedback);
 
         timeCapsuleRepository.save(timeCapsule);
+        log.info("타임캡슐 저장에 성공했습니다.");
+
+        return new TimeCapsuleSaveResponse(timeCapsule.getId());
     }
 
     public TimeCapsuleExistDateResponse getActiveDatesForMonth(

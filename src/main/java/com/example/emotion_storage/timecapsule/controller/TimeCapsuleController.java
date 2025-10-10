@@ -3,8 +3,10 @@ package com.example.emotion_storage.timecapsule.controller;
 import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
+import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleCreationRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;
+import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleCreationResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
@@ -35,6 +37,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class TimeCapsuleController {
 
     private final TimeCapsuleService timeCapsuleService;
+
+    @GetMapping("/create")
+    @Operation(summary = "타임캡슐 생성", description = "대화를 기반으로 타임캡슐을 생성합니다.")
+    public ResponseEntity<ApiResponse<TimeCapsuleCreationResponse>> createTimeCapsule(
+            @RequestBody TimeCapsuleCreationRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}의 채팅방 {}에 대한 타임캡슐을 생성합니다.", userId, request.chatRoomId());
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessMessage.CREATE_TIME_CAPSULE_SUCCESS.getMessage(),
+                timeCapsuleService.createTimeCapsule(request, userId)
+        ));
+    }
 
     @GetMapping("/date")
     @Operation(summary = "타임캡슐 존재하는 날짜 조회", description = "yyyy년 MM월의 날짜 중 캡슐이 존재하는 날짜 목록을 반환합니다.")

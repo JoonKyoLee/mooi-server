@@ -3,6 +3,7 @@ package com.example.emotion_storage.user.service;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -97,6 +98,19 @@ public class UserServiceTest {
         );
     }
 
+    private GoogleSignUpRequest createErrorNicknameGoogleSignUpRequest() {
+        return new GoogleSignUpRequest(
+                "12345",
+                Gender.MALE,
+                LocalDate.of(2000, 1, 1),
+                List.of("내 감정을 정리하고 싶어요", "내 감정 패턴을 알고 싶어요"),
+                true,
+                true,
+                false,
+                "id-token"
+        );
+    }
+
     private GoogleSignUpClaims createGoogleSignUpClaims() {
         return new GoogleSignUpClaims(
                 "google-social-id",
@@ -170,6 +184,19 @@ public class UserServiceTest {
                 true,
                 false,
                 "error-kakao-access-token"
+        );
+    }
+
+    private KakaoSignUpRequest createErrorNicknameKakaoSignUpRequest() {
+        return new KakaoSignUpRequest(
+                "12345",
+                Gender.FEMALE,
+                LocalDate.of(2003,1,1),
+                List.of("내 감정을 정리하고 싶어요", "내 감정 패턴을 알고 싶어요"),
+                true,
+                true,
+                false,
+                "kakao-access-token"
         );
     }
 
@@ -286,6 +313,21 @@ public class UserServiceTest {
     }
 
     @Test
+    void 구글_회원가입_시_닉네임이_유효하지_않을_때_예외가_발생한다() {
+        // given
+        GoogleSignUpRequest request = createErrorNicknameGoogleSignUpRequest();
+        GoogleSignUpClaims claims = createGoogleSignUpClaims();
+
+        when(googleTokenVerifier.verifySignUpToken(request.idToken())).thenReturn(claims);
+        when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.googleSignUp(request))
+                .isInstanceOf(BaseException.class)
+                .hasMessageContaining(ErrorCode.INVALID_NICKNAME.getMessage());
+    }
+
+    @Test
     void 카카오_회원가입한_이메일로_구글_회원가입을_시도할_때_예외가_발생한다() {
         /// given
         GoogleSignUpRequest request = createGoogleSignUpRequest();
@@ -376,6 +418,21 @@ public class UserServiceTest {
 
         // then
         verify(userRepository, times(1)).save(any(User.class));
+    }
+
+    @Test
+    void 카카오_회원가입_시_닉네임이_유효하지_않을_때_예외가_발생한다() {
+        // given
+        KakaoSignUpRequest request = createErrorNicknameKakaoSignUpRequest();
+        KakaoUserInfo userInfo = createKakaoUserInfo();
+
+        when(kakaoUserInfoClient.getKakaoUserInfo(request.accessToken())).thenReturn(userInfo);
+        when(userRepository.findBySocialId(Long.toString(1L))).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> userService.kakaoSignUp(request))
+                .isInstanceOf(BaseException.class)
+                .hasMessageContaining(ErrorCode.INVALID_NICKNAME.getMessage());
     }
 
     @Test

@@ -41,7 +41,7 @@ public class TimeCapsuleController {
 
     private final TimeCapsuleService timeCapsuleService;
 
-    @GetMapping("/create")
+    @PostMapping("/create")
     @Operation(summary = "타임캡슐 생성", description = "대화를 기반으로 타임캡슐을 생성합니다.")
     public ResponseEntity<ApiResponse<TimeCapsuleCreateResponse>> createTimeCapsule(
             @RequestBody TimeCapsuleCreateRequest request,

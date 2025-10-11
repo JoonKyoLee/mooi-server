@@ -56,6 +56,7 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 public class TimeCapsuleService {
 
+    private static final String SESSION_ID_FORMAT = "session-%d-%d";
     private static final String ARRIVED_STATUS = "arrived";
     private static final String SORT_FAVORITE = "favorite";
     private static final String SORT_BY_TEMP_SAVED = "isTempSave";
@@ -79,12 +80,14 @@ public class TimeCapsuleService {
         ChatRoom chatRoom = chatRoomRepository.findById(createRequest.chatroomId())
                 .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
+        String sessionId = String.format(SESSION_ID_FORMAT, userId, chatRoom.getId());
+
         try {
             AiTimeCapsuleCreateRequest request = new AiTimeCapsuleCreateRequest(
                     AiTimeCapsuleCreatePrompts.ROLE_MESSAGE,
                     AiTimeCapsuleCreatePrompts.REFERENCE_MESSAGE,
                     AiTimeCapsuleCreatePrompts.ANALYZE_MESSAGE,
-                    createRequest.sessionId()
+                    sessionId
             );
 
             String url = aiServerBaseUrl + "/timecapsule/create";

@@ -103,16 +103,12 @@ public class UserService {
     public LoginResponse kakaoLogin(KakaoLoginRequest request, HttpServletResponse response) {
         KakaoUserInfo userInfo = kakaoUserInfoClient.getKakaoUserInfo(request.accessToken());
 
-        User user = userRepository.findBySocialId(userInfo.getKakaoId())
+        User user = userRepository.findByEmail(userInfo.kakaoAccount().email())
                 .orElseThrow(() -> new BaseException(ErrorCode.NEED_SIGN_UP));
 
-// 카카오 소셜 로그인의 경우 이메일은 비즈 계정에서만 가능하기 때문에 추후에 비즈 계정으로 변경 시 이메일로 구현 가능
-//        User user = userRepository.findByEmail(userInfo.kakaoAccount().email())
-//                .orElseThrow(() -> new BaseException(ErrorCode.NEED_SIGN_UP));
-//
-//        if (user.getSocialType().equals(SocialType.GOOGLE)) {
-//            throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE);
-//        }
+        if (user.getSocialType().equals(SocialType.GOOGLE)) {
+            throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE);
+        }
 
         String accessToken = tokenService.issueAccessToken(user.getId());
         tokenService.issueRefreshToken(user.getId(), response);
@@ -124,27 +120,19 @@ public class UserService {
     public void kakaoSignUp(KakaoSignUpRequest request) {
         KakaoUserInfo userInfo = kakaoUserInfoClient.getKakaoUserInfo(request.accessToken());
 
-        Optional<User> existingUser = userRepository.findBySocialId(userInfo.getKakaoId());
+        Optional<User> existingUser = userRepository.findByEmail(userInfo.kakaoAccount().email());
         if (existingUser.isPresent()) {
-            throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO);
+            User user = existingUser.get();
+            if (user.getSocialType().equals(SocialType.GOOGLE)) {
+                throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE);
+            }
+            if (user.getSocialType().equals(SocialType.KAKAO)) {
+                throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO);
+            }
         }
 
-        validateNickname(request.nickname());
-
-// 카카오 소셜 로그인의 경우 이메일은 비즈 계정에서만 가능하기 때문에 추후에 비즈 계정으로 변경 시 이메일로 구현 가능
-//        Optional<User> existingUser = userRepository.findByEmail(userInfo.kakaoAccount().email());
-//        if (existingUser.isPresent()) {
-//            User user = existingUser.get();
-//            if (user.getSocialType().equals(SocialType.GOOGLE)) {
-//                throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE);
-//            }
-//            if (user.getSocialType().equals(SocialType.KAKAO)) {
-//                throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO);
-//            }
-//        }
-
         User user = User.builder()
-                //.email(userInfo.kakaoAccount().email())
+                .email(userInfo.kakaoAccount().email())
                 .socialId(userInfo.getKakaoId())
                 .socialType(SocialType.KAKAO)
                 .profileImageUrl(userInfo.kakaoAccount().profile().profileImgUrl())

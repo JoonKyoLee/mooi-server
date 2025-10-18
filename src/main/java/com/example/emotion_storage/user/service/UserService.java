@@ -46,7 +46,7 @@ public class UserService {
         User user = userRepository.findByEmail(claims.email())
                 .orElseThrow(() -> new BaseException(ErrorCode.NEED_SIGN_UP));
 
-        if (user.getSocialType().equals(SocialType.KAKAO)) {
+        if (user.isKakaoType()) {
             throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO);
         }
 
@@ -60,17 +60,7 @@ public class UserService {
     public void googleSignUp(GoogleSignUpRequest request) {
         GoogleSignUpClaims claims = googleTokenVerifier.verifySignUpToken(request.idToken());
 
-        Optional<User> existingUser = userRepository.findByEmail(claims.email());
-        if (existingUser.isPresent()) {
-            User user = existingUser.get();
-            if (user.getSocialType().equals(SocialType.GOOGLE)) {
-                throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE);
-            }
-            if (user.getSocialType().equals(SocialType.KAKAO)) {
-                throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO);
-            }
-        }
-
+        validateAlreadyRegisteredUser(claims.email());
         validateNickname(request.nickname());
 
         User user = User.builder()
@@ -106,7 +96,7 @@ public class UserService {
         User user = userRepository.findByEmail(userInfo.kakaoAccount().email())
                 .orElseThrow(() -> new BaseException(ErrorCode.NEED_SIGN_UP));
 
-        if (user.getSocialType().equals(SocialType.GOOGLE)) {
+        if (user.isGoogleType()) {
             throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE);
         }
 
@@ -120,16 +110,8 @@ public class UserService {
     public void kakaoSignUp(KakaoSignUpRequest request) {
         KakaoUserInfo userInfo = kakaoUserInfoClient.getKakaoUserInfo(request.accessToken());
 
-        Optional<User> existingUser = userRepository.findByEmail(userInfo.kakaoAccount().email());
-        if (existingUser.isPresent()) {
-            User user = existingUser.get();
-            if (user.getSocialType().equals(SocialType.GOOGLE)) {
-                throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE);
-            }
-            if (user.getSocialType().equals(SocialType.KAKAO)) {
-                throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO);
-            }
-        }
+        validateAlreadyRegisteredUser(userInfo.kakaoAccount().email());
+        validateNickname(request.nickname());
 
         User user = User.builder()
                 .email(userInfo.kakaoAccount().email())
@@ -160,6 +142,19 @@ public class UserService {
     private void validateNickname(String nickname) {
         if (!Pattern.matches(NICKNAME_PATTERN, nickname)) {
             throw new BaseException(ErrorCode.INVALID_NICKNAME);
+        }
+    }
+
+    private void validateAlreadyRegisteredUser(String email) {
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            if (user.isGoogleType()) {
+                throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE);
+            }
+            if (user.isKakaoType()) {
+                throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO);
+            }
         }
     }
 }

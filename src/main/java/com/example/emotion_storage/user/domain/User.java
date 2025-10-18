@@ -204,4 +204,12 @@ public class User extends BaseTimeEntity {
     public void withdrawUser() {
         this.deletedAt = LocalDateTime.now();
     }
+
+    public boolean isKakaoType() {
+        return socialType.equals(SocialType.KAKAO);
+    }
+
+    public boolean isGoogleType() {
+        return socialType.equals(SocialType.GOOGLE);
+    }
 }

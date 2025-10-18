@@ -50,9 +50,7 @@ public class UserService {
             throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO);
         }
 
-        String accessToken = tokenService.issueAccessToken(user.getId());
-        tokenService.issueRefreshToken(user.getId(), response);
-
+        String accessToken = issueTokens(user.getId(), response);
         return new LoginResponse(accessToken);
     }
 
@@ -100,9 +98,7 @@ public class UserService {
             throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE);
         }
 
-        String accessToken = tokenService.issueAccessToken(user.getId());
-        tokenService.issueRefreshToken(user.getId(), response);
-
+        String accessToken = issueTokens(user.getId(), response);
         return new LoginResponse(accessToken);
     }
 
@@ -156,5 +152,10 @@ public class UserService {
                 throw new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO);
             }
         }
+    }
+
+    private String issueTokens(Long userId, HttpServletResponse response) {
+        tokenService.issueRefreshToken(userId, response);
+        return tokenService.issueAccessToken(userId);
     }
 }

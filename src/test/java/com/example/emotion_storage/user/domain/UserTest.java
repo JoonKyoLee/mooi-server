@@ -139,4 +139,22 @@ public class UserTest {
         assertThat(user.isTimeCapsuleReportNotify()).isEqualTo(timeCapsuleReportNotify);
         assertThat(user.isMarketingInfoNotify()).isEqualTo(marketingInfoNotify);
     }
+
+    @Test
+    void 소셜_타입_판별에_성공한다() {
+        // given
+        User googleUser = User.builder()
+                .socialType(SocialType.GOOGLE)
+                .build();
+
+        User kakaoUser = User.builder()
+                .socialType(SocialType.KAKAO)
+                .build();
+
+        // when, then
+        assertThat(googleUser.isGoogleType()).isTrue();
+        assertThat(googleUser.isKakaoType()).isFalse();
+        assertThat(kakaoUser.isKakaoType()).isTrue();
+        assertThat(kakaoUser.isGoogleType()).isFalse();
+    }
 }

@@ -285,6 +285,22 @@ public class UserControllerTest {
     }
 
     @Test
+    void 카카오_로그인_시에_구글_계정으로_가입된_이메일로_로그인을_시도하면_예외가_발생한다() throws Exception {
+        // given
+        given(userService.kakaoLogin(any(KakaoLoginRequest.class), any(HttpServletResponse.class)))
+                .willThrow(new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE));
+
+        // when, then
+        mockMvc.perform(post("/api/v1/users/login/kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new KakaoLoginRequest("access-token"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("ALREADY_REGISTERED_WITH_GOOGLE"))
+                .andExpect(jsonPath("$.message").value(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE.getMessage()));
+    }
+
+    @Test
     void 카카오_회원가입이_성공하면_success_true를_반환한다() throws Exception {
         // given
         KakaoSignUpRequest request = new KakaoSignUpRequest(
@@ -360,6 +376,32 @@ public class UserControllerTest {
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.code").value("ALREADY_REGISTERED_WITH_KAKAO"))
                 .andExpect(jsonPath("$.message").value(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO.getMessage()));
+    }
+
+    @Test
+    void 카카오_회원가입_시에_이미_구글로_가입된_계정으로_회원가입을_시도하면_예외가_발생한다() throws Exception {
+        // given
+        doThrow(new BaseException(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE))
+                .when(userService)
+                .kakaoSignUp(any(KakaoSignUpRequest.class));
+
+        KakaoSignUpRequest request = new KakaoSignUpRequest(
+                "모이",
+                Gender.MALE,
+                LocalDate.of(2000,1,1),
+                List.of(),
+                true, true, false,
+                "kakao-access-token"
+        );
+
+        // when & then
+        mockMvc.perform(post("/api/v1/users/signup/kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("ALREADY_REGISTERED_WITH_GOOGLE"))
+                .andExpect(jsonPath("$.message").value(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE.getMessage()));
     }
 
     @Test

@@ -392,6 +392,23 @@ public class UserServiceTest {
     }
 
     @Test
+    void 구글_계정으로_가입되어_있는_이메일로_카카오_로그인을_시도할_때_예외가_발생한다() {
+        // given
+        KakaoLoginRequest request = createKakaoLoginRequest();
+        KakaoUserInfo kakaoUserInfo = createErrorKakaoUserInfo();
+
+        User user = createLoginUser(SocialType.GOOGLE);
+
+        when(kakaoUserInfoClient.getKakaoUserInfo("access-token")).thenReturn(kakaoUserInfo);
+        when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.of(user));
+
+        // when, then
+        assertThatThrownBy(() -> userService.kakaoLogin(request, httpServletResponse))
+                .isInstanceOf(BaseException.class)
+                .hasMessageContaining(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE.getMessage());
+    }
+
+    @Test
     void 카카오_로그인을_시도할_때_카카오_액세스_토큰이_유효하지_얂은_경우_예외가_발생한다() {
         // given
         KakaoLoginRequest request = createErrorKakaoLoginRequest();
@@ -450,6 +467,23 @@ public class UserServiceTest {
         assertThatThrownBy(() -> userService.kakaoSignUp(request))
                 .isInstanceOf(BaseException.class)
                 .hasMessageContaining(ErrorCode.ALREADY_REGISTERED_WITH_KAKAO.getMessage());
+    }
+
+    @Test
+    void 구글_회원가입한_이메일으로_카카오_회원가입을_시도할_때_예외가_발생한다() {
+        // given
+        KakaoSignUpRequest request = createKakaoSignUpRequest();
+        KakaoUserInfo userInfo = createKakaoUserInfo();
+
+        User user = createKakaoSignUpUser(request, userInfo, SocialType.GOOGLE);
+
+        when(kakaoUserInfoClient.getKakaoUserInfo(request.accessToken())).thenReturn(userInfo);
+        when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.of(user));
+
+        // when, then
+        assertThatThrownBy(() -> userService.kakaoSignUp(request))
+                .isInstanceOf(BaseException.class)
+                .hasMessageContaining(ErrorCode.ALREADY_REGISTERED_WITH_GOOGLE.getMessage());
     }
 
     @Test

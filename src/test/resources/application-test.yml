@@ -38,3 +38,10 @@ jwt:
   secret: jwt-secret-fot-test-jwt-secret-for-test
   access-token:
     expiration-minutes: 365
+
+ai:
+  websocket:
+    url: ws://localhost:0
+    timeout: 30000
+  server:
+    base-url: http://localhost

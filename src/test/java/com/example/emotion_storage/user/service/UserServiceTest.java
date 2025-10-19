@@ -366,7 +366,7 @@ public class UserServiceTest {
         User user = createLoginUser(SocialType.KAKAO);
 
         when(kakaoUserInfoClient.getKakaoUserInfo("access-token")).thenReturn(kakaoUserInfo);
-        when(userRepository.findBySocialId(Long.toString(1L))).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.of(user));
         when(tokenService.issueAccessToken(user.getId())).thenReturn("kakao-access-token");
 
         // when
@@ -383,7 +383,7 @@ public class UserServiceTest {
         KakaoUserInfo kakaoUserInfo = createErrorKakaoUserInfo();
 
         when(kakaoUserInfoClient.getKakaoUserInfo("access-token")).thenReturn(kakaoUserInfo);
-        when(userRepository.findBySocialId(Long.toString(60L))).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.empty());
 
         // when, then
         assertThatThrownBy(() -> userService.kakaoLogin(request, httpServletResponse))
@@ -411,7 +411,7 @@ public class UserServiceTest {
         KakaoUserInfo userInfo = createKakaoUserInfo();
 
         when(kakaoUserInfoClient.getKakaoUserInfo(request.accessToken())).thenReturn(userInfo);
-        when(userRepository.findBySocialId(Long.toString(1L))).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.empty());
 
         // when
         userService.kakaoSignUp(request);
@@ -427,7 +427,7 @@ public class UserServiceTest {
         KakaoUserInfo userInfo = createKakaoUserInfo();
 
         when(kakaoUserInfoClient.getKakaoUserInfo(request.accessToken())).thenReturn(userInfo);
-        when(userRepository.findBySocialId(Long.toString(1L))).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> userService.kakaoSignUp(request))
@@ -444,7 +444,7 @@ public class UserServiceTest {
         User user = createKakaoSignUpUser(request, userInfo, SocialType.KAKAO);
 
         when(kakaoUserInfoClient.getKakaoUserInfo(request.accessToken())).thenReturn(userInfo);
-        when(userRepository.findBySocialId(Long.toString(1L))).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("test@email.com")).thenReturn(Optional.of(user));
 
         // when, then
         assertThatThrownBy(() -> userService.kakaoSignUp(request))

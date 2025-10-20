@@ -58,7 +58,7 @@ public class ChatServiceTest {
     }
 
     @Test
-    void 감정_대화_채팅방_생성에_성공한다() {
+    void 감정_대화_기존_채팅방이_존재하지_않으면_채팅방_생성에_성공한다() {
         // given
         User user = newUser();
         Long userId = user.getId();
@@ -71,6 +71,23 @@ public class ChatServiceTest {
 
         ChatRoom chatRoom = chatRoomRepository.findById(response.roomId())
                         .orElseThrow();
+        assertThat(chatRoom.getUser().getId()).isEqualTo(userId);
+        assertThat(chatRoom.isEnded()).isFalse();
+    }
+
+    @Test
+    void 감정_대화_기존_채팅방이_존재하면_기존_채팅방을_반환한다() {
+        // given
+        User user = newUser();
+        Long userId = user.getId();
+        ChatRoom chatRoom = newChatRoom(user);
+
+        // when
+        ChatRoomCreateResponse response = chatService.createChatRoom(userId);
+
+        // then
+        assertThat(response.roomId()).isNotNull();
+        assertThat(response.roomId()).isEqualTo(chatRoom.getId());
         assertThat(chatRoom.getUser().getId()).isEqualTo(userId);
         assertThat(chatRoom.isEnded()).isFalse();
     }

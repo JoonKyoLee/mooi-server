@@ -153,7 +153,7 @@ public class ChatServiceTest {
         );
 
         // when
-        chatService.saveUserMessage(userMessageDto);
+        chatService.saveUserMessage(userMessageDto, user.getId());
 
         // then
         ChatRoom reloaded = chatRoomRepository.findById(chatRoom.getId())
@@ -195,12 +195,12 @@ public class ChatServiceTest {
         );
 
         // when
-        chatService.saveUserMessage(firstMessage);
+        chatService.saveUserMessage(firstMessage, user.getId());
         LocalDateTime firstChatTime = chatRoomRepository.findById(chatRoom.getId())
                 .orElseThrow()
                 .getFirstChatTime();
 
-        chatService.saveUserMessage(secondMessage);
+        chatService.saveUserMessage(secondMessage, user.getId());
 
         // then
         ChatRoom reloaded = chatRoomRepository.findById(chatRoom.getId())
@@ -229,7 +229,7 @@ public class ChatServiceTest {
         );
 
         // when & then
-        assertThatThrownBy(() -> chatService.saveUserMessage(userMessageDto))
+        assertThatThrownBy(() -> chatService.saveUserMessage(userMessageDto, newUser().getId()))
                 .isInstanceOf(BaseException.class)
                 .hasMessageContaining(ErrorCode.CHAT_ROOM_NOT_FOUND.getMessage());
     }

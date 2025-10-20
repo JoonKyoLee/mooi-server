@@ -185,6 +185,36 @@ public class ChatServiceTest {
     }
 
     @Test
+    void 첫_채팅을_보내면_티켓을_차감한다() {
+        // given
+        User user = newUser();
+        Long beforeKey = user.getTicketCount();
+        ChatRoom chatRoom = newChatRoom(user);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+        LocalDateTime now = LocalDateTime.now();
+        String timestamp = formatter.format(now);
+
+        UserMessageDto userMessageDto = new UserMessageDto(
+                "message-1",
+                chatRoom.getId(),
+                "안녕하세요",
+                "USER",
+                timestamp
+        );
+
+        // when
+        chatService.saveUserMessage(userMessageDto, user.getId());
+
+        // then
+        User reloaded = userRepository.findById(user.getId())
+                .orElseThrow();
+        Long afterTickets = reloaded.getTicketCount();
+
+        assertThat(afterTickets).isEqualTo(beforeKey - 1L);
+    }
+
+    @Test
     void 첫_메시지_이후_다시_저장해도_첫_채팅_시각은_변경되지_않는다() {
         // given
         User user = newUser();

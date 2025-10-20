@@ -17,6 +17,7 @@ import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -55,22 +56,34 @@ public class ChatService {
     private final WebSocketClientService webSocketClientService;
     private final ChatMessageStore chatMessageStore;
 
-
     @Transactional
     public ChatRoomCreateResponse createChatRoom(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
-        ChatRoom chatRoom = ChatRoom.builder()
-                .user(user)
-                .isEnded(false)
-                .build();
+        ChatRoom chatRoom = findOrCreateActiveChatRoom(user);
 
-        chatRoomRepository.save(chatRoom);
-
-        log.info("사용자 {}가 감정대화를 진행할 수 있는 채팅방 id {} 생성이 완료되었습니다.", userId, chatRoom.getId());
-
+        log.info("사용자 {}가 감정대화를 진행할 채팅방 id {}를 반환합니다.", userId, chatRoom.getId());
         return new ChatRoomCreateResponse(chatRoom.getId());
+    }
+
+    private ChatRoom findOrCreateActiveChatRoom(User user) {
+        ChatRoom latest = chatRoomRepository.findTopByUser_IdOrderByCreatedAtDesc(user.getId())
+                .orElse(null);
+
+        if (latest != null && !latest.isEnded() && latest.getFirstChatTime() == null) {
+            log.info("기존에 생성되었지만 채팅이 진행되지 않은 사용자 {}의 채팅방을 반환합니다.", user.getId());
+            return latest;
+        }
+
+        ChatRoom newRoom = chatRoomRepository.save(
+                ChatRoom.builder()
+                        .user(user)
+                        .isEnded(false)
+                        .build()
+        );
+        log.info("사용자 {}가 감정대화를 진행할 수 있는 채팅방을 반환합니다.", user.getId());
+        return newRoom;
     }
 
     @Transactional

@@ -2,6 +2,7 @@ package com.example.emotion_storage.chat.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
 
 import com.example.emotion_storage.chat.domain.Chat;
 import com.example.emotion_storage.chat.domain.ChatRoom;
@@ -80,7 +81,7 @@ public class ChatMessageStoreTest {
         );
 
         // when
-        chatMessageStore.saveUserMessage(userMessageDto);
+        chatMessageStore.saveUserMessage(userMessageDto, user.getId());
 
         // then
         ChatRoom reloaded = chatRoomRepository.findById(chatRoom.getId())
@@ -122,12 +123,12 @@ public class ChatMessageStoreTest {
         );
 
         // when
-        chatMessageStore.saveUserMessage(firstMessage);
+        chatMessageStore.saveUserMessage(firstMessage, user.getId());
         LocalDateTime firstChatTime = chatRoomRepository.findById(chatRoom.getId())
                 .orElseThrow()
                 .getFirstChatTime();
 
-        chatMessageStore.saveUserMessage(secondMessage);
+        chatMessageStore.saveUserMessage(secondMessage, user.getId());
 
         // then
         ChatRoom reloaded = chatRoomRepository.findById(chatRoom.getId())
@@ -143,6 +144,7 @@ public class ChatMessageStoreTest {
     @Test
     void 존재하지_않는_채팅방이면_유저_메시지_저장_시_예외가_발생한다() {
         // given
+        User user = newUser();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
         LocalDateTime now = LocalDateTime.now();
         String timestamp = formatter.format(now);
@@ -156,7 +158,7 @@ public class ChatMessageStoreTest {
         );
 
         // when & then
-        assertThatThrownBy(() -> chatMessageStore.saveUserMessage(userMessageDto))
+        assertThatThrownBy(() -> chatMessageStore.saveUserMessage(userMessageDto, user.getId()))
                 .isInstanceOf(BaseException.class)
                 .hasMessageContaining(ErrorCode.CHAT_ROOM_NOT_FOUND.getMessage());
     }

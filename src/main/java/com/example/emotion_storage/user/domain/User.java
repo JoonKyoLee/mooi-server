@@ -166,6 +166,13 @@ public class User extends BaseTimeEntity {
         this.ticketCount = 10L;
     }
 
+    public void useTicket() {
+        if (this.ticketCount < 0) {
+            throw new BaseException(ErrorCode.TICKET_NOT_ENOUGH);
+        }
+        this.ticketCount -= 1;
+    }
+
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }

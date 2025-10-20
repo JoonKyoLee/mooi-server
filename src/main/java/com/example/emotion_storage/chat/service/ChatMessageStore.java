@@ -8,6 +8,8 @@ import com.example.emotion_storage.chat.repository.ChatRepository;
 import com.example.emotion_storage.chat.repository.ChatRoomRepository;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
+import com.example.emotion_storage.user.domain.User;
+import com.example.emotion_storage.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
@@ -25,19 +27,26 @@ public class ChatMessageStore {
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRepository chatRepository;
+    private final UserRepository userRepository;
 
     @Transactional
-    public void saveUserMessage(UserMessageDto userMessage) {
+    public void saveUserMessage(UserMessageDto userMessage, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
         ChatRoom chatRoom = chatRoomRepository.findById(userMessage.roomId())
                 .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(TIMESTAMP_FORMAT);
 
-        // 첫 채팅 시각 기록
+        // 첫 채팅 시각 기록 및 티켓 차감
         if (chatRoom.getFirstChatTime() == null) {
             log.info("채팅방 {}의 첫 채팅시각을 기록합니다.", chatRoom.getId());
             LocalDateTime firstChatTime = LocalDateTime.parse(userMessage.timestamp(), formatter);
             chatRoom.setFirstChatTime(firstChatTime);
+
+            log.info("대화를 시작하여 사용자 {}의 티켓을 차감합니다.", userId);
+            user.useTicket();
         }
 
         log.info("채팅방 {}에 전송된 사용자 메시지를 저장합니다.", userMessage.roomId());

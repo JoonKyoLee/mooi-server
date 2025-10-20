@@ -120,7 +120,7 @@ public class ChatService {
         Long roomId = userMessage.roomId();
         
         // 1. 사용자 메시지 저장
-        chatMessageStore.saveUserMessage(userMessage);
+        chatMessageStore.saveUserMessage(userMessage, userId);
         log.info("[채팅방:{}] 사용자 메시지 저장 완료", roomId);
 
         // 2. AI 서버로 메시지 전송

@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.emotion_storage.chat.dto.response.ChatRoomCloseResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCreateResponse;
+import com.example.emotion_storage.chat.service.ChatMessageStore;
 import com.example.emotion_storage.chat.service.ChatService;
 import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.config.TestSecurityConfig;
@@ -29,6 +30,7 @@ public class HomeControllerTest {
     @Autowired MockMvc mockMvc;
     @Autowired ObjectMapper objectMapper;
     @MockitoBean ChatService chatService;
+    @MockitoBean ChatMessageStore chatMessageStore;
     @MockitoBean HomeService homeService;
     @MockitoBean JpaMetamodelMappingContext jpaMetamodelMappingContext;
 

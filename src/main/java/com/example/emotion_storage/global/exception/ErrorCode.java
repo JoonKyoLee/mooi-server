@@ -24,6 +24,7 @@ public enum ErrorCode {
 
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "채팅방을 찾을 수 없습니다."),
     CHAT_ROOM_ACCESS_DENIED(HttpStatus.FORBIDDEN, "채팅방에 접근할 수 없습니다."),
+    TICKET_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "티켓이 부족하여 대화를 시작할 수 없습니다."),
 
     TIME_CAPSULE_NOT_FOUND(HttpStatus.NOT_FOUND, "타임캡슐을 찾을 수 없습니다."),
     TIME_CAPSULE_IS_NOT_OWNED(HttpStatus.FORBIDDEN, "사용자의 타임캡슐이 아닙니다."),

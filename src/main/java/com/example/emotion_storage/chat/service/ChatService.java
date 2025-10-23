@@ -17,7 +17,6 @@ import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -123,6 +122,19 @@ public class ChatService {
     }
 
     @Transactional
+    public void saveChatRoomTemporarily(Long userId, Long roomId) {
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        if (!chatRoom.getUser().getId().equals(userId)) {
+            throw new BaseException(ErrorCode.CHAT_ROOM_ACCESS_DENIED);
+        }
+
+        log.info("채팅방 {}에서 채팅방 임시 저장 종료를 요청했습니다.", roomId);
+        chatRoom.saveTemporarily();
+    }
+
+    @Transactional
     public ChatRoomCloseResponse closeChatRoom(Long userId, Long roomId) {
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
@@ -132,7 +144,7 @@ public class ChatService {
         }
 
         log.info("채팅방 {}에서 감정 대화 종료를 요청했습니다.", roomId);
-        chatRoom.closeChatRoom(true);
+        chatRoom.closeChatRoom();
 
         return new ChatRoomCloseResponse(true);
     }

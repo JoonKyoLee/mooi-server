@@ -31,7 +31,7 @@ public class ChatRoomTest {
         ChatRoom chatRoom = newChatRoom();
 
         // when
-        chatRoom.closeChatRoom(true);
+        chatRoom.closeChatRoom();
 
         // then
         assertThat(chatRoom.isEnded()).isTrue();

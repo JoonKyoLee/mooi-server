@@ -17,7 +17,6 @@ import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -96,7 +95,7 @@ public class ChatService {
         }
 
         log.info("채팅방 {}에서 감정 대화 종료를 요청했습니다.", roomId);
-        chatRoom.closeChatRoom(true);
+        chatRoom.closeChatRoom();
 
         return new ChatRoomCloseResponse(true);
     }

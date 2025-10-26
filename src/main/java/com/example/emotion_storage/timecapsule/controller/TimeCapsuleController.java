@@ -6,12 +6,14 @@ import com.example.emotion_storage.global.security.principal.CustomUserPrincipal
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleCreateRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;
+import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleOpenDateUpdateRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleSaveRequest;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleCreateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
+import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleOpenDateUpdateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleSaveResponse;
 import com.example.emotion_storage.timecapsule.service.TimeCapsuleService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -66,6 +68,20 @@ public class TimeCapsuleController {
         return ResponseEntity.ok(ApiResponse.success(
                 SuccessMessage.SAVE_TIME_CAPSULE_SUCCESS.getMessage(),
                 timeCapsuleService.saveTimeCapsule(request, userId)
+        ));
+    }
+
+    @PostMapping("/{capsuleId}/openAt")
+    public ResponseEntity<ApiResponse<TimeCapsuleOpenDateUpdateResponse>> updateTimeCapsuleOpenDate(
+            @PathVariable("capsuleId") Long timeCapsuleId,
+            @RequestBody TimeCapsuleOpenDateUpdateRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}가 타임캡슐 {}에 대한 오픈일 저장을 요청했습니다.", userId, timeCapsuleId);
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessMessage.UPDATE_TIME_CAPSULE_OPEN_DATE_SUCCESS.getMessage(),
+                timeCapsuleService.updateTimeCapsuleOpenDate(request, userId)
         ));
     }
 

@@ -30,7 +30,12 @@ public enum ErrorCode {
     TIME_CAPSULE_FAVORITE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "즐겨찾기는 최대 30개까지만 가능합니다."),
     TIME_CAPSULE_KEY_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "열쇠가 부족하여 타임캡슐을 열 수 없습니다."),
     TIME_CAPSULE_OPEN_RULE_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "열람 비용 규칙이 정의되어 있지 않습니다."),
-    
+    TIME_CAPSULE_NOT_TEMP_SAVE(HttpStatus.BAD_REQUEST, "임시저장된 타임캡슐이 아닙니다."),
+    TIME_CAPSULE_DRAFT_EXPIRED(HttpStatus.GONE, "타임캡슐 임시저장 기간이 만료되었습니다."),
+    TIME_CAPSULE_OPEN_DATE_BEFORE_STORED_AT(HttpStatus.BAD_REQUEST, "오픈일은 보관일 이전일 수 없습니다."),
+    TIME_CAPSULE_OPEN_DATE_AFTER_LIMIT(HttpStatus.BAD_REQUEST, "오픈일은 보관일로부터 1년을 초과할 수 없습니다."),
+
+
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "리포트를 찾을 수 없습니다."),
     DAILY_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "일일리포트 조회 실패 - 존재하지 않음"),
     INVALID_DATE_FORMAT(HttpStatus.BAD_REQUEST, "잘못된 날짜 형식입니다."),

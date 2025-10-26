@@ -13,6 +13,7 @@ import com.example.emotion_storage.timecapsule.dto.request.AiTimeCapsuleCreateRe
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleCreateRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;
+import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleOpenDateUpdateRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleSaveRequest;
 import com.example.emotion_storage.timecapsule.dto.response.AiTimeCapsuleCreateErrorResponse;
 import com.example.emotion_storage.timecapsule.dto.response.AiTimeCapsuleCreateResponse;
@@ -21,6 +22,7 @@ import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailRes
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleFavoriteResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleListResponse;
+import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleOpenDateUpdateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleSaveResponse;
 import com.example.emotion_storage.timecapsule.repository.TimeCapsuleRepository;
 import com.example.emotion_storage.user.domain.User;
@@ -64,6 +66,7 @@ public class TimeCapsuleService {
     private static final String SORT_BY_ARRIVED_TIME = "openedAt";
     private static final String SORT_BY_FAVORITE_TIME = "favoriteAt";
     private static final int TIME_CAPSULE_FAVORITES_LIMIT = 30;
+    private static final int TIME_CAPSULE_STORAGE_LIMIT_DAYS = 365;
     private static final long SECONDS_PER_DAY = 24 * 60 * 60;
 
     private final ChatService chatService;
@@ -141,21 +144,6 @@ public class TimeCapsuleService {
 
     @Transactional
     public TimeCapsuleSaveResponse saveTimeCapsule(TimeCapsuleSaveRequest request, Long userId) {
-        // 임시 저장되어 있는 타임캡슐이 존재하는지 확인하고 최종 저장
-        if (!request.isTempSave()) {
-            log.info("채팅방 {}의 임시 저장되어 있는 타임캡슐이 존재하는지 확인합니다.", request.chatroomId());
-            Optional<TimeCapsule> tempTimeCapsule = timeCapsuleRepository
-                    .findByChatroomIdAndIsTempSaveTrue(request.chatroomId());
-
-            if (tempTimeCapsule.isPresent()) {
-                log.info("임시 저장되어 있는 타임캡슐을 최종 저장합니다.");
-                TimeCapsule timeCapsule = tempTimeCapsule.get();
-                timeCapsule.updateTempSave(false);
-                timeCapsule.setOpenedAt(request.openAt());
-                return new TimeCapsuleSaveResponse(timeCapsule.getId());
-            }
-        }
-
         log.info("사용자 {}의 채팅방 {}에 대한 타임캡슐을 저장합니다.", userId, request.chatroomId());
 
         User user = userRepository.findById(userId)
@@ -163,6 +151,8 @@ public class TimeCapsuleService {
 
         ChatRoom chatRoom = chatRoomRepository.findById(request.chatroomId())
                 .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        validateOpenAtRange(chatRoom.getFirstChatTime(), request.openAt());
 
         TimeCapsule timeCapsule = TimeCapsule.builder()
                 .user(user)
@@ -195,6 +185,37 @@ public class TimeCapsuleService {
         log.info("타임캡슐 저장에 성공했습니다.");
 
         return new TimeCapsuleSaveResponse(timeCapsule.getId());
+    }
+
+    @Transactional
+    public TimeCapsuleOpenDateUpdateResponse updateTimeCapsuleOpenDate(TimeCapsuleOpenDateUpdateRequest request, Long userId) {
+        log.info("타임캡슐 {}이 존재하는지 확인합니다.", request.capsuleId());
+        TimeCapsule timeCapsule = timeCapsuleRepository.findById(request.capsuleId())
+                .orElseThrow(() -> new BaseException(ErrorCode.TIME_CAPSULE_NOT_FOUND));
+
+        // 첫 채팅 시각 + 24시간이 지나면 저장 불가
+        if (LocalDateTime.now().isAfter(timeCapsule.getHistoryDate().plusDays(1))) {
+            throw new BaseException(ErrorCode.TIME_CAPSULE_DRAFT_EXPIRED);
+        }
+        if (!timeCapsule.getIsTempSave()) {
+            throw new BaseException(ErrorCode.TIME_CAPSULE_NOT_TEMP_SAVE);
+        }
+        validateOpenAtRange(request.storedAt(), request.openAt());
+
+        log.info("임시 저장되어 있는 타임캡슐을 최종 저장합니다.");
+        timeCapsule.updateTempSave(false);
+        timeCapsule.setOpenedAt(request.openAt());
+
+        return new TimeCapsuleOpenDateUpdateResponse(timeCapsule.getId());
+    }
+
+    private void validateOpenAtRange(LocalDateTime storedAt, LocalDateTime openAt) {
+        if (openAt.isBefore(storedAt)) {
+            throw new BaseException(ErrorCode.TIME_CAPSULE_OPEN_DATE_BEFORE_STORED_AT);
+        }
+        if (openAt.isAfter(storedAt.plusDays(TIME_CAPSULE_STORAGE_LIMIT_DAYS))) {
+            throw new BaseException(ErrorCode.TIME_CAPSULE_OPEN_DATE_AFTER_LIMIT);
+        }
     }
 
     public TimeCapsuleExistDateResponse getActiveDatesForMonth(

@@ -67,7 +67,7 @@ public class MyPageService {
 
         log.info("사용자 {}의 계정 정보를 조회합니다.", userId);
         return new UserAccountInfoResponse(
-                user.getEmail(), user.getSocialType(), user.getGender(), user.getBirthday()
+                user.getNickname(), user.getEmail(), user.getSocialType(), user.getGender(), user.getBirthday()
         );
     }
 

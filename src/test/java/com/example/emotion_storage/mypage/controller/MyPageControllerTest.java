@@ -121,7 +121,7 @@ public class MyPageControllerTest {
     void 사용자_계정_정보_조회에_성공한다() throws Exception {
         // given
         UserAccountInfoResponse response = new UserAccountInfoResponse(
-                "test@example.com", SocialType.GOOGLE, Gender.MALE, LocalDate.of(2000, 1, 1)
+                "MOOI", "test@example.com", SocialType.GOOGLE, Gender.MALE, LocalDate.of(2000, 1, 1)
         );
 
         given(myPageService.getUserAccountInfo(anyLong()))

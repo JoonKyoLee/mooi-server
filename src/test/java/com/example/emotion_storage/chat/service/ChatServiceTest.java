@@ -14,6 +14,7 @@ import com.example.emotion_storage.user.domain.SocialType;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,6 +53,29 @@ public class ChatServiceTest {
         ChatRoom chatRoom = ChatRoom.builder()
                 .user(user)
                 .isEnded(false)
+                .isTempSave(false)
+                .build();
+        user.addChatRoom(chatRoom);
+        return chatRoomRepository.save(chatRoom);
+    }
+
+    private ChatRoom tempSaveChatRoom(User user) {
+        ChatRoom chatRoom = ChatRoom.builder()
+                .user(user)
+                .isEnded(false)
+                .firstChatTime(LocalDateTime.now().minusSeconds(30))
+                .isTempSave(true)
+                .build();
+        user.addChatRoom(chatRoom);
+        return chatRoomRepository.save(chatRoom);
+    }
+
+    private ChatRoom finishedChatRoom(User user) {
+        ChatRoom chatRoom = ChatRoom.builder()
+                .user(user)
+                .isEnded(true)
+                .isTempSave(false)
+                .firstChatTime(LocalDateTime.now().minusSeconds(30))
                 .build();
         user.addChatRoom(chatRoom);
         return chatRoomRepository.save(chatRoom);
@@ -68,6 +92,8 @@ public class ChatServiceTest {
 
         // then
         assertThat(response.roomId()).isNotNull();
+        assertThat(response.isTempSave()).isFalse();
+        assertThat(response.isFirstChatOfDay()).isTrue();
 
         ChatRoom chatRoom = chatRoomRepository.findById(response.roomId())
                         .orElseThrow();
@@ -88,8 +114,45 @@ public class ChatServiceTest {
         // then
         assertThat(response.roomId()).isNotNull();
         assertThat(response.roomId()).isEqualTo(chatRoom.getId());
+        assertThat(response.isTempSave()).isFalse();
+        assertThat(response.isFirstChatOfDay()).isTrue();
         assertThat(chatRoom.getUser().getId()).isEqualTo(userId);
         assertThat(chatRoom.isEnded()).isFalse();
+    }
+
+    @Test
+    void 감정_대화_임시저장_채팅방이_존재하면_임시저장_채팅방을_반환한다() {
+        // given
+        User user = newUser();
+        Long userId = user.getId();
+        ChatRoom chatRoom = tempSaveChatRoom(user);
+
+        // when
+        ChatRoomCreateResponse response = chatService.createChatRoom(userId);
+
+        // then
+        assertThat(response.roomId()).isNotNull();
+        assertThat(response.roomId()).isEqualTo(chatRoom.getId());
+        assertThat(response.isTempSave()).isTrue();
+        assertThat(response.isFirstChatOfDay()).isTrue();
+        assertThat(chatRoom.getUser().getId()).isEqualTo(userId);
+        assertThat(chatRoom.isEnded()).isFalse();
+    }
+
+    @Test
+    void 당일_대화한_채팅방이_존재하면_당일_첫_대화여부를_false로_반환한다() {
+        // given
+        User user = newUser();
+        Long userId = user.getId();
+        ChatRoom chatRoom = finishedChatRoom(user);
+
+        // when
+        ChatRoomCreateResponse response = chatService.createChatRoom(userId);
+
+        // then
+        assertThat(response.roomId()).isNotNull();
+        assertThat(response.isTempSave()).isFalse();
+        assertThat(response.isFirstChatOfDay()).isFalse();
     }
 
     @Test

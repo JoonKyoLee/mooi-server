@@ -37,7 +37,7 @@ public class HomeControllerTest {
     @Test
     void 감정_대화_시작_시에_채팅방_ID를_반환한다() throws Exception {
         // given
-        given(chatService.createChatRoom(anyLong())).willReturn(new ChatRoomCreateResponse(1L));
+        given(chatService.createChatRoom(anyLong())).willReturn(new ChatRoomCreateResponse(1L, false, false));
 
         // when & then
         mockMvc.perform(post("/api/v1/home/emotion-conversation"))

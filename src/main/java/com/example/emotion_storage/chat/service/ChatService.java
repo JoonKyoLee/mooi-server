@@ -15,8 +15,10 @@ import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -60,18 +62,23 @@ public class ChatService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
+        log.info("채팅방을 생성하거나 기존 채팅방이 존재하는지 확인합니다.");
         ChatRoom chatRoom = findOrCreateActiveChatRoom(user);
 
-        log.info("사용자 {}가 감정대화를 진행할 채팅방 id {}를 반환합니다.", userId, chatRoom.getId());
-        return new ChatRoomCreateResponse(chatRoom.getId());
+        log.info("채팅방 {}가 당일의 첫 채팅방인지 확인합니다.", chatRoom.getId());
+        boolean isFirstChatOfDay = isFirstChatRoomOfDay(chatRoom);
+
+        log.info("사용자 {}가 감정대화를 진행할 채팅방 id {}, 임시 저장 여부 {}, 당일 첫 채팅방 여부 {}를 반환합니다.",
+                userId, chatRoom.getId(), chatRoom.getIsTempSave(), isFirstChatOfDay);
+        return new ChatRoomCreateResponse(chatRoom.getId(), chatRoom.getIsTempSave(), isFirstChatOfDay);
     }
 
     private ChatRoom findOrCreateActiveChatRoom(User user) {
         ChatRoom latest = chatRoomRepository.findTopByUser_IdOrderByCreatedAtDesc(user.getId())
                 .orElse(null);
 
-        if (latest != null && !latest.isEnded() && latest.getFirstChatTime() == null) {
-            log.info("기존에 생성되었지만 채팅이 진행되지 않은 사용자 {}의 채팅방을 반환합니다.", user.getId());
+        if (latest != null && !latest.isEnded()) {
+            log.info("기존에 생성되었지만 채팅이 진행되지 않았거나 임시 저장된 채팅방을 반환합니다.");
             return latest;
         }
 
@@ -83,6 +90,26 @@ public class ChatService {
         );
         log.info("사용자 {}가 감정대화를 진행할 수 있는 채팅방을 반환합니다.", user.getId());
         return newRoom;
+    }
+
+    private boolean isFirstChatRoomOfDay(ChatRoom currentRoom) {
+        log.info("현재 채팅방 {}의 바로 직전 채팅방을 조회합니다.", currentRoom.getId());
+        ChatRoom prevRoom = chatRoomRepository.findPrevRoom(
+                currentRoom.getUser().getId(), currentRoom.getCreatedAt(), currentRoom.getId()
+        ).orElse(null);
+
+        if (prevRoom == null) {
+            log.info("이전 채팅방이 존재하지 않기 때문에 첫 대화방으로 판단합니다.");
+            return true;
+        }
+
+        log.info("이전 채팅방의 생성 시각 및 첫 채팅 시각을 판단합니다.");
+        LocalDate today = LocalDate.now();
+        boolean prevCreatedToday = prevRoom.getCreatedAt().toLocalDate().isEqual(today);
+        boolean prevFirstChattedToday =
+                prevRoom.getFirstChatTime() != null && prevRoom.getFirstChatTime().toLocalDate().isEqual(today);
+
+        return !(prevCreatedToday || prevFirstChattedToday);
     }
 
     @Transactional

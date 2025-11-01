@@ -86,6 +86,7 @@ public class ChatService {
                 ChatRoom.builder()
                         .user(user)
                         .isEnded(false)
+                        .isTempSave(false)
                         .build()
         );
         log.info("사용자 {}가 감정대화를 진행할 수 있는 채팅방을 반환합니다.", user.getId());

@@ -66,12 +66,13 @@ public class ChatRoom extends BaseTimeEntity {
         chat.setChatRoom(null);
     }
 
-    public void saveTemporarily() {
+    public void tempSave() {
         this.isTempSave = true;
     }
 
     public void closeChatRoom() {
         this.isEnded = true;
+        this.isTempSave = false;
     }
 
     public void setFirstChatTime(LocalDateTime firstChatTime) {

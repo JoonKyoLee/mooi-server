@@ -2,8 +2,10 @@ package com.example.emotion_storage.chat.controller;
 
 import com.example.emotion_storage.chat.dto.request.ChatRequest;
 import com.example.emotion_storage.chat.dto.response.AiChatResponse;
+import com.example.emotion_storage.chat.dto.response.ChatRoomTempSaveResponse;
 import com.example.emotion_storage.chat.service.ChatService;
 import com.example.emotion_storage.global.api.ApiResponse;
+import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,5 +48,19 @@ public class ChatController {
         
         ApiResponse<AiChatResponse> response = chatService.sendUserMessage(request, userId);
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{roomId}/temp-save")
+    @Operation(summary = "채팅방 임시 저장", description = "채팅방을 임시 저장합니다.")
+    public ResponseEntity<ApiResponse<ChatRoomTempSaveResponse>> tempSaveChatRoom(
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}가 채팅방 {}을 임시저장 요청했습니다.", userId, roomId);
+        ChatRoomTempSaveResponse response = chatService.tempSave(userId, roomId);
+        return ResponseEntity.ok(
+                ApiResponse.success(SuccessMessage.CHAT_ROOM_TEMP_SAVE_SUCCESS.getMessage(), response)
+        );
     }
 }

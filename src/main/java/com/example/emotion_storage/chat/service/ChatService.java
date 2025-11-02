@@ -7,6 +7,7 @@ import com.example.emotion_storage.chat.dto.ChatPromptMessages;
 import com.example.emotion_storage.chat.dto.UserMessageDto;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCloseResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCreateResponse;
+import com.example.emotion_storage.chat.dto.response.ChatRoomTempSaveResponse;
 import com.example.emotion_storage.chat.repository.ChatRepository;
 import com.example.emotion_storage.chat.repository.ChatRoomRepository;
 import com.example.emotion_storage.global.api.ApiResponse;
@@ -111,6 +112,21 @@ public class ChatService {
                 prevRoom.getFirstChatTime() != null && prevRoom.getFirstChatTime().toLocalDate().isEqual(today);
 
         return !(prevCreatedToday || prevFirstChattedToday);
+    }
+
+    @Transactional
+    public ChatRoomTempSaveResponse tempSave(Long userId, Long roomId) {
+        ChatRoom chatRoom = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        if (!chatRoom.getUser().getId().equals(userId)) {
+            throw new BaseException(ErrorCode.CHAT_ROOM_ACCESS_DENIED);
+        }
+
+        log.info("채팅방 {}에서 채팅방 임시 저장을 요청했습니다.", roomId);
+        chatRoom.tempSave();
+
+        return new ChatRoomTempSaveResponse(roomId);
     }
 
     @Transactional

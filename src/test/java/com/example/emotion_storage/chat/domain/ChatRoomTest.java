@@ -35,6 +35,19 @@ public class ChatRoomTest {
 
         // then
         assertThat(chatRoom.isEnded()).isTrue();
+        assertThat(chatRoom.getIsTempSave()).isFalse();
+    }
+
+    @Test
+    void 채팅방_임시저장에_성공한다() {
+        // given
+        ChatRoom chatRoom = newChatRoom();
+
+        // when
+        chatRoom.tempSave();
+
+        // then
+        assertThat(chatRoom.getIsTempSave()).isTrue();
     }
 
     @Test

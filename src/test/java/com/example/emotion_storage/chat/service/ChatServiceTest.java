@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.example.emotion_storage.chat.domain.ChatRoom;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCloseResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCreateResponse;
+import com.example.emotion_storage.chat.dto.response.ChatRoomTempSaveResponse;
 import com.example.emotion_storage.chat.repository.ChatRoomRepository;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
@@ -161,6 +162,46 @@ public class ChatServiceTest {
         assertThatThrownBy(() -> chatService.createChatRoom(9999L))
                 .isInstanceOf(BaseException.class)
                 .hasMessageContaining(ErrorCode.USER_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void 감정_대화_채팅방_임시저장에_성공한다() {
+        // given
+        User user = newUser();
+        ChatRoom chatRoom = newChatRoom(user);
+
+        // when
+        ChatRoomTempSaveResponse response = chatService.tempSave(user.getId(), chatRoom.getId());
+
+        // then
+        ChatRoom updated = chatRoomRepository.findById(response.chatRoomId())
+                        .orElseThrow();
+
+        assertThat(updated.getIsTempSave()).isTrue();
+        assertThat(updated.getId()).isEqualTo(chatRoom.getId());
+    }
+
+    @Test
+    void 채팅방이_존재하지_않을_때_임시_저장_로직_호출_시에_예외가_발생한다() {
+        // given
+        User user = newUser();
+
+        // when & then
+        assertThatThrownBy(() -> chatService.tempSave(user.getId(), 99999L))
+                .isInstanceOf(BaseException.class)
+                .hasMessageContaining(ErrorCode.CHAT_ROOM_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    void 유저_아이디가_다를_때_임시_저장_호출_시에_예외가_발생한다() {
+        // given
+        User user = newUser();
+        ChatRoom chatRoom = newChatRoom(user);
+
+        // when & then
+        assertThatThrownBy(() -> chatService.tempSave(9988L, chatRoom.getId()))
+                .isInstanceOf(BaseException.class)
+                .hasMessageContaining(ErrorCode.CHAT_ROOM_ACCESS_DENIED.getMessage());
     }
 
     @Test

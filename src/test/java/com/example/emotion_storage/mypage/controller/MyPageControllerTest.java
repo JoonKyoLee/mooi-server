@@ -121,7 +121,7 @@ public class MyPageControllerTest {
     void 사용자_계정_정보_조회에_성공한다() throws Exception {
         // given
         UserAccountInfoResponse response = new UserAccountInfoResponse(
-                "test@example.com", SocialType.GOOGLE, Gender.MALE, LocalDate.of(2000, 1, 1)
+                "MOOI", "test@example.com", SocialType.GOOGLE, Gender.MALE, LocalDate.of(2000, 1, 1), 200
         );
 
         given(myPageService.getUserAccountInfo(anyLong()))
@@ -132,10 +132,12 @@ public class MyPageControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value(SuccessMessage.GET_USER_ACCOUNT_INFO_SUCCESS.getMessage()))
+                .andExpect(jsonPath("$.data.nickname").value("MOOI"))
                 .andExpect(jsonPath("$.data.email").value("test@example.com"))
                 .andExpect(jsonPath("$.data.socialType").value("GOOGLE"))
                 .andExpect(jsonPath("$.data.gender").value("MALE"))
-                .andExpect(jsonPath("$.data.birthday").value("2000-01-01"));
+                .andExpect(jsonPath("$.data.birthday").value("2000-01-01"))
+                .andExpect(jsonPath("$.data.days").value(200));
     }
 
     @Test

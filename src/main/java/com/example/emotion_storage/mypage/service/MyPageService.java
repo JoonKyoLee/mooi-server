@@ -36,11 +36,7 @@ public class MyPageService {
         User user = findUserById(userId);
 
         log.info("사용자 {}의 닉네임, 가입 일수, 열쇠 개수를 조회합니다.", userId);
-
-        LocalDate signupDate = user.getCreatedAt().toLocalDate();
-        LocalDate today = LocalDate.now();
-        long totalDays = ChronoUnit.DAYS.between(signupDate, today) + 1; // 가입한 순간부터 1일로 계산
-
+        long totalDays = calculateSignUpDuration(user);
         return new MyPageOverviewResponse(user.getNickname(), totalDays, user.getKeyCount());
     }
 
@@ -66,9 +62,16 @@ public class MyPageService {
         User user = findUserById(userId);
 
         log.info("사용자 {}의 계정 정보를 조회합니다.", userId);
+        long days = calculateSignUpDuration(user);
         return new UserAccountInfoResponse(
-                user.getNickname(), user.getEmail(), user.getSocialType(), user.getGender(), user.getBirthday()
+                user.getNickname(), user.getEmail(), user.getSocialType(), user.getGender(), user.getBirthday(), days
         );
+    }
+
+    private long calculateSignUpDuration(User user) {
+        LocalDate signupDate = user.getCreatedAt().toLocalDate();
+        LocalDate today = LocalDate.now();
+        return ChronoUnit.DAYS.between(signupDate, today) + 1; // 가입한 순간부터 1일로 계산
     }
 
     @Transactional(readOnly = true)

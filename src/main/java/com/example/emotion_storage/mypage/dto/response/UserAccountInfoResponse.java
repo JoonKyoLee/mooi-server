@@ -9,5 +9,6 @@ public record UserAccountInfoResponse(
         String email,
         SocialType socialType,
         Gender gender,
-        LocalDate birthday
+        LocalDate birthday,
+        long days
 ) {}

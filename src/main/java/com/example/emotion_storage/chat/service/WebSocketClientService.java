@@ -69,7 +69,11 @@ public class WebSocketClientService {
         currentSessionId = sessionId;
     }
 
-    private void sendMessageToSession(WebSocketSession session, AiMessageDto message) throws Exception {
+    private synchronized void sendMessageToSession(WebSocketSession session, AiMessageDto message) throws Exception {
+        if (session == null || !session.isOpen()) {
+            throw new IllegalStateException("WebSocket 세션이 열려있지 않습니다.");
+        }
+        
         String messageJson = objectMapper.writeValueAsString(message);
         session.sendMessage(new TextMessage(messageJson));
         log.info("메시지를 AI 서버로 전송했습니다: {}", messageJson);

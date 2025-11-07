@@ -57,6 +57,7 @@ public class ChatMessageStoreTest {
         ChatRoom chatRoom = ChatRoom.builder()
                 .user(user)
                 .isEnded(false)
+                .isTempSave(false)
                 .build();
         user.addChatRoom(chatRoom);
         return chatRoomRepository.save(chatRoom);

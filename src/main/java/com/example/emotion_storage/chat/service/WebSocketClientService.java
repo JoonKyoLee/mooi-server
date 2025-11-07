@@ -23,7 +23,7 @@ public class WebSocketClientService {
 
     // 상수 정의
     private static final int REQUEST_TIMEOUT_SECONDS = 30;
-    private static final int GAUGE_WAIT_MILLISECONDS = 3000;
+    private static final long GAUGE_WAIT_MILLISECONDS = TimeUnit.SECONDS.toMillis(REQUEST_TIMEOUT_SECONDS);
     private static final String MESSAGE_TYPE_CHAT_DELTA = "chat.delta";
     private static final String MESSAGE_TYPE_CHAT_END = "chat.end";
     private static final String MESSAGE_TYPE_CHAT_COMPLETED = "chat.complete";
@@ -36,6 +36,7 @@ public class WebSocketClientService {
     private final ConcurrentHashMap<String, StringBuilder> responseBuilders = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, GaugeDto> gaugeResults = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Boolean> chatEndReceived = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Boolean> gaugeWaitExpired = new ConcurrentHashMap<>();
     private volatile WebSocketSession currentSession;
     private volatile String currentSessionId;
 
@@ -66,6 +67,7 @@ public class WebSocketClientService {
     private void registerRequest(String sessionId, CompletableFuture<AiResponseDto> future) {
         pendingRequests.put(sessionId, future);
         responseBuilders.put(sessionId, new StringBuilder());
+        gaugeWaitExpired.put(sessionId, false);
         currentSessionId = sessionId;
     }
 
@@ -92,6 +94,7 @@ public class WebSocketClientService {
         responseBuilders.remove(sessionId);
         gaugeResults.remove(sessionId);
         chatEndReceived.remove(sessionId);
+        gaugeWaitExpired.remove(sessionId);
     }
 
     private void cleanupAllRequests(Throwable exception) {
@@ -100,6 +103,7 @@ public class WebSocketClientService {
         responseBuilders.clear();
         gaugeResults.clear();
         chatEndReceived.clear();
+        gaugeWaitExpired.clear();
     }
 
     private WebSocketSession getOrCreateSession() {
@@ -212,40 +216,73 @@ public class WebSocketClientService {
         if (sessionId != null) {
             final String finalSessionId = sessionId;
             chatEndReceived.put(finalSessionId, true);
-            
-            CompletableFuture.delayedExecutor(GAUGE_WAIT_MILLISECONDS, TimeUnit.MILLISECONDS)
-                    .execute(() -> completeResponse(finalSessionId));
-            
+
+            scheduleGaugeFallback(finalSessionId);
+            tryCompleteResponse(finalSessionId);
+
             log.debug("[세션:{}] chat.end 수신, gauge 대기 중...", finalSessionId);
         } else {
             log.warn("chat.end 메시지에서 세션 ID를 찾을 수 없습니다");
         }
     }
     
-    private synchronized void completeResponse(String sessionId) {
-        CompletableFuture<AiResponseDto> future = pendingRequests.remove(sessionId);
-        if (future == null) {
-            log.debug("[세션:{}] 이미 완료된 응답입니다", sessionId);
+    private void scheduleGaugeFallback(String sessionId) {
+        CompletableFuture.delayedExecutor(GAUGE_WAIT_MILLISECONDS, TimeUnit.MILLISECONDS)
+                .execute(() -> handleGaugeFallback(sessionId));
+    }
+
+    private void handleGaugeFallback(String sessionId) {
+        if (!pendingRequests.containsKey(sessionId)) {
             return;
         }
-        
-        StringBuilder builder = responseBuilders.remove(sessionId);
-        GaugeDto gauge = gaugeResults.remove(sessionId);
-        chatEndReceived.remove(sessionId);
-        
-        if (builder != null) {
-            String fullResponse = builder.toString();
-            
-            AiResponseDto finalResponse = AiResponseDto.builder()
-                    .type(MESSAGE_TYPE_CHAT_COMPLETED)
-                    .sessionId(sessionId)
-                    .fullResponse(fullResponse)
-                    .gauge(gauge)  // gauge 정보 포함
-                    .build();
-            
-            future.complete(finalResponse);
-            log.info("[세션:{}] AI 응답 완료, gauge 포함: {}", sessionId, gauge != null);
+        gaugeWaitExpired.put(sessionId, true);
+        log.debug("[세션:{}] gauge 결과 대기 시간이 만료되었습니다", sessionId);
+        tryCompleteResponse(sessionId);
+    }
+
+    private synchronized void tryCompleteResponse(String sessionId) {
+        CompletableFuture<AiResponseDto> future = pendingRequests.get(sessionId);
+        if (future == null) {
+            return;
         }
+
+        if (!Boolean.TRUE.equals(chatEndReceived.get(sessionId))) {
+            return;
+        }
+
+        GaugeDto gauge = gaugeResults.get(sessionId);
+        boolean waitExpired = Boolean.TRUE.equals(gaugeWaitExpired.get(sessionId));
+
+        if (gauge == null && !waitExpired) {
+            log.debug("[세션:{}] gauge 결과를 아직 기다리는 중입니다", sessionId);
+            return;
+        }
+
+        StringBuilder builder = responseBuilders.remove(sessionId);
+        String fullResponse = builder != null ? builder.toString() : "";
+
+        pendingRequests.remove(sessionId);
+        gaugeResults.remove(sessionId);
+        chatEndReceived.remove(sessionId);
+        gaugeWaitExpired.remove(sessionId);
+
+        if (builder == null) {
+            log.warn("[세션:{}] 응답 본문이 존재하지 않아 빈 문자열로 처리합니다", sessionId);
+        }
+
+        if (gauge == null) {
+            log.warn("[세션:{}] gauge 결과 없이 응답을 완료합니다", sessionId);
+        }
+
+        AiResponseDto finalResponse = AiResponseDto.builder()
+                .type(MESSAGE_TYPE_CHAT_COMPLETED)
+                .sessionId(sessionId)
+                .fullResponse(fullResponse)
+                .gauge(gauge)
+                .build();
+
+        future.complete(finalResponse);
+        log.info("[세션:{}] AI 응답 완료, gauge 포함: {}", sessionId, gauge != null);
     }
 
     private void handleErrorMessage(AiResponseDto response) {
@@ -259,6 +296,7 @@ public class WebSocketClientService {
             responseBuilders.remove(sessionId);
             gaugeResults.remove(sessionId);
             chatEndReceived.remove(sessionId);
+            gaugeWaitExpired.remove(sessionId);
             
             if (future != null) {
                 future.completeExceptionally(new RuntimeException("AI 서버 오류: " + response.getMessage()));
@@ -291,8 +329,8 @@ public class WebSocketClientService {
                     gauge.getSummary());
             
             if (chatEndReceived.containsKey(sessionId)) {
-                log.debug("[세션:{}] chat.end를 이미 받았으므로 즉시 응답 완료", sessionId);
-                completeResponse(sessionId);
+                log.debug("[세션:{}] chat.end를 이미 받았으므로 즉시 응답 완료 시도", sessionId);
+                tryCompleteResponse(sessionId);
             }
         } else {
             if (sessionId == null) {

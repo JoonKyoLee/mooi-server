@@ -46,7 +46,7 @@ public class ChatRoom extends BaseTimeEntity {
     private LocalDateTime firstChatTime;
 
     @Column(nullable = false)
-    private Boolean isTempSave;
+    private boolean isTempSave;
 
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

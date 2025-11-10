@@ -35,7 +35,7 @@ public class ChatRoomTest {
 
         // then
         assertThat(chatRoom.isEnded()).isTrue();
-        assertThat(chatRoom.getIsTempSave()).isFalse();
+        assertThat(chatRoom.isTempSave()).isFalse();
     }
 
     @Test
@@ -47,7 +47,7 @@ public class ChatRoomTest {
         chatRoom.tempSave();
 
         // then
-        assertThat(chatRoom.getIsTempSave()).isTrue();
+        assertThat(chatRoom.isTempSave()).isTrue();
     }
 
     @Test

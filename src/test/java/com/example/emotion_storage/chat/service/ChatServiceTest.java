@@ -177,7 +177,7 @@ public class ChatServiceTest {
         ChatRoom updated = chatRoomRepository.findById(response.chatRoomId())
                         .orElseThrow();
 
-        assertThat(updated.getIsTempSave()).isTrue();
+        assertThat(updated.isTempSave()).isTrue();
         assertThat(updated.getId()).isEqualTo(chatRoom.getId());
     }
 

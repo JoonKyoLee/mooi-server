@@ -1,6 +1,5 @@
 package com.example.emotion_storage.chat.service;
 
-import com.example.emotion_storage.chat.domain.Chat;
 import com.example.emotion_storage.chat.domain.ChatRoom;
 import com.example.emotion_storage.chat.domain.SenderType;
 import com.example.emotion_storage.chat.dto.ChatPromptMessages;
@@ -8,7 +7,6 @@ import com.example.emotion_storage.chat.dto.UserMessageDto;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCloseResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCreateResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomTempSaveResponse;
-import com.example.emotion_storage.chat.repository.ChatRepository;
 import com.example.emotion_storage.chat.repository.ChatRoomRepository;
 import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
@@ -19,7 +17,6 @@ import com.example.emotion_storage.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -70,8 +67,8 @@ public class ChatService {
         boolean isFirstChatOfDay = isFirstChatRoomOfDay(chatRoom);
 
         log.info("사용자 {}가 감정대화를 진행할 채팅방 id {}, 임시 저장 여부 {}, 당일 첫 채팅방 여부 {}를 반환합니다.",
-                userId, chatRoom.getId(), chatRoom.getIsTempSave(), isFirstChatOfDay);
-        return new ChatRoomCreateResponse(chatRoom.getId(), chatRoom.getIsTempSave(), isFirstChatOfDay);
+                userId, chatRoom.getId(), chatRoom.isTempSave(), isFirstChatOfDay);
+        return new ChatRoomCreateResponse(chatRoom.getId(), chatRoom.isTempSave(), isFirstChatOfDay);
     }
 
     private ChatRoom findOrCreateActiveChatRoom(User user) {

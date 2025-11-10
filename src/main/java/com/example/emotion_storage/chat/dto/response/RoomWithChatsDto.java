@@ -6,5 +6,6 @@ import java.util.List;
 public record RoomWithChatsDto(
         Long chatRoomId,
         LocalDateTime firstChatTime,
+        int totalChatCount,
         List<ChatDto> chats
 ) {}

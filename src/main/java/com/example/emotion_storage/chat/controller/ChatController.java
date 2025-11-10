@@ -3,6 +3,8 @@ package com.example.emotion_storage.chat.controller;
 import com.example.emotion_storage.chat.dto.request.ChatRequest;
 import com.example.emotion_storage.chat.dto.response.AiChatResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomTempSaveResponse;
+import com.example.emotion_storage.chat.dto.response.RoomWithChatsDto;
+import com.example.emotion_storage.chat.dto.response.SingleRoomSliceResponse;
 import com.example.emotion_storage.chat.service.ChatService;
 import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
@@ -61,6 +63,19 @@ public class ChatController {
         ChatRoomTempSaveResponse response = chatService.tempSave(userId, roomId);
         return ResponseEntity.ok(
                 ApiResponse.success(SuccessMessage.CHAT_ROOM_TEMP_SAVE_SUCCESS.getMessage(), response)
+        );
+    }
+
+    @GetMapping("/rooms")
+    @Operation(summary = "하나의 채팅방의 모든 메시지 조회", description = "cursor가 없으면 최신 방부터, 있으면 해당 ID보다 이전 방을 반환합니다.")
+    public ResponseEntity<ApiResponse<SingleRoomSliceResponse>> getMessagesInChatRoom(
+            @RequestParam(required = false) Long cursor,
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        SingleRoomSliceResponse response = chatService.getMessagesInChatRoom(userId, cursor);
+        return ResponseEntity.ok(
+                ApiResponse.success(SuccessMessage.CHAT_ROOM_MESSAGE_FETCH_SUCCESS.getMessage(), response)
         );
     }
 }

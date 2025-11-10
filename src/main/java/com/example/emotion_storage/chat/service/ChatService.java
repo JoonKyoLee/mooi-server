@@ -4,9 +4,13 @@ import com.example.emotion_storage.chat.domain.ChatRoom;
 import com.example.emotion_storage.chat.domain.SenderType;
 import com.example.emotion_storage.chat.dto.ChatPromptMessages;
 import com.example.emotion_storage.chat.dto.UserMessageDto;
+import com.example.emotion_storage.chat.dto.response.ChatDto;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCloseResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomCreateResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomTempSaveResponse;
+import com.example.emotion_storage.chat.dto.response.RoomWithChatsDto;
+import com.example.emotion_storage.chat.dto.response.SingleRoomSliceResponse;
+import com.example.emotion_storage.chat.repository.ChatRepository;
 import com.example.emotion_storage.chat.repository.ChatRoomRepository;
 import com.example.emotion_storage.global.api.ApiResponse;
 import com.example.emotion_storage.global.api.SuccessMessage;
@@ -17,8 +21,10 @@ import com.example.emotion_storage.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +58,7 @@ public class ChatService {
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final ChatRepository chatRepository;
     private final WebSocketClientService webSocketClientService;
     private final ChatMessageStore chatMessageStore;
 
@@ -297,5 +304,42 @@ public class ChatService {
             log.error("사용자 메시지 처리 중 오류 발생", e);
             throw new RuntimeException(ERROR_MESSAGE_PROCESSING, e);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public SingleRoomSliceResponse getMessagesInChatRoom(Long userId, Long cursorId) {
+        final int size = 1; // 한 개의 방만 반환
+
+        log.info("사용자 {}가 커서 아이디 {}를 통해 채팅방 조회를 요청했습니다.", userId, cursorId);
+        List<ChatRoom> fetched = chatRoomRepository.fetchRoomsSlice(
+                userId, cursorId, PageRequest.of(0, size + 1)
+        );
+
+        log.info("조회된 채팅방 개수를 바탕으로 hasNext를 판단합니다.");
+        boolean hasNext = fetched.size() > size;
+        if (hasNext) {
+            fetched = fetched.subList(0, size);
+        }
+        if (fetched.isEmpty()) {
+            log.info("조회 가능한 채팅방이 존재하지 않기 때문에 빈 응답을 반환합니다.");
+            return new SingleRoomSliceResponse(null, null, false);
+        }
+
+        ChatRoom chatRoom = fetched.get(0);
+        log.info("채팅방 {}가 조회되었습니다.", chatRoom.getId());
+
+        List<ChatDto> chats = chatRepository.findAllByRoomIdOrderByTimeAsc(chatRoom.getId())
+                .stream()
+                .map(ChatDto::from)
+                .toList();
+
+        RoomWithChatsDto roomWithChats = new RoomWithChatsDto(
+                chatRoom.getId(), chatRoom.getFirstChatTime(), chats.size(), chats
+        );
+
+        Long nextCursor = hasNext ? chatRoom.getId() : null;
+
+        log.info("채팅방 {}의 모든 채팅을 포함한 응답을 반환합니다.", chatRoom.getId());
+        return new SingleRoomSliceResponse(roomWithChats, nextCursor, hasNext);
     }
 }

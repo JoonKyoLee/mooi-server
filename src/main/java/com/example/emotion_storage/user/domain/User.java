@@ -167,7 +167,7 @@ public class User extends BaseTimeEntity {
     }
 
     public void useTicket() {
-        if (this.ticketCount < 0) {
+        if (this.ticketCount <= 0) {
             throw new BaseException(ErrorCode.TICKET_NOT_ENOUGH);
         }
         this.ticketCount -= 1;

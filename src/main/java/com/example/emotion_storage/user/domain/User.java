@@ -111,6 +111,11 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean marketingInfoNotify;
 
+    @Column(nullable = false)
+    private int attendanceStreak;
+
+    private LocalDateTime lastAttendanceRewardDate;
+
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)

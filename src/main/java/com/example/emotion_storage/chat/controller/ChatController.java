@@ -72,6 +72,7 @@ public class ChatController {
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal
     ) {
         Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}가 채팅방 메시지 조회를 요청했습니다.", userId);
         SingleRoomSliceResponse response = chatService.getMessagesInChatRoom(userId, cursor);
         return ResponseEntity.ok(
                 ApiResponse.success(SuccessMessage.CHAT_ROOM_MESSAGE_FETCH_SUCCESS.getMessage(), response)

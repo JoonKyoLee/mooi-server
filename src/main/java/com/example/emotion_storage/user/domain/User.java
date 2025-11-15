@@ -114,7 +114,7 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false)
     private int attendanceStreak;
 
-    private LocalDateTime lastAttendanceRewardDate;
+    private LocalDate lastAttendanceRewardDate;
 
     private LocalDateTime deletedAt;
 

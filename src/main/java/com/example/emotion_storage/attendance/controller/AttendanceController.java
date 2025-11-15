@@ -33,7 +33,7 @@ public class AttendanceController {
         log.info("사용자 {}가 출석 보상 현황 조회를 요청했습니다.", userId);
         AttendanceStreakStatusResponse response = attendanceService.getAttendanceRewardStatus(userId);
         return ResponseEntity.ok(
-                ApiResponse.success(SuccessMessage., response)
+                ApiResponse.success(SuccessMessage.GET_ATTENDANCE_STATUS_SUCCESS.getMessage(), response)
         );
     }
 }

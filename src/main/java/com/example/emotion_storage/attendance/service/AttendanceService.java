@@ -28,7 +28,7 @@ public class AttendanceService {
 
         if (lastAttendanceRewardDate == null) {
             log.info("사용자 {}가 출석 보상을 한번도 받지 않았습니다.", userId);
-            return new AttendanceStreakStatusResponse(1, false);
+            return new AttendanceStreakStatusResponse(0, false);
         }
 
         if (lastAttendanceRewardDate.isEqual(now)) {
@@ -38,10 +38,10 @@ public class AttendanceService {
 
         if (lastAttendanceRewardDate.isEqual(now.minusDays(1))) {
             log.info("사용자 {}가 어제 출석 보상을 받아 오늘 연속 보상을 받습니다.", userId);
-            return new AttendanceStreakStatusResponse(attendanceStreak % 7 + 1, false);
+            return new AttendanceStreakStatusResponse(attendanceStreak, false);
         }
 
         log.info("사용자 {}가 연속 출석을 하지 않았습니다.", userId);
-        return new AttendanceStreakStatusResponse(1, false);
+        return new AttendanceStreakStatusResponse(0, false);
     }
 }

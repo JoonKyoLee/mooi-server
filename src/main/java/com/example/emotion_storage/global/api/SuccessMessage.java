@@ -54,6 +54,9 @@ public enum SuccessMessage {
     LOGOUT_USER_SUCCESS("회원 로그아웃 처리 성공"),
     SENTIMENT_ANALYSIS_SUCCESS("감정 분석 성공"),
     GET_USER_KEY_COUNT_SUCCESS("회원 열쇠 개수 조회 성공"),
+
+    // Attendance
+    GET_ATTENDANCE_STATUS_SUCCESS("출석 보상 현황 조회 성공"),
     ;
 
     private final String message;

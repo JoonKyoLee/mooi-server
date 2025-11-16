@@ -101,7 +101,7 @@ public class ChatService {
     private boolean isFirstChatRoomOfDay(ChatRoom currentRoom) {
         log.info("현재 채팅방 {}의 바로 직전 채팅방을 조회합니다.", currentRoom.getId());
         ChatRoom prevRoom = chatRoomRepository.findPrevRoom(
-                currentRoom.getUser().getId(), currentRoom.getCreatedAt(), currentRoom.getId()
+                currentRoom.getUser().getId(), currentRoom.getCreatedAt(), currentRoom.getId(), PageRequest.of(0, 1)
         ).orElse(null);
 
         if (prevRoom == null) {

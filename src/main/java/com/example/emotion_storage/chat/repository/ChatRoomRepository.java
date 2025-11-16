@@ -21,7 +21,9 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
             "AND (cr.createdAt < :createdAt or (cr.createdAt = :createdAt AND cr.id < :currentChatRoomId)) " +
             "ORDER BY cr.createdAt DESC, cr.id DESC"
     )
-    Optional<ChatRoom> findPrevRoom(Long userId, LocalDateTime createdAt, Long currentChatRoomId);
+    Optional<ChatRoom> findPrevRoom(
+            @Param("userId") Long userId, @Param("createdAt") LocalDateTime createdAt,
+            @Param("currentChatRoomId") Long currentChatRoomId, Pageable pageable);
 
     @Query(
             "SELECT cr FROM ChatRoom cr " +

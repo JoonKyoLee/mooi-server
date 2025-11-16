@@ -224,4 +224,15 @@ public class User extends BaseTimeEntity {
     public boolean isGoogleType() {
         return socialType.equals(SocialType.GOOGLE);
     }
+
+    public void updateAttendanceStatus(int attendanceStreak, LocalDate lastAttendanceRewardDate) {
+        this.attendanceStreak = attendanceStreak;
+        this.lastAttendanceRewardDate = lastAttendanceRewardDate;
+
+        if (this.attendanceStreak < 7) {
+            this.keyCount += 1;
+            return;
+        }
+        this.keyCount += 3;
+    }
 }

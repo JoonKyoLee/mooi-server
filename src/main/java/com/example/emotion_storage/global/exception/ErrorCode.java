@@ -36,13 +36,14 @@ public enum ErrorCode {
     TIME_CAPSULE_OPEN_DATE_BEFORE_STORED_AT(HttpStatus.BAD_REQUEST, "오픈일은 보관일 이전일 수 없습니다."),
     TIME_CAPSULE_OPEN_DATE_AFTER_LIMIT(HttpStatus.BAD_REQUEST, "오픈일은 보관일로부터 1년을 초과할 수 없습니다."),
 
-
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "리포트를 찾을 수 없습니다."),
     DAILY_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "일일리포트 조회 실패 - 존재하지 않음"),
     INVALID_DATE_FORMAT(HttpStatus.BAD_REQUEST, "잘못된 날짜 형식입니다."),
 
     EMOTION_REMINDER_DAYS_REQUIRED(HttpStatus.BAD_REQUEST, "감정 기록 알림 요일이 필요합니다."),
     EMOTION_REMINDER_TIME_REQUIRED(HttpStatus.BAD_REQUEST, "감정 기록 알림 시간이 필요합니다."),
+
+    ALREADY_GET_ATTENDANCE_REWARD(HttpStatus.BAD_REQUEST, "오늘 출석 보상을 이미 받았습니다."),
     ;
 
     private final HttpStatus httpStatus;

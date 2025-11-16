@@ -100,14 +100,17 @@ public class ChatService {
 
     private boolean isFirstChatRoomOfDay(ChatRoom currentRoom) {
         log.info("현재 채팅방 {}의 바로 직전 채팅방을 조회합니다.", currentRoom.getId());
-        ChatRoom prevRoom = chatRoomRepository.findPrevRoom(
-                currentRoom.getUser().getId(), currentRoom.getCreatedAt(), currentRoom.getId(), PageRequest.of(0, 1)
-        ).orElse(null);
 
-        if (prevRoom == null) {
+        List<ChatRoom> prevRooms = chatRoomRepository.findPrevRoom(
+                currentRoom.getUser().getId(), currentRoom.getCreatedAt(), currentRoom.getId(), PageRequest.of(0, 1)
+        );
+
+        if (prevRooms.isEmpty()) {
             log.info("이전 채팅방이 존재하지 않기 때문에 첫 대화방으로 판단합니다.");
             return true;
         }
+
+        ChatRoom prevRoom = prevRooms.get(0);
 
         log.info("이전 채팅방의 생성 시각 및 첫 채팅 시각을 판단합니다.");
         LocalDate today = LocalDate.now();

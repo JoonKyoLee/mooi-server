@@ -8,3 +8,7 @@ spring:
       pool:
         size: 5
       thread-name-prefix: "scheduled-task-"
+
+rest-template:
+  connect-timeout: 5000
+  read-timeout: 120000

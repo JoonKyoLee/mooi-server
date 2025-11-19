@@ -162,6 +162,36 @@ public class ChatService {
                 roomId, response.getSender(), response.getMessageType());
     }
 
+    public void sendStreamingDelta(Long roomId, String sessionId, String deltaText) {
+        ChatMessageResponse response = ChatMessageResponse.builder()
+                .content(deltaText)
+                .sender(SenderType.MOOI)
+                .roomId(roomId)
+                .sessionId(sessionId)
+                .timestamp(LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .messageType("chat.delta")
+                .build();
+
+        messagingTemplate.convertAndSend(WEBSOCKET_DESTINATION_PREFIX + roomId, response);
+        log.debug("[채팅방:{}] 스트리밍 delta 전송: deltaText={} (길이: {})", 
+                roomId, deltaText, deltaText.length());
+    }
+
+    public Long extractRoomIdFromSessionId(String sessionId) {
+        if (sessionId == null || !sessionId.startsWith("session-")) {
+            return null;
+        }
+        try {
+            String[] parts = sessionId.split("-");
+            if (parts.length >= 3) {
+                return Long.parseLong(parts[2]);
+            }
+        } catch (NumberFormatException e) {
+            log.warn("sessionId에서 roomId 추출 실패: {}", sessionId, e);
+        }
+        return null;
+    }
+
     private String generateSessionId(Long userId, Long roomId) {
         return String.format(SESSION_ID_FORMAT, userId, roomId);
     }

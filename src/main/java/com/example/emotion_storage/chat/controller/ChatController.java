@@ -3,7 +3,6 @@ package com.example.emotion_storage.chat.controller;
 import com.example.emotion_storage.chat.dto.request.ChatRequest;
 import com.example.emotion_storage.chat.dto.response.AiChatResponse;
 import com.example.emotion_storage.chat.dto.response.ChatRoomTempSaveResponse;
-import com.example.emotion_storage.chat.dto.response.RoomWithChatsDto;
 import com.example.emotion_storage.chat.dto.response.SingleRoomSliceResponse;
 import com.example.emotion_storage.chat.service.ChatService;
 import com.example.emotion_storage.global.api.ApiResponse;

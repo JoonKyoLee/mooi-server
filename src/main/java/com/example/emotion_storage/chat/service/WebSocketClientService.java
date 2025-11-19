@@ -5,8 +5,8 @@ import com.example.emotion_storage.chat.dto.AiResponseDto;
 import com.example.emotion_storage.chat.dto.GaugeDto;
 import com.example.emotion_storage.global.config.websocket.WebSocketClientConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.client.WebSocketClient;
@@ -18,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class WebSocketClientService {
 
     // 상수 정의
@@ -30,8 +29,12 @@ public class WebSocketClientService {
     private static final String MESSAGE_TYPE_ERROR = "error";
     private static final String MESSAGE_TYPE_GAUGE_RESULT = "gauge.result";
 
+    // 의존성 주입 필드
     private final WebSocketClientConfig webSocketClientConfig;
     private final ObjectMapper objectMapper;
+    private final ChatService chatService;
+
+    // 인스턴스 필드
     private final ConcurrentHashMap<String, CompletableFuture<AiResponseDto>> pendingRequests = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, StringBuilder> responseBuilders = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, GaugeDto> gaugeResults = new ConcurrentHashMap<>();
@@ -39,6 +42,16 @@ public class WebSocketClientService {
     private final ConcurrentHashMap<String, Boolean> gaugeWaitExpired = new ConcurrentHashMap<>();
     private volatile WebSocketSession currentSession;
     private volatile String currentSessionId;
+
+    public WebSocketClientService(
+            WebSocketClientConfig webSocketClientConfig,
+            ObjectMapper objectMapper,
+            @Lazy ChatService chatService
+    ) {
+        this.webSocketClientConfig = webSocketClientConfig;
+        this.objectMapper = objectMapper;
+        this.chatService = chatService;
+    }
 
     public CompletableFuture<AiResponseDto> sendMessageToAI(AiMessageDto message) {
         CompletableFuture<AiResponseDto> future = new CompletableFuture<>();
@@ -199,8 +212,17 @@ public class WebSocketClientService {
         if (sessionId != null) {
             StringBuilder builder = responseBuilders.get(sessionId);
             if (builder != null && response.getText() != null) {
-                builder.append(response.getText());
-                log.debug("[세션:{}] 텍스트 누적: {}", sessionId, response.getText());
+                String deltaText = response.getText();
+                builder.append(deltaText);
+                
+                log.debug("[세션:{}] 텍스트 delta 수신: {}, 누적 길이: {}", sessionId, deltaText, builder.length());
+                
+                Long roomId = chatService.extractRoomIdFromSessionId(sessionId);
+                if (roomId != null) {
+                    chatService.sendStreamingDelta(roomId, sessionId, deltaText);
+                } else {
+                    log.warn("[세션:{}] roomId를 추출할 수 없어 스트리밍 전송을 건너뜁니다", sessionId);
+                }
             }
         } else {
             log.warn("chat.delta 메시지에서 세션 ID를 찾을 수 없습니다");
@@ -282,7 +304,7 @@ public class WebSocketClientService {
                 .build();
 
         future.complete(finalResponse);
-        log.info("[세션:{}] AI 응답 완료, gauge 포함: {}", sessionId, gauge != null);
+        log.info("[세션:{}] AI 응답 완료", sessionId);
     }
 
     private void handleErrorMessage(AiResponseDto response) {

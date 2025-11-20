@@ -7,11 +7,14 @@ import com.example.emotion_storage.global.api.SuccessMessage;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,6 +37,20 @@ public class AttendanceController {
         AttendanceStreakStatusResponse response = attendanceService.getAttendanceRewardStatus(userId);
         return ResponseEntity.ok(
                 ApiResponse.success(SuccessMessage.GET_ATTENDANCE_STATUS_SUCCESS.getMessage(), response)
+        );
+    }
+
+    @PostMapping("/attend/{rewardDate}")
+    @Operation(summary = "출석 보상 수령", description = "출석 보상을 수령합니다.")
+    public ResponseEntity<ApiResponse<AttendanceStreakStatusResponse>> updateAttendanceRewardStatus(
+            @PathVariable LocalDate rewardDate,
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}가 {}의 출석 보상 수령을 요청했습니다.", userId, rewardDate);
+        AttendanceStreakStatusResponse response = attendanceService.updateAttendanceRewardStatus(userId, rewardDate);
+        return ResponseEntity.ok(
+                ApiResponse.success(SuccessMessage.UPDATE_ATTENDANCE_STATUS_SUCCESS.getMessage(), response)
         );
     }
 }

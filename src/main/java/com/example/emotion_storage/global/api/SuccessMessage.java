@@ -57,6 +57,7 @@ public enum SuccessMessage {
 
     // Attendance
     GET_ATTENDANCE_STATUS_SUCCESS("출석 보상 현황 조회 성공"),
+    UPDATE_ATTENDANCE_STATUS_SUCCESS("출석 보상 수령 성공"),
     ;
 
     private final String message;

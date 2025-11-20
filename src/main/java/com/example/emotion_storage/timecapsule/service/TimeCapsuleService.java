@@ -9,6 +9,7 @@ import com.example.emotion_storage.timecapsule.domain.AnalyzedEmotion;
 import com.example.emotion_storage.timecapsule.domain.AnalyzedFeedback;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsule;
 import com.example.emotion_storage.timecapsule.domain.TimeCapsuleOpenCost;
+import com.example.emotion_storage.timecapsule.dto.EmotionDetailDto;
 import com.example.emotion_storage.timecapsule.dto.request.AiTimeCapsuleCreateRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleCreateRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
@@ -33,8 +34,11 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,6 +62,7 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 public class TimeCapsuleService {
 
+    private static final Pattern TAIL_PERCENT = Pattern.compile("(\\d{1,3})\\s*%\\s*$");
     private static final String SESSION_ID_FORMAT = "session-%d-%d";
     private static final String ARRIVED_STATUS = "arrived";
     private static final String SORT_FAVORITE = "favorite";
@@ -113,9 +118,10 @@ public class TimeCapsuleService {
             AiTimeCapsuleCreateResponse responseBody = response.getBody();
             log.info("AI 서버로부터 생성된 타임캡슐 응답을 받았습니다: {}", objectMapper.writeValueAsString(responseBody));
 
+            TimeCapsule timeCapsule = saveTempTimeCapsule(responseBody, chatRoom, userId);
             chatService.closeChatRoom(userId, chatRoom.getId()); // 타임캡슐 생성 후 채팅방 종료
 
-            return TimeCapsuleCreateResponse.from(chatRoom.getFirstChatTime(), responseBody);
+            return new TimeCapsuleCreateResponse(timeCapsule.getId());
         } catch (HttpClientErrorException e) {
             log.error("AI 서버 클라이언트 오류 (4xx): {}", e.getResponseBodyAsString(), e);
             throw new RuntimeException("AI 서버 요청 오류: " + e.getMessage(), e);
@@ -142,49 +148,70 @@ public class TimeCapsuleService {
         }
     }
 
-    @Transactional
-    public TimeCapsuleSaveResponse saveTimeCapsule(TimeCapsuleSaveRequest request, Long userId) {
-        log.info("사용자 {}의 채팅방 {}에 대한 타임캡슐을 저장합니다.", userId, request.chatroomId());
-
+    private TimeCapsule saveTempTimeCapsule(AiTimeCapsuleCreateResponse response, ChatRoom chatRoom, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
 
-        ChatRoom chatRoom = chatRoomRepository.findById(request.chatroomId())
-                .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
-
-        validateOpenAtRange(chatRoom.getFirstChatTime(), request.openAt());
-
         TimeCapsule timeCapsule = TimeCapsule.builder()
-                .user(user)
                 .chatroomId(chatRoom.getId())
                 .historyDate(chatRoom.getFirstChatTime())
-                .oneLineSummary(request.oneLineSummary())
-                .dialogueSummary(request.dialogueSummary())
+                .oneLineSummary(response.summaryLine())
+                .dialogueSummary(response.summaryBlock())
                 .myMindNote("")
-                .isTempSave(request.isTempSave())
+                .isTempSave(true)
                 .isOpened(false)
                 .isFavorite(false)
-                .openedAt(request.openAt())
                 .build();
 
-        request.emotionKeywords().stream()
+        toEmotionDetails(response.keywords()).stream()
                 .map(emotion -> AnalyzedEmotion.builder()
                         .analyzedEmotion(emotion.label())
                         .percentage(emotion.ratio())
                         .build())
                 .forEach(timeCapsule::addAnalyzedEmotion);
 
-
-        request.aiFeedback().stream()
+        splitFeedback(response.emotionFeedback()).stream()
                 .map(feedback -> AnalyzedFeedback.builder()
                         .analyzedFeedback(feedback)
                         .build())
                 .forEach(timeCapsule::addAnalyzedFeedback);
 
-        timeCapsuleRepository.save(timeCapsule);
-        log.info("타임캡슐 저장에 성공했습니다.");
+        user.addTimeCapsule(timeCapsule);
+        TimeCapsule saved = timeCapsuleRepository.save(timeCapsule);
+        log.info("타임캡슐 임시 저장에 성공했습니다.");
+        return saved;
+    }
 
-        return new TimeCapsuleSaveResponse(timeCapsule.getId());
+    private List<EmotionDetailDto> toEmotionDetails(List<String> keywords) {
+        if (keywords == null || keywords.isEmpty()) return List.of();
+
+        return keywords.stream()
+                .filter(s -> s != null && !s.isBlank())
+                .map(String::trim)
+                .map(line -> {
+                    Matcher matcher = TAIL_PERCENT.matcher(line);
+                    int ratio = 0;
+                    String label = line;
+
+                    if (matcher.find()) {
+                        try {
+                            ratio = Integer.parseInt(matcher.group(1));
+                        } catch (NumberFormatException ignored) {}
+                        label = line.substring(0, matcher.start()).trim();
+                    }
+                    return new EmotionDetailDto(label, ratio);
+                })
+                .filter(e -> !e.label().isEmpty())
+                .toList();
+    }
+
+    private List<String> splitFeedback(String feedback) {
+        if (feedback == null || feedback.isBlank()) return List.of();
+
+        return Arrays.stream(feedback.split("(?<=[.!?！？])\\s+|\\n+"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 
     @Transactional
@@ -205,6 +232,7 @@ public class TimeCapsuleService {
         log.info("임시 저장되어 있는 타임캡슐을 최종 저장합니다.");
         timeCapsule.updateTempSave(false);
         timeCapsule.setOpenedAt(request.openAt());
+        // update하고 나서 여기서도 user.addTimeCapsule?
 
         return new TimeCapsuleOpenDateUpdateResponse(timeCapsule.getId());
     }

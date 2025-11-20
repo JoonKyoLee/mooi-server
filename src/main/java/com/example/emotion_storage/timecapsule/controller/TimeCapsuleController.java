@@ -57,20 +57,6 @@ public class TimeCapsuleController {
         ));
     }
 
-    @PostMapping("/save")
-    @Operation(summary = "타임캡슐 저장", description = "타임캡슐을 저장합니다.(임시 저장 시에는 openAt을 null로 요청합니다.)")
-    public ResponseEntity<ApiResponse<TimeCapsuleSaveResponse>> saveTimeCapsule(
-            @RequestBody TimeCapsuleSaveRequest request,
-            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
-    ) {
-        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
-        log.info("사용자 {}가 채팅방 {}에 대한 타임캡슐 저장을 요청했습니다.", userId, request.chatroomId());
-        return ResponseEntity.ok(ApiResponse.success(
-                SuccessMessage.SAVE_TIME_CAPSULE_SUCCESS.getMessage(),
-                timeCapsuleService.saveTimeCapsule(request, userId)
-        ));
-    }
-
     @PostMapping("/{capsuleId}/openAt")
     public ResponseEntity<ApiResponse<TimeCapsuleOpenDateUpdateResponse>> updateTimeCapsuleOpenDate(
             @PathVariable("capsuleId") Long timeCapsuleId,

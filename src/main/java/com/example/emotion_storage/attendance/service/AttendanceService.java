@@ -47,12 +47,17 @@ public class AttendanceService {
     }
 
     @Transactional
-    public AttendanceStreakStatusResponse updateAttendanceRewardStatus(Long userId) {
+    public AttendanceStreakStatusResponse updateAttendanceRewardStatus(Long userId, LocalDate rewardDate) {
         User user = findUserById(userId);
 
         LocalDate today = LocalDate.now();
         LocalDate lastAttendanceRewardDate = user.getLastAttendanceRewardDate();
         int attendanceStreak = user.getAttendanceStreak();
+
+        if (rewardDate.isBefore(today)) {
+            log.info("사용자 {}가 만료된 날짜({})에 대한 출석 보상을 요청했습니다.", userId, rewardDate);
+            throw new BaseException(ErrorCode.EXPIRED_ATTENDANCE_REWARD);
+        }
 
         if (lastAttendanceRewardDate == null) {
             log.info("사용자 {}가 첫 출석 보상을 받았습니다.", userId);

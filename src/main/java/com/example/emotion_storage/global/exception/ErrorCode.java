@@ -44,6 +44,7 @@ public enum ErrorCode {
     EMOTION_REMINDER_TIME_REQUIRED(HttpStatus.BAD_REQUEST, "감정 기록 알림 시간이 필요합니다."),
 
     ALREADY_GET_ATTENDANCE_REWARD(HttpStatus.BAD_REQUEST, "오늘 출석 보상을 이미 받았습니다."),
+    EXPIRED_ATTENDANCE_REWARD(HttpStatus.BAD_REQUEST, "출석 보상을 받을 수 있는 기간이 지났습니다."),
     ;
 
     private final HttpStatus httpStatus;

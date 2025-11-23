@@ -232,7 +232,6 @@ public class TimeCapsuleService {
         log.info("임시 저장되어 있는 타임캡슐을 최종 저장합니다.");
         timeCapsule.updateTempSave(false);
         timeCapsule.setOpenedAt(request.openAt());
-        // update하고 나서 여기서도 user.addTimeCapsule?
 
         return new TimeCapsuleOpenDateUpdateResponse(timeCapsule.getId());
     }

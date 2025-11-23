@@ -89,6 +89,7 @@ public class ChatService {
 
         ChatRoom newRoom = chatRoomRepository.save(
                 ChatRoom.builder()
+                        .user(user)
                         .isEnded(false)
                         .isTempSave(false)
                         .build()

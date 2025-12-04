@@ -82,6 +82,7 @@ public class UserService {
                 .emotionReminderTime(LocalTime.of(NOTIFICATION_DEFAULT_HOUR, NOTIFICATION_DEFAULT_MINUTE))
                 .timeCapsuleReportNotify(true)
                 .marketingInfoNotify(request.isMarketingAgreed())
+                .deletedAt(null)
                 .build();
 
         userRepository.save(user);
@@ -130,6 +131,7 @@ public class UserService {
                 .emotionReminderTime(LocalTime.of(NOTIFICATION_DEFAULT_HOUR, NOTIFICATION_DEFAULT_MINUTE))
                 .timeCapsuleReportNotify(true)
                 .marketingInfoNotify(request.isMarketingAgreed())
+                .deletedAt(null)
                 .build();
 
         userRepository.save(user);

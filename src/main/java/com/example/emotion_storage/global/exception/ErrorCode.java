@@ -39,6 +39,9 @@ public enum ErrorCode {
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "리포트를 찾을 수 없습니다."),
     DAILY_REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "일일리포트 조회 실패 - 존재하지 않음"),
     INVALID_DATE_FORMAT(HttpStatus.BAD_REQUEST, "잘못된 날짜 형식입니다."),
+    AI_SERVER_REQUEST_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI 서버 요청에 실패했습니다."),
+    AI_SERVER_RESPONSE_NULL(HttpStatus.INTERNAL_SERVER_ERROR, "AI 서버 응답이 없습니다."),
+    DAILY_REPORT_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "일일 리포트 생성에 실패했습니다."),
 
     EMOTION_REMINDER_DAYS_REQUIRED(HttpStatus.BAD_REQUEST, "감정 기록 알림 요일이 필요합니다."),
     EMOTION_REMINDER_TIME_REQUIRED(HttpStatus.BAD_REQUEST, "감정 기록 알림 시간이 필요합니다."),

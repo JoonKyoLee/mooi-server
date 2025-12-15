@@ -43,4 +43,21 @@ public interface TimeCapsuleRepository extends JpaRepository<TimeCapsule, Long> 
     Page<TimeCapsule> findByUser_IdAndDeletedAtIsNullAndIsFavoriteIsTrue(Long userId, Pageable pageable);
 
     int countByUser_IdAndIsFavoriteTrue(Long userId);
+
+    /**
+     * 특정 사용자의 특정 날짜에 생성된 타임캡슐 목록 조회
+     * deletedAt이 null이고 임시 저장이 아닌 타임캡슐만 조회
+     */
+    @Query("SELECT tc FROM TimeCapsule tc " +
+           "WHERE tc.user.id = :userId " +
+           "AND tc.historyDate >= :startOfDay " +
+           "AND tc.historyDate < :startOfNextDay " +
+           "AND tc.deletedAt IS NULL " +
+           "AND tc.isTempSave = false " +
+           "ORDER BY tc.historyDate ASC")
+    List<TimeCapsule> findByUserIdAndHistoryDate(
+            @Param("userId") Long userId,
+            @Param("startOfDay") LocalDateTime startOfDay,
+            @Param("startOfNextDay") LocalDateTime startOfNextDay
+    );
 }

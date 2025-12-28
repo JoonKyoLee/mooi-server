@@ -222,7 +222,7 @@ public class ChatService {
 
                     // AI 메시지 저장
                     try {
-                        chatMessageStore.saveAiMessage(roomId, aiResponse.getResponse(), aiResponse.getTimestamp());
+                        chatMessageStore.saveAiMessage(roomId, aiResponse.getResponse(), aiResponse.getTimestamp(), aiResponse.getGauge());
                     } catch (Exception e) {
                         log.error("[채팅방:{}] AI 메시지 저장 중 오류 발생", roomId, e);
                     }
@@ -369,7 +369,7 @@ public class ChatService {
                 .toList();
 
         RoomWithChatsDto roomWithChats = new RoomWithChatsDto(
-                chatRoom.getId(), chatRoom.getFirstChatTime(), chats.size(), chats
+                chatRoom.getId(), chatRoom.getFirstChatTime(), chats.size(), chatRoom.getGauge(), chats
         );
 
         Long nextCursor = hasNext ? chatRoom.getId() : null;

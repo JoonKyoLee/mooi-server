@@ -3,6 +3,7 @@ package com.example.emotion_storage.chat.service;
 import com.example.emotion_storage.chat.domain.Chat;
 import com.example.emotion_storage.chat.domain.ChatRoom;
 import com.example.emotion_storage.chat.domain.SenderType;
+import com.example.emotion_storage.chat.dto.GaugeDto;
 import com.example.emotion_storage.chat.dto.UserMessageDto;
 import com.example.emotion_storage.chat.repository.ChatRepository;
 import com.example.emotion_storage.chat.repository.ChatRoomRepository;
@@ -63,7 +64,7 @@ public class ChatMessageStore {
     }
 
     @Transactional
-    public void saveAiMessage(Long roomId, String message, String timestamp) {
+    public void saveAiMessage(Long roomId, String message, String timestamp, GaugeDto gauge) {
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_NOT_FOUND));
 
@@ -79,6 +80,12 @@ public class ChatMessageStore {
                 .build();
 
         chatRepository.save(chat);
+
+        // gauge 값이 있으면 ChatRoom에 저장
+        if (gauge != null) {
+            log.info("채팅방 {}의 gauge 값을 업데이트합니다: {}", roomId, gauge.getGaugeScore());
+            chatRoom.updateGauge(gauge.getGaugeScore());
+        }
 
         log.debug("채팅방 {}에 AI 메시지 저장 완료", roomId);
     }

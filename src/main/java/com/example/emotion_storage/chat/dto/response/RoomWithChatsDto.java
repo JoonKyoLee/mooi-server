@@ -7,5 +7,6 @@ public record RoomWithChatsDto(
         Long chatRoomId,
         LocalDateTime firstChatTime,
         int totalChatCount,
+        Integer gauge,
         List<ChatDto> chats
 ) {}

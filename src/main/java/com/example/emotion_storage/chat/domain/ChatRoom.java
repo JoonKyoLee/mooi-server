@@ -48,6 +48,9 @@ public class ChatRoom extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean isTempSave;
 
+    @Column(name = "gauge")
+    private Integer gauge;
+
     @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Chat> chats = new ArrayList<>();
@@ -77,5 +80,9 @@ public class ChatRoom extends BaseTimeEntity {
 
     public void setFirstChatTime(LocalDateTime firstChatTime) {
         this.firstChatTime = firstChatTime;
+    }
+
+    public void updateGauge(Integer gauge) {
+        this.gauge = gauge;
     }
 }

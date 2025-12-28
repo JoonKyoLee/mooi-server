@@ -1,6 +1,9 @@
 package com.example.emotion_storage.timecapsule.service;
 
+import com.example.emotion_storage.chat.domain.Chat;
 import com.example.emotion_storage.chat.domain.ChatRoom;
+import com.example.emotion_storage.chat.domain.SenderType;
+import com.example.emotion_storage.chat.repository.ChatRepository;
 import com.example.emotion_storage.chat.repository.ChatRoomRepository;
 import com.example.emotion_storage.chat.service.ChatService;
 import com.example.emotion_storage.global.exception.BaseException;
@@ -77,6 +80,7 @@ public class TimeCapsuleService {
     private final ChatService chatService;
     private final TimeCapsuleRepository timeCapsuleRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final ChatRepository chatRepository;
     private final UserRepository userRepository;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
@@ -91,9 +95,13 @@ public class TimeCapsuleService {
         String sessionId = String.format(SESSION_ID_FORMAT, userId, chatRoom.getId());
 
         try {
+            // 채팅방의 실제 채팅 내용 조회
+            List<Chat> chats = chatRepository.findAllByRoomIdOrderByTimeAsc(chatRoom.getId());
+            String referenceMessage = buildChatReferenceMessage(chats);
+
             AiTimeCapsuleCreateRequest request = new AiTimeCapsuleCreateRequest(
                     AiTimeCapsuleCreatePrompts.ROLE_MESSAGE,
-                    AiTimeCapsuleCreatePrompts.REFERENCE_MESSAGE,
+                    referenceMessage,
                     AiTimeCapsuleCreatePrompts.ANALYZE_MESSAGE,
                     sessionId
             );
@@ -428,5 +436,25 @@ public class TimeCapsuleService {
 
         log.info("타임캡슐 {}를 삭제합니다.", timeCapsuleId);
         timeCapsule.setDeletedAt(LocalDateTime.now());
+    }
+
+    /**
+     * 채팅 목록을 reference_message 형식의 문자열로 변환
+     */
+    private String buildChatReferenceMessage(List<Chat> chats) {
+        if (chats == null || chats.isEmpty()) {
+            log.warn("채팅 내용이 없어 빈 reference_message를 반환합니다.");
+            return AiTimeCapsuleCreatePrompts.REFERENCE_MESSAGE + "\n\n(채팅 내용이 없습니다.)";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(AiTimeCapsuleCreatePrompts.REFERENCE_MESSAGE).append("\n\n");
+
+        for (Chat chat : chats) {
+            String senderName = chat.getSender() == SenderType.USER ? "사용자" : "상담봇";
+            sb.append(senderName).append(": ").append(chat.getMessage()).append("\n");
+        }
+
+        return sb.toString().trim();
     }
 }

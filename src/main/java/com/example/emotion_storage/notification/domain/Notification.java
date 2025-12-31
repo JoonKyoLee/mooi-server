@@ -33,6 +33,10 @@ public class Notification extends BaseTimeEntity {
     @Column(nullable = false)
     private Boolean isRead;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NotificationType notificationType;
+
     @Column(nullable = false)
     private LocalDateTime arrivedAt;
 

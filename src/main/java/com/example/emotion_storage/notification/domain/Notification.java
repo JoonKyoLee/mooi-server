@@ -37,6 +37,8 @@ public class Notification extends BaseTimeEntity {
     @Column(nullable = false)
     private NotificationType notificationType;
 
+    private Long targetId;
+
     @Column(nullable = false)
     private LocalDateTime arrivedAt;
 

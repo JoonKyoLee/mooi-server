@@ -13,7 +13,7 @@ import com.example.emotion_storage.global.config.TestSecurityConfig;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.timecapsule.dto.EmotionDetailDto;
-import com.example.emotion_storage.timecapsule.dto.PaginationDto;
+import com.example.emotion_storage.global.dto.PaginationDto;
 import com.example.emotion_storage.timecapsule.dto.TimeCapsuleDto;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;

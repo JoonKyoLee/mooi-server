@@ -35,7 +35,7 @@ public class Notification extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private NotificationType notificationType;
+    private NotificationType type;
 
     private Long targetId;
 

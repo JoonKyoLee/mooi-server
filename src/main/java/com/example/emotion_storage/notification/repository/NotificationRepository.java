@@ -24,4 +24,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Page<Notification> findByUser_IdAndArrivedAtAfter(Long userId, LocalDateTime start, Pageable pageable);
 
     boolean existsByUser_IdAndTypeAndTargetId(Long userId, NotificationType type, Long targetId);
+
+    long countByUser_IdAndType(Long userId, NotificationType type);
+
+    long countByUser_IdAndTypeAndTargetId(Long userId, NotificationType type, Long targetId);
 }

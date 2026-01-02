@@ -1,6 +1,7 @@
 package com.example.emotion_storage.notification.repository;
 
 import com.example.emotion_storage.notification.domain.Notification;
+import com.example.emotion_storage.notification.domain.NotificationType;
 import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,4 +22,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Long countUnreadNotificationsByUserId(@Param("userId") Long userId);
 
     Page<Notification> findByUser_IdAndArrivedAtAfter(Long userId, LocalDateTime start, Pageable pageable);
+
+    boolean existsByUser_IdAndTypeAndTargetId(Long userId, NotificationType type, Long targetId);
 }

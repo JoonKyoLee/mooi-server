@@ -2,6 +2,7 @@ package com.example.emotion_storage.report.service;
 
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
+import com.example.emotion_storage.notification.service.NotificationService;
 import com.example.emotion_storage.report.domain.EmotionVariation;
 import com.example.emotion_storage.report.domain.Keyword;
 import com.example.emotion_storage.report.domain.Report;
@@ -42,6 +43,7 @@ public class DailyReportGenerateService {
     private final ReportRepository reportRepository;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final NotificationService notificationService;
 
     @Value("${ai.server.base-url:http://localhost:8000}")
     private String aiServerBaseUrl;
@@ -128,6 +130,9 @@ public class DailyReportGenerateService {
         // AI 응답을 Report 엔티티로 변환하여 저장
         Report report = convertToReport(user, targetDate, timeCapsules, aiResponse);
         reportRepository.save(report);
+
+        // 알림 저장
+        notificationService.createDailyReportArrival(user.getId(), report.getId());
         
         log.info("일일 리포트 생성 완료 - userId: {}, date: {}, reportId: {}", 
                 user.getId(), targetDate, report.getId());

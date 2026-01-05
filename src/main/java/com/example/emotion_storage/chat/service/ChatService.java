@@ -1,5 +1,6 @@
 package com.example.emotion_storage.chat.service;
 
+import com.example.emotion_storage.chat.domain.Chat;
 import com.example.emotion_storage.chat.domain.ChatRoom;
 import com.example.emotion_storage.chat.domain.SenderType;
 import com.example.emotion_storage.chat.dto.ChatPromptMessages;
@@ -21,7 +22,9 @@ import com.example.emotion_storage.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -54,6 +57,9 @@ public class ChatService {
     
     // 세션 ID 포맷 상수
     private static final String SESSION_ID_FORMAT = "session-%d-%d";
+
+    // AI 메시지 분리 상수
+    private static final String AI_SENTENCE_SPLIT_REGEX = "(?<=[.!?！？])\\s+";
 
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
@@ -365,7 +371,7 @@ public class ChatService {
 
         List<ChatDto> chats = chatRepository.findAllByRoomIdOrderByTimeAsc(chatRoom.getId())
                 .stream()
-                .map(ChatDto::from)
+                .flatMap(this::toChatDtoStream)
                 .toList();
 
         RoomWithChatsDto roomWithChats = new RoomWithChatsDto(
@@ -376,5 +382,35 @@ public class ChatService {
 
         log.info("채팅방 {}의 모든 채팅을 포함한 응답을 반환합니다.", chatRoom.getId());
         return new SingleRoomSliceResponse(roomWithChats, nextCursor, hasNext);
+    }
+
+    private Stream<ChatDto> toChatDtoStream(Chat chat) {
+        if (chat.getSender() == SenderType.USER) {
+            return Stream.of(ChatDto.from(chat));
+        }
+        return splitAiChat(chat).stream();
+    }
+
+    private List<ChatDto> splitAiChat(Chat chat) {
+        String message = chat.getMessage();
+        if (message == null || message.isBlank()) {
+            return List.of(ChatDto.from(chat));
+        }
+
+        String[] chunks = message.split(AI_SENTENCE_SPLIT_REGEX);
+        List<ChatDto> chats = new ArrayList<>();
+
+        LocalDateTime baseTime = chat.getChatTime();
+        int i = 0;
+
+        for (String chunk : chunks) {
+            String trimmed = chunk.trim();
+            if (trimmed.isEmpty()) continue;
+
+            chats.add(new ChatDto(
+                    chat.getId(), chat.getSender().name(), trimmed, baseTime.plusNanos(i++)
+            ));
+        }
+        return chats;
     }
 }

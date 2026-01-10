@@ -408,7 +408,8 @@ public class ChatService {
             if (trimmed.isEmpty()) continue;
 
             chats.add(new ChatDto(
-                    chat.getId(), chat.getSender().name(), trimmed, baseTime.plusNanos(i++)
+                    chat.getId(), chat.getId().toString() + "-" + i,
+                    chat.getSender().name(), trimmed, baseTime.plusNanos(i++)
             ));
         }
         return chats;

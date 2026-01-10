@@ -5,11 +5,14 @@ import java.time.LocalDateTime;
 
 public record ChatDto(
         Long id,
+        String clientId,
         String sender,
         String message,
         LocalDateTime chatTime
 ) {
     public static ChatDto from(Chat chat) {
-        return new ChatDto(chat.getId(), chat.getSender().name(), chat.getMessage(), chat.getChatTime());
+        return new ChatDto(
+                chat.getId(), chat.getId().toString(), chat.getSender().name(), chat.getMessage(), chat.getChatTime()
+        );
     }
 }

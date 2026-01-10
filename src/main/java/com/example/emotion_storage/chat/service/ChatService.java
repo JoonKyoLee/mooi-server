@@ -59,7 +59,7 @@ public class ChatService {
     private static final String SESSION_ID_FORMAT = "session-%d-%d";
 
     // AI 메시지 분리 상수
-    private static final String AI_SENTENCE_SPLIT_REGEX = "(?<=[.!?！？])\\s+";
+    private static final String AI_SENTENCE_SPLIT_REGEX = "(?<=[.!?！？])";
 
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;

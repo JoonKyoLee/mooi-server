@@ -401,7 +401,7 @@ public class ChatService {
         List<ChatDto> chats = new ArrayList<>();
 
         LocalDateTime baseTime = chat.getChatTime();
-        int i = 0;
+        int i = 1;
 
         for (String chunk : chunks) {
             String trimmed = chunk.trim();

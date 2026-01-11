@@ -4,11 +4,7 @@ import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.global.security.jwt.JwtTokenProvider;
 import com.example.emotion_storage.global.security.jwt.TokenStatus;
-import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
-import com.example.emotion_storage.user.domain.User;
-import com.example.emotion_storage.user.repository.UserRepository;
-import java.util.Collections;
-import java.util.List;
+import java.security.Principal;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +14,6 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -30,7 +24,6 @@ public class StompHandler implements ChannelInterceptor {
     private static final String TOKEN_PREFIX = "Bearer ";
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final UserRepository userRepository;
 
     @Override
     public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
@@ -47,25 +40,18 @@ public class StompHandler implements ChannelInterceptor {
 
             TokenStatus status = jwtTokenProvider.validateToken(token);
 
-            if (status == TokenStatus.VALID) {
-                Long userId = jwtTokenProvider.getUserIdFromToken(token);
-                User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
-
-                List<GrantedAuthority> authorities = Collections.emptyList();
-                CustomUserPrincipal principal =
-                        new CustomUserPrincipal(user.getId(), user.getEmail(), authorities);
-
-                UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(principal, null, authorities);
-
-                accessor.setUser(authenticationToken);
-                log.info("[STOMP] 유저 추출 성공 user: {}", accessor.getUser());
-            } else {
+            if (status != TokenStatus.VALID) {
                 throw new BaseException(status == TokenStatus.EXPIRED
                         ? ErrorCode.ACCESS_TOKEN_EXPIRED
                         : ErrorCode.ACCESS_TOKEN_INVALID);
             }
+
+            Long userId = jwtTokenProvider.getUserIdFromToken(token);
+
+            // STOMP user를 "Principal(name=userId)"로 통일
+            accessor.setUser((Principal) () -> String.valueOf(userId));
+
+            log.info("[STOMP] userId set on {}: {}", accessor.getCommand(), userId);
         }
 
         if (StompCommand.SEND.equals(accessor.getCommand())) {

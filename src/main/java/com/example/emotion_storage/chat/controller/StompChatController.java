@@ -4,15 +4,12 @@ import com.example.emotion_storage.chat.dto.UserMessageDto;
 import com.example.emotion_storage.chat.service.ChatService;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
-import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
 @Slf4j
@@ -29,16 +26,20 @@ public class StompChatController {
     public void processMessage(
             UserMessageDto userMessage, SimpMessageHeaderAccessor headerAccessor
     ) {
-        Principal principal = headerAccessor.getUser(); // 여기에서 가져오면 됨
+        Principal principal = headerAccessor.getUser();
 
-        if (!(principal instanceof Authentication authentication)
-                || !(authentication.getPrincipal() instanceof CustomUserPrincipal userPrincipal)) {
+        if (principal.getName() == null) {
             throw new BaseException(ErrorCode.UNAUTHORIZED);
         }
 
-        Long userId = userPrincipal.getId();
+        Long userId;
+        try {
+            userId = Long.parseLong(principal.getName());
+        } catch (NumberFormatException e) {
+            throw new BaseException(ErrorCode.UNAUTHORIZED);
+        }
 
-        log.info("[채팅방:{}] 사용자 {}가 메시지를 전송했습니다: {}", 
+        log.info("[채팅방:{}] 사용자 {}가 메시지를 전송했습니다: {}",
                 userMessage.roomId(), userId, userMessage.content());
 
         try {

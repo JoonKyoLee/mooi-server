@@ -9,4 +9,5 @@ public class NewDailyReportResponse {
     
     private final boolean hasNewReport;
     private final int count;
+    private final Long reportId;
 }

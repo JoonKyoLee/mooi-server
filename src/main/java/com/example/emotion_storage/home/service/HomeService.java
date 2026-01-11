@@ -124,10 +124,15 @@ public class HomeService {
         // 미확인 일일리포트 개수 조회
         Long unopenedReportCount = reportRepository.countUnopenedReportsByUserId(userId);
         boolean hasNewReport = unopenedReportCount > 0;
+
+        // 최근 일일리포트 아이디 조회
+        Long currentReportId = reportRepository.findLatestReportIdByUserId(userId)
+                .orElse(null);
         
         NewDailyReportResponse response = NewDailyReportResponse.builder()
                 .hasNewReport(hasNewReport)
                 .count(unopenedReportCount.intValue())
+                .reportId(currentReportId)
                 .build();
         
         log.info("사용자 새로운 일일리포트 상태 조회 완료 - userId: {}, hasNewReport: {}, count: {}", 

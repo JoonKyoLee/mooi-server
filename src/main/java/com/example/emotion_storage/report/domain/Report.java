@@ -76,4 +76,8 @@ public class Report extends BaseTimeEntity {
         this.keywords.add(keyword);
         keyword.setReport(this);
     }
+
+    public void open() {
+        this.isOpened = true;
+    }
 }

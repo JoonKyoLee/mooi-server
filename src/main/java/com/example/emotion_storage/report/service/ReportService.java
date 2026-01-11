@@ -27,6 +27,7 @@ public class ReportService {
         
         LocalDate historyDate = parseDate(dateString);
         Report report = findReportByUserIdAndDate(userId, historyDate);
+        report.open();
         
         DailyReportDetailResponse response = DailyReportDetailResponse.from(report);
         
@@ -38,6 +39,7 @@ public class ReportService {
         log.info("일일리포트 상세 조회 요청 - userId: {}, reportId: {}", userId, reportId);
 
         Report report = findReportByReportId(reportId);
+        report.open();
 
         DailyReportDetailResponse response = DailyReportDetailResponse.from(report);
 

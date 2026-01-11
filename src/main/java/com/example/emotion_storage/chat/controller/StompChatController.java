@@ -4,9 +4,11 @@ import com.example.emotion_storage.chat.dto.UserMessageDto;
 import com.example.emotion_storage.chat.service.ChatService;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
@@ -22,12 +24,17 @@ public class StompChatController {
 
     @MessageMapping("/v1/chat")
     public void processMessage(
-            UserMessageDto userMessage,
-            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+            UserMessageDto userMessage, Principal principal
     ) {
         // 사용자 ID 추출 (인증되지 않은 경우 개발 테스트용 ID 사용)
-        Long userId = (userPrincipal != null && userPrincipal.getId() != null) ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
-        
+        Long userId = 1L;
+
+        if (principal != null) {
+            Authentication authentication = (Authentication) principal;
+            CustomUserPrincipal userPrincipal = (CustomUserPrincipal) authentication.getPrincipal();
+            userId = userPrincipal.getId();
+        }
+
         log.info("[채팅방:{}] 사용자 {}가 메시지를 전송했습니다: {}", 
                 userMessage.roomId(), userId, userMessage.content());
 

@@ -60,12 +60,18 @@ public class StompHandler implements ChannelInterceptor {
                         new UsernamePasswordAuthenticationToken(principal, null, authorities);
 
                 accessor.setUser(authenticationToken);
+                log.info("[STOMP] 유저 추출 성공 user: {}", accessor.getUser());
             } else {
                 throw new BaseException(status == TokenStatus.EXPIRED
                         ? ErrorCode.ACCESS_TOKEN_EXPIRED
                         : ErrorCode.ACCESS_TOKEN_INVALID);
             }
         }
+
+        if (StompCommand.SEND.equals(accessor.getCommand())) {
+            log.info("[STOMP] SEND sessionId={}, user={}", accessor.getSessionId(), accessor.getUser());
+        }
+
         return message;
     }
 }

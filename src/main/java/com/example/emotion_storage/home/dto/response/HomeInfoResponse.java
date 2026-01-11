@@ -16,4 +16,5 @@ public class HomeInfoResponse {
     private final int timeCapsuleCount;
     private final boolean hasNewReport;
     private final int reportCount;
+    private final Long reportId;
 }

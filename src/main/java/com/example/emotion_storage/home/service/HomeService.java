@@ -54,6 +54,7 @@ public class HomeService {
                 .timeCapsuleCount(timeCapsuleStatus.getCount())
                 .hasNewReport(reportStatus.isHasNewReport())
                 .reportCount(reportStatus.getCount())
+                .reportId(reportStatus.getReportId())
                 .build();
 
         log.info("사용자 홈 정보 조회 완료 - userId: {}, remainingTickets: {}, keyCount: {}, hasNewNotification: {}, hasNewTimeCapsule: {}, hasNewReport: {}",

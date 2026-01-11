@@ -1,7 +1,6 @@
 package com.example.emotion_storage.report.dto.response;
 
 import com.example.emotion_storage.global.util.LabelNormalizer;
-import com.example.emotion_storage.report.domain.EmotionVariation;
 import com.example.emotion_storage.report.domain.Keyword;
 import com.example.emotion_storage.report.domain.Report;
 import lombok.AllArgsConstructor;
@@ -19,8 +18,8 @@ import java.util.stream.Collectors;
 public class DailyReportDetailResponse {
 
     private Long id;
-    private String createdAt;
-    private String updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private List<String> summaries;
     private List<String> keywords;
     private Integer stressIndex;
@@ -39,8 +38,8 @@ public class DailyReportDetailResponse {
     public static DailyReportDetailResponse from(Report report) {
         return DailyReportDetailResponse.builder()
                 .id(report.getId())
-                .createdAt(formatDateTime(report.getCreatedAt()))
-                .updatedAt(formatDateTime(report.getUpdatedAt()))
+                .createdAt(report.getCreatedAt())
+                .updatedAt(report.getUpdatedAt())
                 .summaries(List.of(report.getTodaySummary()))
                 .keywords(report.getKeywords().stream()
                         .map(Keyword::getKeyword)
@@ -55,10 +54,6 @@ public class DailyReportDetailResponse {
                                 .build())
                         .collect(Collectors.toList()))
                 .build();
-    }
-
-    private static String formatDateTime(LocalDateTime dateTime) {
-        return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
     }
 
     private static String formatTime(LocalDateTime dateTime) {

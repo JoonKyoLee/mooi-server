@@ -2,12 +2,15 @@ package com.example.emotion_storage.chat.controller;
 
 import com.example.emotion_storage.chat.dto.UserMessageDto;
 import com.example.emotion_storage.chat.service.ChatService;
+import com.example.emotion_storage.global.exception.BaseException;
+import com.example.emotion_storage.global.exception.ErrorCode;
 import com.example.emotion_storage.global.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -24,16 +27,16 @@ public class StompChatController {
 
     @MessageMapping("/v1/chat")
     public void processMessage(
-            UserMessageDto userMessage, Principal principal
+            UserMessageDto userMessage, SimpMessageHeaderAccessor headerAccessor
     ) {
-        // 사용자 ID 추출 (인증되지 않은 경우 개발 테스트용 ID 사용)
-        Long userId = 1L;
+        Principal principal = headerAccessor.getUser(); // 여기에서 가져오면 됨
 
-        if (principal != null) {
-            Authentication authentication = (Authentication) principal;
-            CustomUserPrincipal userPrincipal = (CustomUserPrincipal) authentication.getPrincipal();
-            userId = userPrincipal.getId();
+        if (!(principal instanceof Authentication authentication)
+                || !(authentication.getPrincipal() instanceof CustomUserPrincipal userPrincipal)) {
+            throw new BaseException(ErrorCode.UNAUTHORIZED);
         }
+
+        Long userId = userPrincipal.getId();
 
         log.info("[채팅방:{}] 사용자 {}가 메시지를 전송했습니다: {}", 
                 userMessage.roomId(), userId, userMessage.content());

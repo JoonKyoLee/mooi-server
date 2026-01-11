@@ -206,6 +206,9 @@ public class ChatService {
 
     public void processUserMessageAsync(UserMessageDto userMessage, Long userId) {
         Long roomId = userMessage.roomId();
+
+        ChatRoom chatRoom = chatRoomRepository.findByIdAndUser_Id(roomId, userId)
+                .orElseThrow(() -> new BaseException(ErrorCode.CHAT_ROOM_ACCESS_DENIED));
         
         // 1. 사용자 메시지 저장
         chatMessageStore.saveUserMessage(userMessage, userId);

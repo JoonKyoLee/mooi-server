@@ -34,4 +34,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     List<ChatRoom> fetchRoomsSlice(
             @Param("userId") Long userId, @Param("cursorId") Long cursorId, Pageable pageable
     );
+
+    Optional<ChatRoom> findByIdAndUser_Id(Long id, Long userId);
 }

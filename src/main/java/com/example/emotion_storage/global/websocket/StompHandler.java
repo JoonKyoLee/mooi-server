@@ -14,6 +14,8 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -27,7 +29,9 @@ public class StompHandler implements ChannelInterceptor {
 
     @Override
     public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+
+        accessor.setLeaveMutable(true);
 
         if (StompCommand.CONNECT.equals(accessor.getCommand()) || StompCommand.SEND.equals(accessor.getCommand())) {
             String authHeader = accessor.getFirstNativeHeader(HttpHeaders.AUTHORIZATION);
@@ -58,6 +62,9 @@ public class StompHandler implements ChannelInterceptor {
             log.info("[STOMP] SEND sessionId={}, user={}", accessor.getSessionId(), accessor.getUser());
         }
 
-        return message;
+        // 변경된 accessor를 message에 반영해서 반환
+        return MessageBuilder.createMessage(
+                message.getPayload(), accessor.getMessageHeaders()
+        );
     }
 }

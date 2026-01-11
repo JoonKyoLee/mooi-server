@@ -24,6 +24,22 @@ public interface TimeCapsuleRepository extends JpaRepository<TimeCapsule, Long> 
     @Query("SELECT COUNT(tc) FROM TimeCapsule tc WHERE tc.user.id = :userId AND tc.isOpened = false AND tc.deletedAt IS NULL")
     Long countUnopenedTimeCapsulesByUserId(@Param("userId") Long userId);
 
+    @Query("""
+        SELECT COUNT(tc)
+        FROM TimeCapsule tc
+        WHERE tc.user.id = :userId
+          AND tc.deletedAt IS NULL
+          AND tc.isTempSave = false
+          AND tc.isOpened = false
+          AND tc.openedAt >= :start
+          AND tc.openedAt <= :end
+    """)
+    Long countUnopenedArrivedTimeCapsulesInRange(
+            @Param("userId") Long userId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
+
     @Query("SELECT DISTINCT CAST(tc.historyDate AS DATE) from TimeCapsule tc "
             + "WHERE tc.user.id = :userId AND tc.historyDate >= :start AND tc.historyDate < :end AND tc.deletedAt IS NULL "
             + "ORDER BY CAST(tc.historyDate AS DATE)")

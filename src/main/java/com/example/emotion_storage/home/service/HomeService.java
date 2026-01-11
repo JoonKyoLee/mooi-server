@@ -13,6 +13,7 @@ import com.example.emotion_storage.report.repository.ReportRepository;
 import com.example.emotion_storage.timecapsule.repository.TimeCapsuleRepository;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -100,9 +101,12 @@ public class HomeService {
         
         // 사용자 존재 여부 확인
         findUserById(userId);
-        
+
+        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime start = end.minusWeeks(3);
+
         // 미확인 타임캡슐 개수 조회
-        Long unopenedCount = timeCapsuleRepository.countUnopenedTimeCapsulesByUserId(userId);
+        Long unopenedCount = timeCapsuleRepository.countUnopenedArrivedTimeCapsulesInRange(userId, start, end);
         boolean hasNewCapsule = unopenedCount > 0;
         
         NewTimeCapsuleResponse response = NewTimeCapsuleResponse.builder()

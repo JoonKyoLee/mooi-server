@@ -46,4 +46,18 @@ public class ReportController {
                 ApiResponse.success(SuccessMessage.DAILY_REPORT_DETAIL_GET_SUCCESS.getMessage(), response)
         );
     }
+
+    @GetMapping("/daily-report/{reportId}")
+    @Operation(summary = "아이디 기반 일일리포트 상세 조회", description = "특정 날짜의 일일리포트 상세 정보를 조회합니다.")
+    public ResponseEntity<ApiResponse<DailyReportDetailResponse>> getDailyReportDetailById(
+            @PathVariable Long reportId,
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("아이디 기반 일일리포트 상세 조회 API 호출 - userId: {}, reportId: {}", userId, reportId);
+        DailyReportDetailResponse response = reportService.getDailyReportDetailById(userId, reportId);
+        return ResponseEntity.ok(
+                ApiResponse.success(SuccessMessage.DAILY_REPORT_DETAIL_GET_SUCCESS.getMessage(), response)
+        );
+    }
 }

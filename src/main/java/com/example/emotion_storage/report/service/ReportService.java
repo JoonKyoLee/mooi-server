@@ -34,6 +34,17 @@ public class ReportService {
         return response;
     }
 
+    public DailyReportDetailResponse getDailyReportDetailById(Long userId, Long reportId) {
+        log.info("일일리포트 상세 조회 요청 - userId: {}, reportId: {}", userId, reportId);
+
+        Report report = findReportByReportId(reportId);
+
+        DailyReportDetailResponse response = DailyReportDetailResponse.from(report);
+
+        log.info("일일리포트 상세 조회 완료 - userId: {}, reportId: {}", userId, reportId);
+        return response;
+    }
+
     private LocalDate parseDate(String dateString) {
         try {
             return LocalDate.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
@@ -50,5 +61,10 @@ public class ReportService {
                     log.warn("존재하지 않는 일일리포트 조회 시도 - userId: {}, historyDate: {}", userId, historyDate);
                     return new BaseException(ErrorCode.REPORT_NOT_FOUND);
                 });
+    }
+
+    private Report findReportByReportId(Long reportId) {
+        return reportRepository.findById(reportId)
+                .orElseThrow(() -> new BaseException(ErrorCode.REPORT_NOT_FOUND));
     }
 }

@@ -1,5 +1,6 @@
 package com.example.emotion_storage.report.dto.response;
 
+import com.example.emotion_storage.global.util.LabelNormalizer;
 import com.example.emotion_storage.report.domain.EmotionVariation;
 import com.example.emotion_storage.report.domain.Keyword;
 import com.example.emotion_storage.report.domain.Report;
@@ -50,7 +51,7 @@ public class DailyReportDetailResponse {
                 .emotionChanges(report.getEmotionVariations().stream()
                         .map(emotionVariation -> EmotionChangeDto.builder()
                                 .time(formatTime(emotionVariation.getTime()))
-                                .label(emotionVariation.getLabel())
+                                .label(LabelNormalizer.emojiSpace(emotionVariation.getLabel()))
                                 .build())
                         .collect(Collectors.toList()))
                 .build();

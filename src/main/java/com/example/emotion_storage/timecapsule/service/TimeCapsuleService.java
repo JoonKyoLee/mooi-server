@@ -207,7 +207,7 @@ public class TimeCapsuleService {
                         } catch (NumberFormatException ignored) {}
                         label = line.substring(0, matcher.start()).trim();
                     }
-                    return new EmotionDetailDto(label, ratio);
+                    return EmotionDetailDto.of(label, ratio);
                 })
                 .filter(e -> !e.label().isEmpty())
                 .toList();

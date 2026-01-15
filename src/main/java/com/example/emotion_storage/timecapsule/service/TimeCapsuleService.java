@@ -21,6 +21,7 @@ import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleOpenDateUp
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleSaveRequest;
 import com.example.emotion_storage.timecapsule.dto.response.AiTimeCapsuleCreateErrorResponse;
 import com.example.emotion_storage.timecapsule.dto.response.AiTimeCapsuleCreateResponse;
+import com.example.emotion_storage.timecapsule.dto.response.ArrivedTimeCapsuleCountResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleCreateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
@@ -456,5 +457,21 @@ public class TimeCapsuleService {
         }
 
         return sb.toString().trim();
+    }
+
+    @Transactional(readOnly = true)
+    public ArrivedTimeCapsuleCountResponse getArrivedTimeCapsuleCount(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BaseException(ErrorCode.USER_NOT_FOUND));
+
+        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime start = end.minusWeeks(3);
+
+        log.info("사용자 {}의 미확인 타임캡슐 개수를 조회합니다.", user.getId());
+        // 미확인 타임캡슐 개수 조회
+        Long unopenedCount = timeCapsuleRepository.countUnopenedArrivedTimeCapsulesInRange(user.getId(), start, end);
+
+        log.info("사용자 {}의 미확인 타임캡슐 조회에 성공했습니다.", user.getId());
+        return new ArrivedTimeCapsuleCountResponse(unopenedCount);
     }
 }

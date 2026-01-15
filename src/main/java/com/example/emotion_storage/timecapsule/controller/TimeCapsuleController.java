@@ -8,6 +8,7 @@ import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleFavoriteRe
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleNoteUpdateRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleOpenDateUpdateRequest;
 import com.example.emotion_storage.timecapsule.dto.request.TimeCapsuleSaveRequest;
+import com.example.emotion_storage.timecapsule.dto.response.ArrivedTimeCapsuleCountResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleCreateResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleDetailResponse;
 import com.example.emotion_storage.timecapsule.dto.response.TimeCapsuleExistDateResponse;
@@ -191,6 +192,19 @@ public class TimeCapsuleController {
                 HttpStatus.NO_CONTENT.value(),
                 SuccessMessage.DELETE_TIME_CAPSULE_SUCCESS.getMessage(),
                 null
+        ));
+    }
+
+    @GetMapping("/arrived/count")
+    @Operation(summary = "최근 3주 내 도착 타임캡슐 개수 조회", description = "최근 3주 내에 도착한 미열람 타임캡슐 개수를 조회합니다.")
+    public ResponseEntity<ApiResponse<ArrivedTimeCapsuleCountResponse>> getArrivedTimeCapsuleCount(
+            @AuthenticationPrincipal CustomUserPrincipal userPrincipal
+    ) {
+        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        log.info("사용자 {}가 최근 3주 이내 도착한 타임캡슐 개수를 요청했습니다.", userId);
+        ArrivedTimeCapsuleCountResponse response = timeCapsuleService.getArrivedTimeCapsuleCount(userId);
+        return ResponseEntity.ok(ApiResponse.success(
+                SuccessMessage.GET_ARRIVED_TIME_CAPSULE_COUNT_SUCCESS.getMessage(), response
         ));
     }
 }

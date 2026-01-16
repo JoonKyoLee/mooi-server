@@ -9,7 +9,7 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Collections;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,8 +20,8 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class GoogleTokenVerifier {
 
-    @Value("${spring.security.oauth2.google.client-id}")
-    private String googleClientId;
+    @Value("${spring.security.oauth2.google.client-ids}")
+    private List<String> googleClientIds;
 
     public GoogleLoginClaims verifyLoginToken(String idToken) {
         Payload payload = verifyToken(idToken);
@@ -40,7 +40,7 @@ public class GoogleTokenVerifier {
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                     new NetHttpTransport(),
                     GsonFactory.getDefaultInstance())
-                    .setAudience(Collections.singletonList(googleClientId))
+                    .setAudience(googleClientIds)
                     .build();
 
             GoogleIdToken googleIdToken = verifier.verify(idToken);

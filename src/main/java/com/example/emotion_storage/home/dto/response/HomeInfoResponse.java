@@ -6,7 +6,8 @@ import lombok.Getter;
 @Getter
 @Builder
 public class HomeInfoResponse {
-    
+
+    private final String userName;
     private final Long remainingTickets;
     private final Long dailyLimit;
     private final Long keyCount;

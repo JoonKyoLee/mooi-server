@@ -36,7 +36,7 @@ public class HomeService {
         log.info("사용자 홈 정보 조회 요청 - userId: {}", userId);
 
         // 사용자 존재 여부 확인
-        findUserById(userId);
+        User user = findUserById(userId);
 
         // 각종 정보 조회
         TicketStatusResponse ticketStatus = getTicketStatus(userId);
@@ -46,6 +46,7 @@ public class HomeService {
         NewDailyReportResponse reportStatus = getNewDailyReportStatus(userId);
 
         HomeInfoResponse response = HomeInfoResponse.builder()
+                .userName(user.getNickname())
                 .remainingTickets(ticketStatus.getRemainingTickets())
                 .dailyLimit(ticketStatus.getDailyLimit())
                 .keyCount(keyCount.getKeyCount())

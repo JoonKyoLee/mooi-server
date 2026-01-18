@@ -88,10 +88,12 @@ public class ChatService {
         ChatRoom latest = chatRoomRepository.findTopByUser_IdOrderByCreatedAtDesc(user.getId())
                 .orElse(null);
 
-        if (latest != null && !latest.isEnded()) {
-            log.info("기존에 생성되었지만 채팅이 진행되지 않았거나 임시 저장된 채팅방을 반환합니다.");
+        if (isReusableTodayRoom(latest)) {
+            log.info("오늘 생성되었지만 채팅이 진행되지 않았거나 임시 저장된 채팅방인 {}을 반환합니다.", latest.getId());
             return latest;
         }
+
+        expireIfNeeded(latest);
 
         ChatRoom newRoom = chatRoomRepository.save(
                 ChatRoom.builder()
@@ -104,6 +106,33 @@ public class ChatService {
 
         log.info("사용자 {}가 감정대화를 진행할 수 있는 채팅방을 반환합니다.", user.getId());
         return newRoom;
+    }
+
+    private boolean isReusableTodayRoom(ChatRoom chatRoom) {
+        if (chatRoom == null || chatRoom.isEnded()) {
+            return false;
+        }
+
+        LocalDate today = LocalDate.now();
+        LocalDate roomDate = extractRoomDate(chatRoom);
+
+        return roomDate.isEqual(today);
+    }
+
+    private LocalDate extractRoomDate(ChatRoom chatRoom) {
+        if (chatRoom.getFirstChatTime() != null) {
+            return chatRoom.getFirstChatTime().toLocalDate();
+        }
+        return chatRoom.getCreatedAt().toLocalDate();
+    }
+
+    private void expireIfNeeded(ChatRoom room) {
+        if (room == null || room.isEnded()) {
+            return;
+        }
+
+        log.info("이전 채팅방 {}를 만료 처리합니다.", room.getId());
+        room.closeChatRoom();
     }
 
     private boolean isFirstChatRoomOfDay(ChatRoom currentRoom) {

@@ -27,6 +27,7 @@ public class RequestIdFilter extends OncePerRequestFilter {
         String requestId = UUID.randomUUID().toString().replace("-", "");
 
         MDC.put(MDC_KEY, requestId);
+        request.setAttribute(MDC_KEY, requestId);
         response.setHeader(HEADER_NAME, requestId);
 
         try {

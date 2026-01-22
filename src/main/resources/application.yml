@@ -12,3 +12,8 @@ spring:
 rest-template:
   connect-timeout: 5000
   read-timeout: 120000
+
+monitoring:
+  discord:
+    enabled: true
+    error-webhook-url: ${DISCORD_ERROR_WEBHOOK_URL:}

@@ -38,6 +38,7 @@ public class SecurityConfig {
                 .headers(h -> h.frameOptions(FrameOptionsConfig::sameOrigin)) // H2 콘솔 접근 시 iframe 사용 허용 (동일 출처만 허용하여 보안 유지)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/mypage", "/api/v1/mypage/**").authenticated() // 마이페이지 조회 시 1L에 해당하는 유저 정보가 반환되는 문제 확인을 위함
                         // 개발 편의성을 위한 PERMIT ALL 설정
 //                        .requestMatchers("/auth/session").authenticated()
 //                        .requestMatchers("/auth/**",

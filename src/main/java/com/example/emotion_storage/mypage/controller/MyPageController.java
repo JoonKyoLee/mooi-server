@@ -40,7 +40,7 @@ public class MyPageController {
     public ResponseEntity<ApiResponse<MyPageOverviewResponse>> getMyPageOverview(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal
     ) {
-        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        Long userId = userPrincipal.getId();
         log.info("사용자 {}의 마이페이지 내 정보 조회를 요청받았습니다.", userId);
         MyPageOverviewResponse response = myPageService.getMyPageOverview(userId);
         return ResponseEntity.ok(ApiResponse.success(
@@ -53,7 +53,7 @@ public class MyPageController {
             @RequestBody NicknameChangeRequest request,
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal
     ) {
-        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        Long userId = userPrincipal.getId();
         log.info("사용자 {}의 닉네임 수정을 요청받았습니다.", userId);
         myPageService.changeUserNickname(request, userId);
         return ResponseEntity.ok(ApiResponse.success(
@@ -67,7 +67,7 @@ public class MyPageController {
     public ResponseEntity<ApiResponse<UserKeyCountResponse>> getUserKeyCount(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal
     ) {
-        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        Long userId = userPrincipal.getId();
         log.info("사용자 {}의 열쇠 개수 조회를 요청받았습니다.", userId);
         UserKeyCountResponse response = myPageService.getUserKeyCount(userId);
         return ResponseEntity.ok(ApiResponse.success(
@@ -79,7 +79,7 @@ public class MyPageController {
     public ResponseEntity<ApiResponse<UserAccountInfoResponse>> getUserAccountInfo(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal
     ) {
-        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        Long userId = userPrincipal.getId();
         log.info("사용자 {}의 계정 정보 조회를 요청받았습니다.", userId);
         UserAccountInfoResponse response = myPageService.getUserAccountInfo(userId);
         return ResponseEntity.ok(ApiResponse.success(
@@ -91,7 +91,7 @@ public class MyPageController {
     public ResponseEntity<ApiResponse<NotificationSettingsResponse>> getNotificationSettings(
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal
     ) {
-        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        Long userId = userPrincipal.getId();
         log.info("사용자 {}의 알림설정 상태 정보 조회를 요청받았습니다.", userId);
         NotificationSettingsResponse response = myPageService.getNotificationSettings(userId);
         return ResponseEntity.ok(ApiResponse.success(
@@ -104,7 +104,7 @@ public class MyPageController {
             @RequestBody NotificationSettingsUpdateRequest request,
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal
     ) {
-        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        Long userId = userPrincipal.getId();
         log.info("사용자 {}의 알림설정 상태 업데이트를 요청받았습니다.", userId);
         myPageService.updateNotificationSettings(request, userId);
         return ResponseEntity.ok(ApiResponse.success(
@@ -119,7 +119,7 @@ public class MyPageController {
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
             HttpServletRequest request, HttpServletResponse response
     ) {
-        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        Long userId = userPrincipal.getId();
         log.info("회원 {}의 탈퇴를 요청받았습니다.", userId);
         myPageService.withdrawUser(userId, request, response);
         return ResponseEntity.ok(ApiResponse.success(
@@ -134,7 +134,7 @@ public class MyPageController {
             @AuthenticationPrincipal CustomUserPrincipal userPrincipal,
             HttpServletRequest request, HttpServletResponse response
     ) {
-        Long userId = userPrincipal != null ? userPrincipal.getId() : 1L; // TODO: 개발 테스트를 위한 코드
+        Long userId = userPrincipal.getId();
         log.info("회원 {}의 로그아웃을 요청받았습니다.", userId);
         myPageService.logout(userId, request, response);
         return ResponseEntity.ok(ApiResponse.success(

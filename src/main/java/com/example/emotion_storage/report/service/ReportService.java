@@ -17,11 +17,11 @@ import java.time.format.DateTimeParseException;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class ReportService {
 
     private final ReportRepository reportRepository;
 
+    @Transactional
     public DailyReportDetailResponse getDailyReportDetail(Long userId, String dateString) {
         log.info("일일리포트 상세 조회 요청 - userId: {}, date: {}", userId, dateString);
         
@@ -35,6 +35,7 @@ public class ReportService {
         return response;
     }
 
+    @Transactional
     public DailyReportDetailResponse getDailyReportDetailById(Long userId, Long reportId) {
         log.info("일일리포트 상세 조회 요청 - userId: {}, reportId: {}", userId, reportId);
 

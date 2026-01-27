@@ -51,4 +51,22 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
         return findLatestUnopenedReportIdsByUserId(userId, Pageable.ofSize(1))
                 .stream().findFirst();
     }
+
+    @Query("""
+        select r
+        from Report r
+        join r.timeCapsules tc
+        where tc.user.id = :userId
+        order by r.historyDate desc
+    """)
+    List<Report> findLatestReportsByUserId(
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
+
+    default Optional<Report> findLatestReportByUserId(Long userId) {
+        return findLatestReportsByUserId(userId, Pageable.ofSize(1))
+                .stream()
+                .findFirst();
+    }
 }

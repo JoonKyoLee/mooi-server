@@ -9,11 +9,13 @@ import com.example.emotion_storage.home.dto.response.NewNotificationResponse;
 import com.example.emotion_storage.home.dto.response.NewTimeCapsuleResponse;
 import com.example.emotion_storage.home.dto.response.TicketStatusResponse;
 import com.example.emotion_storage.notification.repository.NotificationRepository;
+import com.example.emotion_storage.report.domain.Report;
 import com.example.emotion_storage.report.repository.ReportRepository;
 import com.example.emotion_storage.timecapsule.repository.TimeCapsuleRepository;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -126,19 +128,23 @@ public class HomeService {
         
         // 사용자 존재 여부 확인
         findUserById(userId);
+
+        Optional<Report> latestReport = reportRepository.findLatestReportByUserId(userId);
         
         // 미확인 일일리포트 개수 조회
-        Long unopenedReportCount = reportRepository.countUnopenedReportsByUserId(userId);
-        boolean hasNewReport = unopenedReportCount > 0;
+        boolean hasNewReport = false;
+        Long reportId = null;
 
         // 최근 일일리포트 아이디 조회
-        Long currentReportId = reportRepository.findLatestReportIdByUserId(userId)
-                .orElse(null);
+        if (latestReport.isPresent() && !latestReport.get().getIsOpened()) {
+            hasNewReport = true;
+            reportId = latestReport.get().getId();
+        }
         
         NewDailyReportResponse response = NewDailyReportResponse.builder()
                 .hasNewReport(hasNewReport)
-                .count(unopenedReportCount.intValue())
-                .reportId(currentReportId)
+                .count(hasNewReport ? 1 : 0)
+                .reportId(reportId)
                 .build();
         
         log.info("사용자 새로운 일일리포트 상태 조회 완료 - userId: {}, hasNewReport: {}, count: {}", 

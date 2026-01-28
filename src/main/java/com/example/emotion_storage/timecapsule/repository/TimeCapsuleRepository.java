@@ -61,9 +61,15 @@ public interface TimeCapsuleRepository extends JpaRepository<TimeCapsule, Long> 
     int countByUser_IdAndIsFavoriteTrue(Long userId);
 
     // 전체 유저에 대해 도착한 타임캡슐 조회에 사용
-    Page<TimeCapsule> findByDeletedAtIsNullAndIsTempSaveFalseAndIsOpenedFalseAndOpenedAtLessThanEqual(
-            LocalDateTime now, Pageable pageable
-    );
+    @Query("""
+    SELECT tc from TimeCapsule tc JOIN tc.user u
+    WHERE tc.deletedAt is null
+    AND tc.isTempSave is false
+    AND tc.isOpened is false
+    AND tc.openedAt <= :now
+    AND u.deletedAt is null
+    """)
+    Page<TimeCapsule> findArrivalTargetCapsules(@Param("now") LocalDateTime now, Pageable pageable);
 
     /**
      * 특정 사용자의 특정 날짜에 생성된 타임캡슐 목록 조회

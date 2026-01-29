@@ -1,5 +1,6 @@
 package com.example.emotion_storage.user.auth.oauth.google;
 
+import com.example.emotion_storage.global.config.properties.GoogleOAuthProperties;
 import com.example.emotion_storage.global.exception.BaseException;
 import com.example.emotion_storage.global.exception.ErrorCode;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
@@ -12,7 +13,6 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -20,8 +20,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class GoogleTokenVerifier {
 
-    @Value("${spring.security.oauth2.google.client-ids}")
-    private List<String> googleClientIds;
+    private final GoogleOAuthProperties googleOAuthProperties;
 
     public GoogleLoginClaims verifyLoginToken(String idToken) {
         Payload payload = verifyToken(idToken);
@@ -37,10 +36,15 @@ public class GoogleTokenVerifier {
 
     public Payload verifyToken(String idToken) {
         try {
+            List<String> clientIds = googleOAuthProperties.getClientIdList();
+            if (clientIds.isEmpty()) {
+                throw new BaseException(ErrorCode.INVALID_ID_TOKEN);
+            }
+
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                     new NetHttpTransport(),
                     GsonFactory.getDefaultInstance())
-                    .setAudience(googleClientIds)
+                    .setAudience(clientIds)
                     .build();
 
             GoogleIdToken googleIdToken = verifier.verify(idToken);

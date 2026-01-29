@@ -340,7 +340,7 @@ public class TimeCapsuleService {
     }
 
     private TimeCapsule findOwnedTimeCapsule(Long timeCapsuleId, Long userId) {
-        TimeCapsule timeCapsule = timeCapsuleRepository.findById(timeCapsuleId)
+        TimeCapsule timeCapsule = timeCapsuleRepository.findTimeCapsuleByIdAndDeletedAtIsNull(timeCapsuleId)
                 .orElseThrow(() -> new BaseException(ErrorCode.TIME_CAPSULE_NOT_FOUND));
 
         if (!timeCapsule.getUser().getId().equals(userId)) {

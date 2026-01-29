@@ -24,6 +24,8 @@ public interface TimeCapsuleRepository extends JpaRepository<TimeCapsule, Long> 
     @Query("SELECT COUNT(tc) FROM TimeCapsule tc WHERE tc.user.id = :userId AND tc.isOpened = false AND tc.deletedAt IS NULL")
     Long countUnopenedTimeCapsulesByUserId(@Param("userId") Long userId);
 
+    Optional<TimeCapsule> findTimeCapsuleByIdAndDeletedAtIsNull(Long id);
+
     @Query("""
         SELECT COUNT(tc)
         FROM TimeCapsule tc

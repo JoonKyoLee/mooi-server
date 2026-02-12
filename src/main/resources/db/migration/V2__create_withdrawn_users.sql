@@ -8,6 +8,7 @@ CREATE TABLE `withdrawn_users`
     `purge_after`       datetime    NOT NULL,
     `purge_status`      varchar(20) NOT NULL DEFAULT 'PENDING',
     `purged_at`         datetime             DEFAULT NULL,
+    `fail_reason`       varchar(255)         DEFAULT NULL,
 
     PRIMARY KEY (`withdrawn_user_id`),
 

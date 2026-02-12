@@ -39,3 +39,6 @@ ai:
     timeout: 30000
   server:
     base-url: http://localhost
+
+withdrawal:
+  purge-after-months: 6

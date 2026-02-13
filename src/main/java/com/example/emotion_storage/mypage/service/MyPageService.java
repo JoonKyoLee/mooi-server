@@ -11,9 +11,13 @@ import com.example.emotion_storage.mypage.dto.response.UserKeyCountResponse;
 import com.example.emotion_storage.user.auth.service.TokenService;
 import com.example.emotion_storage.user.domain.User;
 import com.example.emotion_storage.user.repository.UserRepository;
+import com.example.emotion_storage.user.withdrawal.config.WithdrawalProperties;
+import com.example.emotion_storage.user.withdrawal.domain.WithDrawnUser;
+import com.example.emotion_storage.user.withdrawal.repository.WithDrawnUserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +34,8 @@ public class MyPageService {
 
     private final UserRepository userRepository;
     private final TokenService tokenService;
+    private final WithDrawnUserRepository withDrawnUserRepository;
+    private final WithdrawalProperties withdrawalProperties;
 
     @Transactional(readOnly = true)
     public MyPageOverviewResponse getMyPageOverview(Long userId) {
@@ -105,8 +111,16 @@ public class MyPageService {
     public void withdrawUser(Long userId, HttpServletRequest request, HttpServletResponse response) {
         User user = findUserById(userId);
 
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime purgeAfter = now.plusMonths(withdrawalProperties.purgeAfterMonths());
+
         log.info("회원 {}의 탈퇴 처리를 진행합니다.", userId);
-        user.withdrawUser();
+        user.withdrawUser(now);
+
+        if (!withDrawnUserRepository.existsByUserId(userId)) {
+            WithDrawnUser withDrawnUser = WithDrawnUser.pending(userId, now, purgeAfter);
+            withDrawnUserRepository.save(withDrawnUser);
+        }
 
         logout(userId, request, response);
     }

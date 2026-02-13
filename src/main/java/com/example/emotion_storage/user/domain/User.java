@@ -226,8 +226,8 @@ public class User extends BaseTimeEntity {
         this.marketingInfoNotify = marketingInfoNotify;
     }
 
-    public void withdrawUser() {
-        this.deletedAt = LocalDateTime.now();
+    public void withdrawUser(LocalDateTime now) {
+        this.deletedAt = now;
     }
 
     public boolean isKakaoType() {
